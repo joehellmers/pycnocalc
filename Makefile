@@ -2,9 +2,10 @@ F90COMP = gfortran
 OBJS = globalvars.o logging.o vectors.o nucleon_interactions.o folding_potential.o
 MODULES = globalvars.mod logging.mod vectors.mod nucleon_interactions.mod folding_potential.mod
 SWITCHES = -ffree-line-length-none -O3
+OUTDIR = /home/hellmersjl/bin
 
 pycnocalc: $(MODULES)
-	$(F90COMP) pycnocalc.f90 $(OBJS) -o pycnocalc $(SWITCHES)
+	$(F90COMP) pycnocalc.f90 $(OBJS) -o $(OUTDIR)/pycnocalc $(SWITCHES)
 
 folding_potential.mod: constants.mod nucleon_interactions.mod 
 	$(F90COMP) -c folding_potential.f90 $(SWITCHES)
@@ -29,6 +30,6 @@ logging.mod: logging.f90
 clean: 
 	rm *.mod
 	rm *.o
-	rm pycnocalc
+	rm $(OUTDIR)/pycnocalc
 
 
