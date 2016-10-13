@@ -18,6 +18,7 @@ use constants
 use vectors
 use nucleon_interactions
 use folding_potential
+use logging
 
 implicit none
 
@@ -40,6 +41,7 @@ real(kind=dbl) :: this_vfold
 real(4) :: t1
 real(kind=dbl) :: work1, work2, work3, work4, work5, work6
 
+call initialize_logging
 call printintro
 
 call initialize_globals
@@ -178,7 +180,7 @@ use logging
 
 implicit none
 
-call scr_and_log ('This is PycnoCalc - Pycnonulear Reaction Calculation System')
+call scr_and_log_str ('This is PycnoCalc - Pycnonulear Reaction Calculation System')
 
 
 print *,'***********************************************************'
