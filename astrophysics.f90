@@ -1,0 +1,237 @@
+!
+!	astrophysics.f90
+!	PycnoCalc
+!
+!	Created by hellmersjl on 5/24/08.
+!
+
+module astrophysics
+
+use constants
+
+implicit none
+
+save
+
+
+contains 
+!******************************************
+!
+! Function to calculate the mean weight per nuclus based on Atomic Weight and Number
+!
+!******************************************
+
+
+real(kind=dbl) function mean_wt_nucleus (A, Z)
+
+use constants
+
+implicit none
+
+integer, intent(in) :: A ! Atomic Weight
+integer, intent(in) :: Z ! Atomic Number
+
+
+mean_wt_nucleus = A*(1.0 + ((Z * electron_mass)/(A*amu)))
+
+end function mean_wt_nucleus
+
+
+!******************************************
+!
+! Function to calculate the mean weight per electron based on Atomic Weight and Number
+!
+!******************************************
+
+real(kind=dbl) function mean_wt_electron(A,Z)
+
+use constants
+
+implicit none
+
+integer, intent(in) :: A ! Atomic Weight
+integer, intent(in) :: Z ! Atomic Number
+
+
+mean_wt_electron = mean_wt_nucleus(A,Z)/Z
+
+end function mean_wt_electron
+
+!*******************************d***********
+!
+! Function to calculate the number density of nuclei based on 
+!	- matter density
+!	- Atomic Weight
+!   - Atomic Number
+!
+!******************************************
+
+real(kind=dbl) function nbr_density_nucleus (rho, A, Z)
+use constants
+implicit none
+
+
+
+real(kind=dbl), intent(in) :: rho ! mass density 
+integer, intent(in) :: A ! Atomic Weight
+integer, intent(in) :: Z ! Atomic Number
+
+nbr_density_nucleus = rho/(mean_wt_nucleus(A,Z)*amu)
+
+end function nbr_density_nucleus
+
+!******************************************
+!
+! Function to calculate the number density of electrons based on 
+!	- matter density
+!	- Atomic Weight
+!   - Atomic Number
+!
+!******************************************
+real(kind=dbl) function nbr_density_electron (rho, A, Z)
+use constants
+implicit none
+
+
+
+real(kind=dbl), intent(in) :: rho ! mass density 
+integer, intent(in) :: A ! Atomic Weight
+integer, intent(in) :: Z ! Atomic Number
+
+nbr_density_electron = rho/(mean_wt_electron(A,Z)*amu)
+
+end function nbr_density_electron
+
+!******************************************
+!
+! Function to calculate the characteristic radius based on 
+!	- Atomic Weight
+!   - Atomic Number
+! 
+!	REF: SPVH1969 (2)
+!
+!******************************************
+
+real(kind=dbl) function char_r (A, Z)
+use constants
+use globalvars
+implicit none
+
+integer, intent(in) :: A ! Atomic Weight
+integer, intent(in) :: Z ! Atomic Number
+
+char_r = char_r_factor/(A*Z*Z)
+
+end function char_r
+
+!******************************************
+!
+! Function to calculate the characteristic energy based on 
+!	- Atomic Weight
+!   - Atomic Number
+! 
+!	REF: SPVH1969 (2)
+!
+!******************************************
+
+real(kind=dbl) function char_E (A, Z)
+use constants
+use globalvars
+implicit none
+
+
+integer, intent(in) :: A ! Atomic Weight
+integer, intent(in) :: Z ! Atomic Number
+
+char_E = A*Z*Z*Z*Z*boltzmann*char_E_factor
+
+end function char_E
+
+!******************************************
+!
+! Function to calculate the inverse length parameter based on
+!	- Density
+!	- Atomic Weight
+!   - Atomic Number
+! 
+!	REF: SPVH1969 (3)
+!
+!******************************************
+
+
+real(kind=dbl) function inv_len_param (rho, A, Z)
+use constants
+use globalvars
+implicit none
+
+
+
+real(kind=dbl), intent(in) :: rho ! mass density 
+integer, intent(in) :: A ! Atomic Weight
+integer, intent(in) :: Z ! Atomic Number
+
+inv_len_param = ((rho/(mean_wt_nucleus(A,Z)*inv_len_factor))**(1.0/3.0))/(A*Z*Z)
+
+
+end function inv_len_param
+
+!*****************************************************************
+!
+! Subroutine to calculate Pycnonuclear Reaction Rates at Zero Temp
+!
+!	INPUTS
+!	- Density (g/cm^3)
+!	- Atomic Weight
+!   - Atomic Number
+!   - SFactor (MeV*barns)f
+! 
+!	OUTPUTs 
+!	- Lower Bound of the Rate (Static Approximation of Potential)
+!     in (Reactions/sec/cm^3)
+!   - Upper Bound of the Rate (Relaxed Approximation of Potential)
+!     in (Reactions/sec/cm^3)
+!
+!	REF: SPVH1969 (39)
+!
+!*****************************************************************
+subroutine react_rate_zero_temp(rho, A, Z, S, lower_rate, upper_rate)
+use constants
+use globalvars
+implicit none
+
+
+! Parameter declarations
+real(kind=dbl), intent(in) :: rho ! mass density 
+integer, intent(in) :: A ! Atomic Weight
+integer, intent(in) :: Z ! Atomic Number
+real(kind=dbl), intent(in) :: S ! SFactor
+real(kind=dbl), intent(out) :: lower_rate ! Lower Bound of Reaction Rate
+real(kind=dbl), intent(out) :: upper_rate ! Upper Bound of Reaction Rate
+
+
+! Function Headers
+!real(kind=dbl) :: inv_len_param
+!real(kind=dbl) :: mean_wt_nucleus
+
+
+! local variables
+real(kind=dbl) :: lambda
+real(kind=dbl) :: common_part
+
+
+! get the inverse length parameter
+
+lambda = inv_len_param(rho, A, Z)
+
+! Calculate the common part first to reduce load on system
+common_part = (rho/mean_wt_nucleus(A,Z))*A*A*(Z**4)*S*1.00e46_dbl*(lambda**(7.0/4.0))
+
+lower_rate = common_part*3.90_dbl*exp(-2.638_dbl/sqrt(lambda))
+
+upper_rate = common_part*4.76_dbl*exp(-2.516_dbl/sqrt(lambda))
+
+end subroutine react_rate_zero_temp
+
+	
+end module astrophysics
+

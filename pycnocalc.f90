@@ -19,6 +19,7 @@ use vectors
 use nucleon_interactions
 use folding_potential
 use logging
+use globalvars
 
 implicit none
 
@@ -138,33 +139,6 @@ print *, ' -------  End Run: PycnoCalc --------'
 
 
 end program PycnoCalc
-
-
-!******************************************
-!
-! Subroutine to Initialize Global variables
-!
-!******************************************
-
-
-subroutine initialize_globals
-use constants
-use globalvars
-implicit none
-
-char_r_factor = ((hbar*hbar)/((amu)*elementary_charge*elementary_charge))
-print *, 'Setting Characteristic Length Factor to', char_r_factor
-print *
-char_E_factor = (amu*elementary_charge*elementary_charge*elementary_charge*elementary_charge)/(hbar*hbar*boltzmann)
-print *, 'Setting Characteristic Energy Factor to', char_E_factor
-print *
-inv_len_factor = 1.0/((char_r_factor*char_r_factor*char_r_factor)/(2.0_dbl * amu))
-print *, 'Setting Dimensionless Inverse Length Factor to', inv_len_factor
-print *
-
-
-end subroutine initialize_globals
-
 
 
 !******************************************
