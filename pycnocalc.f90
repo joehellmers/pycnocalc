@@ -112,7 +112,7 @@ t1 = secnds(0.0);
 
 ! Oxygen-16 <-> Nickel-58
 
-do r_iterator=1,120
+do r_iterator=40,50
 	this_r = 0.1_dbl*r_iterator
 	this_vfold = -1.0_dbl*vfold_spherically_symmetric(0.1_dbl*r_iterator,58,16,4.230848400_dbl,2.460993151_dbl,15,0.50_dbl,0.50_dbl,0.1606844454_dbl,0.1820414223_dbl,6.0_dbl,6.0_dbl)
 	print *,this_r,',',log10(this_vfold)
