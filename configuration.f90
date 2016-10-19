@@ -43,7 +43,7 @@ integer :: function_cnt
 
 
 
-character(len=13), parameter :: cfg_file = 'PycnoCalc.cfg'
+character(len=13), parameter :: cfg_file = 'pycnocalc.cfg'
 
 
 contains 
@@ -79,7 +79,6 @@ contains
 	first_time = .TRUE.
 	function_cnt = 0
 	
-		
 	open (unit,file=cfg_file,status='OLD',action='READ', iostat=ierror)
 	if (ierror .NE. 0) then
 			call scr_and_log_str('Cannot open configuration file')
@@ -106,7 +105,7 @@ contains
 		end if
 		
 		cfg_line = trim(adjustl(cfg_line))
-		
+
 		if ((.NOT. is_first_char(cfg_line,'#')) .AND. (len_trim(cfg_line) .NE. 0)) then
 			if (first_time) then
 				if (.NOT. is_first_char(cfg_line,'[')) then
@@ -133,9 +132,6 @@ contains
 		
 	close(unit)
 
-
-	
-
 	end subroutine load_config
 
 
@@ -160,14 +156,14 @@ contains
 	call scr_and_log_str('-----------------------------')
 	call scr_and_log_str(' ')
 	call scr_and_log_str('Function Count = ',lf=.FALSE.)
-	call scr_and_log(nbr=real(function_cnt,kind=dbl),fmt='(f5.)')
+	call scr_and_log(nbr=real(function_cnt,kind=dbl),fmt='(f5.0)')
 	call scr_and_log_str(' ')
 	
 	do i=1,function_cnt
-		call scr_and_log_str('Funcation: ' // function_list(i)%function_name)
+		call scr_and_log_str('Function: ' // function_list(i)%function_name)
 		call scr_and_log_str(' ')
 		call scr_and_log_str('        Parameter Count = ',lf=.FALSE.)
-		call scr_and_log(nbr=real(function_list(i)%param_cnt,kind=dbl),fmt='(f5.)')
+		call scr_and_log(nbr=real(function_list(i)%param_cnt,kind=dbl),fmt='(f5.0)')
 		call scr_and_log_str(' ')
 		do j=1,function_list(i)%param_cnt
 			call scr_and_log_str('     Parameter Name  : ' // function_list(i)%params(j)%param_name //' Value: ' // function_list(i)%params(j)%param_value)

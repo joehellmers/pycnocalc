@@ -6,6 +6,8 @@ OUTDIR = /home/hellmersjl/bin
 
 pycnocalc: $(MODULES)
 	$(F90COMP) pycnocalc.f90 $(OBJS) -o $(OUTDIR)/pycnocalc $(SWITCHES)
+	cp pycnocalc.cfg $(OUTDIR)
+	chmod ugo-x $(OUTDIR)/pycnocalc.cfg
 
 folding_potential.mod: constants.mod nucleon_interactions.mod general_nuclear.mod 
 	$(F90COMP) -c folding_potential.f90 $(SWITCHES)

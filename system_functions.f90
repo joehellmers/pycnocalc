@@ -239,7 +239,8 @@ do
 	if (this_r > max_r) then
 		exit
 	end if
-	!this_vfold = -1.0_dbl*vfold_spherically_symmetric(this_r,A1,A2,n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2)
+	this_vfold = -1.0_dbl*vfold_spherically_symmetric(this_r,A1,A2,n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2)
+	!this_vfold =  -1.0_dbl*vfold_spherically_symmetric(0.1_dbl*r_iterator,58,16,4.230848400_dbl,2.460993151_dbl,15,0.50_dbl,0.50_dbl,0.1606844454_dbl,0.1820414223_dbl,6.0_dbl,6.0_dbl)
 	call scr_and_log(nbr = this_r, fmt='(F10.5)')
 	write (unit,*) this_r,delimiter,this_vfold,delimiter, log10(-1.0_dbl*this_vfold)
 	this_r = this_r + delta_r
