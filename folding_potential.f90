@@ -14,13 +14,11 @@ save
 
 contains
 
-	real(kind=dbl) function vfold_spherically_symmetric (R, A1, A2, radius1, radius2, partition,diffuse1,diffuse2,rho0_1, rho0_2,tot_radius1, tot_radius2)
+	real(kind=dbl) function vfold_spherically_symmetric (R, A1, A2, partition,diffuse1,diffuse2,rho0_1, rho0_2,tot_radius1, tot_radius2)
 	
 	! R  : Distance between nuclei in fermi (10e-15 m)
 	! A1 : The number of nucleon's in the first nucleus
 	! A2 : The number of nucleon's in the second nucleus
-	! radius1 : The radius of the first nucleus in fermi
-	! radius2 : The radius of the second nucleus in fermi
 	! partition : The number of increments to divide the range of integrations
 	! diffuse1 : the diffuseness parameter for the first nucleus
 	! diffuse2 : the diffuseness paramter for the second nucleus
@@ -33,14 +31,13 @@ contains
 	
 	use constants
 	use nucleon_interactions
+	use general_nuclear
 	
 	implicit none
 	
 	real(kind=dbl) :: R
 	integer :: A1
 	integer :: A2
-	real(kind=dbl) :: radius1
-	real(kind=dbl) :: radius2
 	integer :: partition
 	real(kind=dbl) :: diffuse1
 	real(kind=dbl) :: diffuse2
@@ -68,6 +65,8 @@ contains
 	real(kind=dbl) :: accumulator1
 	real(kind=dbl) :: accumulator2
 	
+	real(kind=dbl) :: radius1
+	real(kind=dbl) :: radius2
 	
 	
 	
@@ -88,6 +87,9 @@ contains
 	real(kind=dbl) :: pi_div_2
 
 	pi_div_2 = pi/2.0_dbl
+	
+	radius1 = nuclear_radius(A1)
+	radius2 = nuclear_radius(A2)
 	
 	accumulator1 = 0
 	accumulator2 = 0
@@ -110,7 +112,7 @@ contains
 	do r1=1,partition
 		! print *,'Outer Loop: ',r1
 		this_r1 = r1*delta_r1-delta_r1/2.0
-		ndensity1 = rho0_1/(1.0_dbl + exp((this_r1-radius1)/diffuse1))
+		ndensity1 = density_2pF(rho0_1,this_r1,radius1,diffuse1)
 		! print *,'r1=',this_r1
 		! print *,'Density1 = ',ndensity1
 		do theta1=1,partition
@@ -122,7 +124,7 @@ contains
 				
 				do r2=1,partition
 					this_r2 = r2*delta_r2-delta_r2/2.0
-					ndensity2 = rho0_2/(1.0_dbl + exp((this_r2-radius2)/diffuse2))
+					ndensity2 = density_2pF(rho0_2,this_r2,radius2,diffuse2)
 					!print *,'Density2 = ',ndensity2
 					do theta2=1,partition
 						this_theta2 = theta2*delta_theta2-delta_theta2/2.0
@@ -140,9 +142,7 @@ contains
 							
 							d = sqrt(dx*dx + dy*dy + dz*dz)
 							
-							! Works for 1 quarter slice 
-							accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,this_r2/4.75_dbl)
-							
+							accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2))							
 
 							my_cnt = my_cnt + 1
 						end do
@@ -157,7 +157,7 @@ contains
 	!print *,'Calculated Volume1 = ',accumulator2
 	
 	
-	vfold_spherically_symmetric = 8.0_dbl*accumulator1
+	vfold_spherically_symmetric = -8.0_dbl*accumulator1
 	
 	
 	end function vfold_spherically_symmetric
