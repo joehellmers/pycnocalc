@@ -160,13 +160,17 @@ real(kind=dbl) :: this_vfold
 real(kind=dbl) :: int_result
 
 real(kind=dbl)		:: min_r, max_r, delta_r
-integer				:: A1, A2, n
+integer			:: A1, A2, n
 real(kind=dbl)		:: diffuse1, diffuse2
 real(kind=dbl)		:: rho0_1, rho0_2
 real(kind=dbl)		:: tot_radius1, tot_radius2
-integer				:: unit,ierror
+integer			:: unit,ierror
 character(len=1)	:: delimiter
 character(len=80)	:: outputfile
+real(kind=dbl) 		:: start, finish, tot_time
+real(kind=dbl)      :: total_walltime
+
+integer count_0, count_1, count_rate, count_max
 
 t1 = secnds(0.0);
 
@@ -175,13 +179,11 @@ unit = 150
 min_r		= ConvertStrToReal(getParamValue('FoldingSimple','r1'))
 max_r		= ConvertStrToReal(getParamValue('FoldingSimple','r2'))
 delta_r		= ConvertStrToReal(getParamValue('FoldingSimple','dr'))
-A1			= ConvertStrToInt(getParamValue('FoldingSimple','A1')) 
-A2			= ConvertStrToInt(getParamValue('FoldingSimple','A2')) 
-n			= ConvertStrToInt(getParamValue('FoldingSimple','n')) 
+A1		= ConvertStrToInt(getParamValue('FoldingSimple','A1')) 
+A2		= ConvertStrToInt(getParamValue('FoldingSimple','A2')) 
+n		= ConvertStrToInt(getParamValue('FoldingSimple','n')) 
 diffuse1	= ConvertStrToReal(getParamValue('FoldingSimple','diffuse1')) 
 diffuse2	= ConvertStrToReal(getParamValue('FoldingSimple','diffuse2')) 
-
-
 
 ! If the total radii are given, use them, otherwise calculate
  
@@ -235,6 +237,10 @@ end if
 
 
 this_r = min_r
+
+call system_clock(count_0, count_rate, count_max)
+call cpu_time(start)
+
 do 
 	if (this_r > max_r) then
 		exit
@@ -242,18 +248,21 @@ do
 	this_vfold = -1.0_dbl*vfold_spherically_symmetric(this_r,A1,A2,n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2)
 	!this_vfold =  -1.0_dbl*vfold_spherically_symmetric(0.1_dbl*r_iterator,58,16,4.230848400_dbl,2.460993151_dbl,15,0.50_dbl,0.50_dbl,0.1606844454_dbl,0.1820414223_dbl,6.0_dbl,6.0_dbl)
 	call scr_and_log(nbr = this_r, fmt='(F10.5)')
-	write (unit,*) this_r,delimiter,this_vfold,delimiter, log10(-1.0_dbl*this_vfold)
+    write (unit,*) this_r,delimiter,this_vfold,delimiter, log10(-1.0_dbl*this_vfold)
 	this_r = this_r + delta_r
 	
 end do
+call cpu_time(finish)
+call system_clock(count_1, count_rate, count_max)
+tot_time = finish - start
+total_walltime = (count_1 * 1.0 / count_rate)/1000
+call scr_and_log (str='Wall Time: ',nbr=total_walltime,fmt='(ES13.5)',lf=.true.)
+call scr_and_log (str='Total Time: ',nbr=tot_time,fmt='(ES13.5)',lf=.true.)
+
 close(unit)
 
 end subroutine sample_folding_potential_calcs
 
 	
-	
-
-
-
 end module system_functions
 

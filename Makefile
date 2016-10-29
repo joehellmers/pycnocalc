@@ -1,12 +1,13 @@
 F90COMP = gfortran
 OBJS = globalvars.o logging.o vectors.o nucleon_interactions.o folding_potential.o astrophysics.o configuration.o utilities.o general_nuclear.o integration.o system_functions.o
 MODULES = globalvars.mod logging.mod vectors.mod nucleon_interactions.mod folding_potential.mod astrophysics.mod configuration.mod utilities.mod general_nuclear.mod integration.mod system_functions.mod
-SWITCHES = -ffree-line-length-none -O3
+SWITCHES = -ffree-line-length-none -O3 -fopenmp
 OUTDIR = /home/hellmersjl/bin
 
 pycnocalc: $(MODULES)
 	$(F90COMP) pycnocalc.f90 $(OBJS) -o $(OUTDIR)/pycnocalc $(SWITCHES)
 	cp pycnocalc.cfg $(OUTDIR)
+	scp $(OUTDIR)/pycnocalc alcyone:~/bin
 	chmod ugo-x $(OUTDIR)/pycnocalc.cfg
 
 folding_potential.mod: constants.mod nucleon_interactions.mod general_nuclear.mod 

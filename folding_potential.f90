@@ -109,41 +109,35 @@ contains
 	
 	my_cnt = 0
 
+!!$omp parallel &
+!!$omp shared ( delta_r1, delta_r2, delta_theta1, delta_phi1, delta_theta2, delta_phi2 ) &
+!!$omp shared ( this_r1, ndensity1, this_theta1, this_phi1, this_r2, ndensity2, this_theta2) &
+!!$omp private ( r1, theta1, phi1, r2, theta2, phi2 ) &
+!!$omp reduction (+:accumulator1,accumulator2)
+
+!!$omp do
 	do r1=1,partition
-		! print *,'Outer Loop: ',r1
 		this_r1 = r1*delta_r1-delta_r1/2.0
 		ndensity1 = density_2pF(rho0_1,this_r1,radius1,diffuse1)
-		! print *,'r1=',this_r1
-		! print *,'Density1 = ',ndensity1
 		do theta1=1,partition
 			this_theta1 = theta1*delta_theta1-delta_theta1/2.0
-			
 			do phi1=1,partition
 				this_phi1 = phi1*delta_phi1 - delta_phi1/2.0 - pi_div_2
 				accumulator2 = accumulator2 + this_r1*this_r1*sin(this_theta1)*delta_theta1*delta_phi1*delta_r1
-				
 				do r2=1,partition
 					this_r2 = r2*delta_r2-delta_r2/2.0
 					ndensity2 = density_2pF(rho0_2,this_r2,radius2,diffuse2)
-					!print *,'Density2 = ',ndensity2
 					do theta2=1,partition
 						this_theta2 = theta2*delta_theta2-delta_theta2/2.0
-						
 						do phi2=1, partition
-							
 							this_phi2 = phi2*delta_phi2 - delta_phi2/2.0
-							
 							dV1 = this_r1*this_r1*sin(this_theta1)*delta_theta1*delta_phi1*delta_r1
 							dV2 = (this_r2)*(this_r2)*sin(this_theta2)*delta_theta2*delta_phi2*delta_r2
-							
 							dx = R + this_r2*sin(this_theta2)*cos(this_phi2) - this_r1*sin(this_theta1)*cos(this_phi1) 
 							dy = this_r2*sin(this_theta2)*sin(this_phi2) - this_r1*sin(this_theta1)*sin(this_phi1)
 							dz = this_r2*cos(this_theta2) - this_r1*cos(this_theta1)
-							
 							d = sqrt(dx*dx + dy*dy + dz*dz)
-							
 							accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2))							
-
 							my_cnt = my_cnt + 1
 						end do
 					end do
@@ -151,7 +145,9 @@ contains
 			end do
 		end do
 	end do
-	
+!!$omp end do
+
+!!$omp end parallel	
 	
 	!print *,'Inner Loop Total Count=',my_cnt
 	!print *,'Calculated Volume1 = ',accumulator2

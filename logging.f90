@@ -56,8 +56,6 @@ contains
 	
 	unit = 25
 	
-	
-	
 	if (present(lf)) then
 		if (lf) then
 			c_advance = 'YES'
@@ -71,8 +69,10 @@ contains
 	open(unit, file=full_log_file, status='OLD', ACTION='WRITE', iostat=ierror, access='APPEND')
 	
 	if (present(str) .and. present(nbr)) then
-		write (unit,fmt,advance=c_advance) str,nbr
-		write(*, fmt, advance=c_advance) str,nbr
+		write (unit,'(a)',advance='NO') str
+		write (unit,fmt,advance=c_advance) nbr
+		write(*, '(a)', advance='NO') str
+		write(*, fmt, advance=c_advance) nbr
 	else
 		if (present(str)) then
 			write (unit,fmt,advance=c_advance) str
