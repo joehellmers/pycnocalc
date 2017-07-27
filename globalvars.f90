@@ -26,6 +26,8 @@ real(kind=dbl) :: char_r_factor  ! The Characteristic radius factor in cm
 real(kind=dbl) :: char_E_factor  ! The Characteristic energy factor in ergs
 real(kind=dbl) :: inv_len_factor ! The dimensionless Inverse Length factor
 
+character(:), allocatable :: cfgfile ! The configuration file used
+
 contains
 
 

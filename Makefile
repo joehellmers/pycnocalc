@@ -1,22 +1,19 @@
 F90COMP = gfortran
-OBJS = globalvars.o logging.o vectors.o nucleon_interactions.o folding_potential.o astrophysics.o configuration.o utilities.o general_nuclear.o integration.o system_functions.o
-MODULES = globalvars.mod logging.mod vectors.mod nucleon_interactions.mod folding_potential.mod astrophysics.mod configuration.mod utilities.mod general_nuclear.mod integration.mod system_functions.mod
+OBJS = globalvars.o logging.o vectors.o nucleon_interactions.o folding_potential.o astrophysics.o configuration.o utilities.o general_nuclear.o integration.o system_functions.o cmdline.o
+MODULES = globalvars.mod logging.mod vectors.mod nucleon_interactions.mod folding_potential.mod astrophysics.mod configuration.mod utilities.mod general_nuclear.mod integration.mod system_functions.mod cmdline.mod
 SWITCHES = -ffree-line-length-none -O3 -fopenmp
 OUTDIR = /home/hellmersjl/bin
 
 pycnocalc: $(MODULES)
 	$(F90COMP) pycnocalc.f90 $(OBJS) -o $(OUTDIR)/pycnocalc $(SWITCHES)
 	cp pycnocalc.cfg $(OUTDIR)
-	scp $(OUTDIR)/pycnocalc alcyone:~/bin
 	chmod ugo-x $(OUTDIR)/pycnocalc.cfg
 
 folding_potential.mod: constants.mod nucleon_interactions.mod general_nuclear.mod 
 	$(F90COMP) -c folding_potential.f90 $(SWITCHES)
 
-
 nucleon_interactions.mod: constants.mod vectors.mod 
 	$(F90COMP) -c nucleon_interactions.f90 $(SWITCHES)
-
 
 globalvars.mod: constants.mod
 	$(F90COMP) -c globalvars.f90 $(SWITCHES)
@@ -36,10 +33,10 @@ astrophysics.mod: constants.mod globalvars.mod
 utilities.mod: constants.mod
 	$(F90COMP) -c utilities.f90 $(SWITCHES)
 
-configuration.mod: constants.mod logging.mod utilities.mod
+configuration.mod: constants.mod logging.mod utilities.mod globalvars.mod
 	$(F90COMP) -c configuration.f90 $(SWITCHES)
 
-general_nuclear.mod: constants.mod
+general_nuclear.mod: constants.mod integration.mod
 	$(F90COMP) -c general_nuclear.f90 $(SWITCHES)
 
 system_functions.mod: constants.mod astrophysics.mod logging.mod folding_potential.mod configuration.mod utilities.mod general_nuclear.mod integration.mod
@@ -47,6 +44,14 @@ system_functions.mod: constants.mod astrophysics.mod logging.mod folding_potenti
 
 integration.mod: constants.mod
 	$(F90COMP) -c integration.f90 $(SWITCHES)
+
+cmdline.mod:
+	$(F90COMP) -c cmdline.f90 $(SWITCHES)
+
+dist:
+	scp $(OUTDIR)/pycnocalc alcyone:~/bin
+
+all: pycnocalc dist
 
 
 clean: 

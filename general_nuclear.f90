@@ -38,7 +38,7 @@ contains
 
 !******************************************
 !
-! Function to integegrate in order normalize to get central density
+! Function to integrate in order normalize to get central density
 !
 !******************************************
 	
@@ -72,5 +72,51 @@ contains
 	
 	end function density_2pF
 	
-end module general_nuclear
 
+!******************************************
+!
+! Central nuclear density for 2 parameter Fermi
+!
+!******************************************
+
+	real(kind=dbl) function rho0_2pF(A, radius, diffuseness)
+
+	use integration
+
+	implicit none
+	
+	integer, intent(in) :: A 		! number of nucleons
+	real(kind=dbl), intent(in) :: radius		! radius of nucleus
+	real(kind=dbl), intent(in) :: diffuseness	! diffusivity
+
+	rho0_2pF = A/((4.0_dbl*pi)*trapezoid(normalize_rho,0.0_dbl, 100.0_dbl, 1000, diffuseness, radius))
+
+	end function rho0_2pF
+
+!******************************************
+!
+! Spacing between nucleons at a particular density
+!
+! Function calculates the spacing between target particles - the exterior cube around a central body in the lattice of the crust
+!
+!******************************************
+
+	real(kind=dbl) function bcc_spacing(rho, A, Z)   !output in units of fermi  
+
+	use constants
+
+	implicit none
+
+	integer, intent(in) :: A, Z		!nucleon and proton number, respectively
+	real(kind=dbl), intent(in) :: rho	!density of crust in GRAMS/CM^3
+	real(kind=dbl) :: V			!volume around each nucleus 
+
+      	V=log10(Z*m_proton_mev+(A-Z)*m_neutron_mev)-log10(rho)+12.25119	!in this line V is actually the log(V)
+      	V=10.0**V                                               !in this line, log(V) becomes V
+      	bcc_spacing = V**(1.0/3.0)  !output is in fermi 
+	
+	end function bcc_spacing
+
+
+
+end module general_nuclear

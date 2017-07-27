@@ -43,7 +43,7 @@ integer :: function_cnt
 
 
 
-character(len=13), parameter :: cfg_file = 'pycnocalc.cfg'
+! character(len=13), parameter :: cfgfile = 'pycnocalc.cfg'
 
 
 contains 
@@ -61,6 +61,7 @@ contains
 	use constants
 	use logging
 	use utilities
+    use globalvars
 	
 	implicit none
 
@@ -72,18 +73,18 @@ contains
 	integer :: comment_cnt
 	integer :: section_cnt 
 	
-	call system('cp ' // cfg_file // ' ' // results_dir)
+	call system('cp ' // cfgfile // ' ' // results_dir)
 	
 	unit = 35
 	
 	first_time = .TRUE.
 	function_cnt = 0
 	
-	open (unit,file=cfg_file,status='OLD',action='READ', iostat=ierror)
+	open (unit,file=cfgfile,status='OLD',action='READ', iostat=ierror)
 	if (ierror .NE. 0) then
 			call scr_and_log_str('Cannot open configuration file')
 	        call scr_and_log_str('File: ',lf=.FALSE.)	
-			call scr_and_log_str(cfg_file)
+			call scr_and_log_str(cfgfile)
 			call scr_and_log_str('Error: ',lf=.FALSE.)
 			real_ierror =real(ierror)
 			call scr_and_log(nbr=real_ierror,fmt='(f5.0)')
@@ -100,7 +101,7 @@ contains
 		
 		if (ierror .GT. 0) then
 				print *, ierror
-				call scr_and_log_str('Error Reading from Configuration file' // cfg_file)
+				call scr_and_log_str('Error Reading from Configuration file' // cfgfile)
 				stop
 		end if
 		

@@ -32,4 +32,7 @@ real(kind=dbl), parameter :: hbar = 1.054571596e-27_dbl ! Normalized Planck's co
 real(kind=dbl), parameter :: boltzmann = 1.3806503e-23_dbl * 1.0e7_dbl ! Boltzmann's constant in erg/degree Kelvin
 real(kind=dbl), parameter :: pi = 3.1415926535897932_dbl ! PI
 
+real(kind=dbl), parameter :: m_proton_mev = 938.272046_dbl ! Proton pass in MeV
+real(kind=dbl), parameter :: m_neutron_mev = 939.5654133_dbl ! Neutron pass in MeV
+
 end module constants

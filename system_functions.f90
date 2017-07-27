@@ -204,13 +204,13 @@ end if
 if (checkParam('FoldingSimple','rho0_1')) then
 	rho0_1	= ConvertStrToReal(getParamValue('FoldingSimple','rho0_1'))
 else
-	rho0_1 = A1/((4.0_dbl*pi)*trapezoid(normalize_rho,0.0_dbl, 100.0_dbl, 1000,diffuse1,tot_radius1))
+	rho0_1 = rho0_2pF(A1, tot_radius1, diffuse1)
 end if
 
 if (checkParam('FoldingSimple','rho0_2')) then
 	rho0_2	= ConvertStrToReal(getParamValue('FoldingSimple','rho0_2'))
 else
-	rho0_2 = A2/((4.0_dbl*pi)*trapezoid(normalize_rho,0.0_dbl, 100.0_dbl, 1000,diffuse2,tot_radius2))
+	rho0_2 = rho0_2pF(A2, tot_radius2, diffuse2)
 end if
 
 
