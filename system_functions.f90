@@ -34,11 +34,12 @@ implicit none
 call scr_and_log (str='This is PycnoCalc - Pycnonulear Reaction Calculation System',fmt='(a)')
 
 call scr_and_log(str=' ',fmt='(a)')
-call scr_and_log(str='***********************************************************',fmt='(a)')
-call scr_and_log(str='   A Collaboration of: Dr. Fridonlin Weber',fmt='(a)')
-call scr_and_log(str='                       Graduate Student Barbara Golf',fmt='(a)')
-call scr_and_log(str='                       Undergrad Joe Hellmers',fmt='(a)')
-call scr_and_log(str='***********************************************************',fmt='(a)')
+call scr_and_log(str='*****************************************************************',fmt='(a)')
+call scr_and_log(str='  A Collaboration of: Dr. Fridolin Weber (fweber@mail.sdsu.edu)',fmt='(a)')
+call scr_and_log(str='                       Joe Hellmers (hellmersjl@icloud.com)',fmt='(a)')
+call scr_and_log(str='                       Barbara Golf (bsouci@gmail.com)',fmt='(a)')
+call scr_and_log(str='                       Whitney Ryan (whitney.currier@gmail.com)',fmt='(a)')
+call scr_and_log(str='*****************************************************************',fmt='(a)')
 call scr_and_log(str=' ',fmt='(a)')
 
 end subroutine printintro
