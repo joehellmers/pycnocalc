@@ -36,9 +36,9 @@ call scr_and_log (str='This is PycnoCalc - Pycnonulear Reaction Calculation Syst
 call scr_and_log(str=' ',fmt='(a)')
 call scr_and_log(str='*****************************************************************',fmt='(a)')
 call scr_and_log(str='  A Collaboration of: Dr. Fridolin Weber (fweber@mail.sdsu.edu)',fmt='(a)')
-call scr_and_log(str='                       Joe Hellmers (hellmersjl@icloud.com)',fmt='(a)')
-call scr_and_log(str='                       Barbara Golf (bsouci@gmail.com)',fmt='(a)')
-call scr_and_log(str='                       Whitney Ryan (whitney.currier@gmail.com)',fmt='(a)')
+call scr_and_log(str='                      Joe Hellmers (hellmersjl@icloud.com)',fmt='(a)')
+call scr_and_log(str='                      Barbara Golf (bsouci@gmail.com)',fmt='(a)')
+call scr_and_log(str='                      Whitney Ryan (whitney.currier@gmail.com)',fmt='(a)')
 call scr_and_log(str='*****************************************************************',fmt='(a)')
 call scr_and_log(str=' ',fmt='(a)')
 
