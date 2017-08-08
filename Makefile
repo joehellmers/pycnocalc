@@ -9,7 +9,7 @@ pycnocalc: $(MODULES)
 	cp pycnocalc.cfg $(OUTDIR)
 	chmod ugo-x $(OUTDIR)/pycnocalc.cfg
 
-folding_potential.mod: constants.mod nucleon_interactions.mod general_nuclear.mod 
+folding_potential.mod: constants.mod nucleon_interactions.mod general_nuclear.mod configuration.mod 
 	$(F90COMP) -c folding_potential.f90 $(SWITCHES)
 
 nucleon_interactions.mod: constants.mod vectors.mod 
@@ -59,4 +59,6 @@ clean:
 	rm *.o
 	rm $(OUTDIR)/pycnocalc
 
-
+clean_local:
+	rm *.mod
+	rm *.o

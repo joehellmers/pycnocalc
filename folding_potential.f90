@@ -14,11 +14,13 @@ save
 
 contains
 
-	real(kind=dbl) function vfold_spherically_symmetric (R, A1, A2, partition,diffuse1,diffuse2,rho0_1, rho0_2,tot_radius1, tot_radius2)
+	real(kind=dbl) function vfold_spherically_symmetric (R, A1, A2, Z1, Z2, partition,diffuse1,diffuse2,rho0_1, rho0_2,tot_radius1, tot_radius2)
 	
 	! R  : Distance between nuclei in fermi (10e-15 m)
-	! A1 : The number of nucleon's in the first nucleus
-	! A2 : The number of nucleon's in the second nucleus
+	! A1 : The number of nucleons in the first nucleus
+	! A2 : The number of nucleons in the second nucleus
+	! Z1 : The number of protons in the first nucleus
+	! Z2 : The number of protons in the second nucleus
 	! partition : The number of increments to divide the range of integrations
 	! diffuse1 : the diffuseness parameter for the first nucleus
 	! diffuse2 : the diffuseness paramter for the second nucleus
@@ -32,19 +34,22 @@ contains
 	use constants
 	use nucleon_interactions
 	use general_nuclear
+    use configuration
 	
 	implicit none
 	
-	real(kind=dbl) :: R
-	integer :: A1
-	integer :: A2
-	integer :: partition
-	real(kind=dbl) :: diffuse1
-	real(kind=dbl) :: diffuse2
-	real(kind=dbl) :: rho0_1
-	real(kind=dbl) :: rho0_2
-	real(kind=dbl) :: tot_radius1
-	real(kind=dbl) :: tot_radius2
+	real(kind=dbl), intent(in) :: R
+	integer, intent(in) :: A1
+	integer, intent(in) :: A2
+	integer, intent(in) :: Z1
+	integer, intent(in) :: Z2
+	integer, intent(in) :: partition
+	real(kind=dbl), intent(in) :: diffuse1
+	real(kind=dbl), intent(in) :: diffuse2
+	real(kind=dbl), intent(in) :: rho0_1
+	real(kind=dbl), intent(in) :: rho0_2
+	real(kind=dbl), intent(in) :: tot_radius1
+	real(kind=dbl), intent(in) :: tot_radius2
 	
 	integer :: r1
 	integer :: r2
@@ -52,6 +57,8 @@ contains
 	integer :: theta2
 	integer :: phi1
 	integer :: phi2
+    character(len=1) :: foldingNuclearInteraction
+
 	real(kind=dbl) :: delta_r1
 	real(kind=dbl) :: delta_r2
 	real(kind=dbl) :: delta_theta1
@@ -108,6 +115,7 @@ contains
 	delta_phi2 = 2*pi/partition
 	
 	my_cnt = 0
+    foldingNuclearInteraction = getParamValue("FoldingSimple","nuc_interaction_type")
 
 !!$omp parallel &
 !!$omp shared ( delta_r1, delta_r2, delta_theta1, delta_phi1, delta_theta2, delta_phi2 ) &
@@ -137,7 +145,11 @@ contains
 							dy = this_r2*sin(this_theta2)*sin(this_phi2) - this_r1*sin(this_theta1)*sin(this_phi1)
 							dz = this_r2*cos(this_theta2) - this_r1*cos(this_theta1)
 							d = sqrt(dx*dx + dy*dy + dz*dz)
-							accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2))							
+                            if (foldingNuclearInteraction .eq. '1') then
+							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2))
+                            else
+							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonSaoPaulo(d,0.85_dbl,reduced_mass(A1,Z1,A2,Z2))
+                            end if
 							my_cnt = my_cnt + 1
 						end do
 					end do

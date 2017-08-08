@@ -41,21 +41,14 @@ end type function_list_type
 type (function_list_type), dimension(max_function_cnt) :: function_list
 integer :: function_cnt
 
+contains
 
-
-! character(len=13), parameter :: cfgfile = 'pycnocalc.cfg'
-
-
-contains 
-	
-	
 	!*********************************
 	!
 	!  Load Configuration File
 	!
 	!*********************************
-	
-	
+
 	subroutine load_config
 	
 	use constants

@@ -117,6 +117,22 @@ contains
 	
 	end function bcc_spacing
 
+!******************************************
+!
+! Calculate reduced mass
+!
+!******************************************
+
+
+    real(kind=dbl) function reduced_mass(A1,Z1,A2,Z2)   !output in units of MeV/c^2
+
+    implicit none
+
+    integer, intent(in) ::  A1, Z1, A2, Z2  !nucleon and proton number, respectively, for target (1) and projectile (2) nuclei, respectively
+
+        reduced_mass=((Z1*m_proton_mev+(A1-Z1)*m_neutron_mev)*(Z2*m_proton_mev+(A2-Z2)*m_neutron_mev))/((Z1+Z2)*m_proton_mev+(A1+A2-Z1-Z2)*m_neutron_mev)
+
+    end function reduced_mass
 
 
 end module general_nuclear
