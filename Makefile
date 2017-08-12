@@ -1,6 +1,32 @@
 F90COMP = gfortran
-OBJS = globalvars.o logging.o vectors.o nucleon_interactions.o folding_potential.o astrophysics.o configuration.o utilities.o general_nuclear.o integration.o system_functions.o cmdline.o
-MODULES = globalvars.mod logging.mod vectors.mod nucleon_interactions.mod folding_potential.mod astrophysics.mod configuration.mod utilities.mod general_nuclear.mod integration.mod system_functions.mod cmdline.mod
+OBJS = globalvars.o \
+	logging.o \
+	vectors.o \
+	nucleon_interactions.o \
+	folding_potential.o \
+	astrophysics.o \
+	configuration.o \
+	utilities.o \
+	general_nuclear.o \
+	integration.o \
+	system_functions.o \
+	cmdline.o \
+	rate_calc.o \
+	tests.o
+MODULES = globalvars.mod \
+	logging.mod \
+	vectors.mod \
+	nucleon_interactions.mod \
+	folding_potential.mod \
+	astrophysics.mod \
+	configuration.mod \
+	utilities.mod \
+	general_nuclear.mod \
+	integration.mod \
+	system_functions.mod \
+	cmdline.mod \
+	rate_calc.mod \
+	tests.mod
 SWITCHES = -ffree-line-length-none -O3 -fopenmp
 OUTDIR = /home/hellmersjl/bin
 
@@ -48,13 +74,19 @@ integration.mod: constants.mod
 cmdline.mod:
 	$(F90COMP) -c cmdline.f90 $(SWITCHES)
 
+rate_calc.mod: constants.mod folding_potential.mod astrophysics.mod integration.mod
+	$(F90COMP) -c rate_calc.f90 $(SWITCHES)
+
+tests.mod: constants.mod rate_calc.mod general_nuclear.mod logging.mod
+	$(F90COMP) -c tests.f90 $(SWITCHES)
+
 dist:
-	scp $(OUTDIR)/pycnocalc alcyone:~/bin
+	scp $(OUTDIR)/pycnocalc electra:~/bin
 
 all: pycnocalc dist
 
 
-clean: 
+clean:
 	rm *.mod
 	rm *.o
 	rm $(OUTDIR)/pycnocalc

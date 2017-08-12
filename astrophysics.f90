@@ -232,6 +232,34 @@ upper_rate = common_part*4.76_dbl*exp(-2.516_dbl/sqrt(lambda))
 
 end subroutine react_rate_zero_temp
 
+!*****************************************************************
+!
+! Coulomb Potential function - output in MEV
+!
+!*****************************************************************
+
+    real(kind=dbl) function Vcoulomb(Z1_int,Z2_int,r,radius1,radius2)
+
+        implicit none
+
+        real(kind=dbl), intent(in) :: r             ! distance (starts in fermi!)
+        real(kind=dbl), intent(in) :: radius1       ! radius of ion 1
+        real(kind=dbl), intent(in) :: radius2	    ! radius of ion 2
+        integer, intent(in) :: Z1_int                   ! proton count for nucleus 1
+        integer, intent(in) :: Z2_int  			        ! proton count for nucleus 2
+
+        real(kind=dbl) :: Z1, Z2
+
+        Z1 = dfloat(Z1_int)
+        Z2 = dfloat(Z2_int)
+
+        if (r .lt. (radius1+radius2)) then
+            Vcoulomb=((3.0_dbl*(radius1+radius2)**2.0_dbl)-(r**2.0_dbl))*(Z1*Z2*1.4397_dbl)/(2.0_dbl*(radius1+radius2)**3.0_dbl)	! Vcoulomb is in MeV
+        else
+            Vcoulomb = (Z1*Z2*1.4397_dbl)/r	! Vcoulomb is in MeV
+        end if
+
+    end function Vcoulomb
 	
 end module astrophysics
 

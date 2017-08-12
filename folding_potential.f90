@@ -14,7 +14,7 @@ save
 
 contains
 
-	real(kind=dbl) function vfold_spherically_symmetric (R, A1, A2, Z1, Z2, partition,diffuse1,diffuse2,rho0_1, rho0_2,tot_radius1, tot_radius2)
+	real(kind=dbl) function vfold_spherically_symmetric (R, A1, A2, Z1, Z2, partition,diffuse1,diffuse2,rho0_1, rho0_2,tot_radius1, tot_radius2, E0)
 	
 	! R  : Distance between nuclei in fermi (10e-15 m)
 	! A1 : The number of nucleons in the first nucleus
@@ -28,6 +28,7 @@ contains
 	! rho0_2 : the central density of the second nucleus
 	! tot_radius1 : the effective radius of the first nucleus
 	! tot_radius2 : the effective radius of the second nucleus
+    ! E0: zero-point vibrational energy for first (incoming particle)
 	
 	! returns the Folding potential in MeV
 	
@@ -50,6 +51,7 @@ contains
 	real(kind=dbl), intent(in) :: rho0_2
 	real(kind=dbl), intent(in) :: tot_radius1
 	real(kind=dbl), intent(in) :: tot_radius2
+	real(kind=dbl), intent(in) :: E0
 	
 	integer :: r1
 	integer :: r2
@@ -109,21 +111,15 @@ contains
 	
 	delta_r1=tot_radius1/partition
 	delta_r2=tot_radius2/partition
-	delta_theta1 = ((pi_div_2)/2.0_dbl)/partition
-	delta_phi1 = pi/partition
+	delta_theta1 = pi/partition
+	delta_phi1 = 2.0_dbl*pi/partition
     delta_theta2 = pi/partition
-	delta_phi2 = 2*pi/partition
+	delta_phi2 = 2.0_dbl*pi/partition
 	
 	my_cnt = 0
-    foldingNuclearInteraction = getParamValue("FoldingSimple","nuc_interaction_type")
+    ! foldingNuclearInteraction = getParamValue("FoldingSimple","nuc_interaction_type")
+    ! print *,"vfold_spherically_symmetric: Interaction time = ", foldingNuclearInteraction
 
-!!$omp parallel &
-!!$omp shared ( delta_r1, delta_r2, delta_theta1, delta_phi1, delta_theta2, delta_phi2 ) &
-!!$omp shared ( this_r1, ndensity1, this_theta1, this_phi1, this_r2, ndensity2, this_theta2) &
-!!$omp private ( r1, theta1, phi1, r2, theta2, phi2 ) &
-!!$omp reduction (+:accumulator1,accumulator2)
-
-!!$omp do
 	do r1=1,partition
 		this_r1 = r1*delta_r1-delta_r1/2.0
 		ndensity1 = density_2pF(rho0_1,this_r1,radius1,diffuse1)
@@ -145,11 +141,11 @@ contains
 							dy = this_r2*sin(this_theta2)*sin(this_phi2) - this_r1*sin(this_theta1)*sin(this_phi1)
 							dz = this_r2*cos(this_theta2) - this_r1*cos(this_theta1)
 							d = sqrt(dx*dx + dy*dy + dz*dz)
-                            if (foldingNuclearInteraction .eq. '1') then
-							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2))
-                            else
-							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonSaoPaulo(d,0.85_dbl,reduced_mass(A1,Z1,A2,Z2))
-                            end if
+                            ! if (foldingNuclearInteraction .eq. '1') then
+							!   accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2))
+                            !else
+							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonSaoPaulo(d,E0,reduced_mass(A1,Z1,A2,Z2))
+                            !end if
 							my_cnt = my_cnt + 1
 						end do
 					end do
@@ -157,16 +153,11 @@ contains
 			end do
 		end do
 	end do
-!!$omp end do
-
-!!$omp end parallel	
 	
 	!print *,'Inner Loop Total Count=',my_cnt
 	!print *,'Calculated Volume1 = ',accumulator2
 	
-	
-	vfold_spherically_symmetric = -8.0_dbl*accumulator1
-	
+    vfold_spherically_symmetric = accumulator1	
 	
 	end function vfold_spherically_symmetric
 	

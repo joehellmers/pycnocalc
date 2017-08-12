@@ -22,6 +22,7 @@ use astrophysics
 use folding_potential
 use utilities
 use cmdline
+use tests
 
 implicit none
 
@@ -45,6 +46,10 @@ do i=1, function_cnt
 	
 	if (function_list(i)%function_name .EQ. 'FoldingSimple') then
 		call sample_folding_potential_calcs
+	end if
+
+	if (function_list(i)%function_name .EQ. 'turn_pt_001') then
+		call turn_pt_001
 	end if
 
 end do

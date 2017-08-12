@@ -44,18 +44,20 @@ contains
 
     ! Print to log and screen
 
-	subroutine scr_and_log (str, nbr, fmt, lf)
+	subroutine scr_and_log (str, nbr, intval, fmt, lf)
 	implicit none
 	
 	character(len=*), intent(in), optional :: str
 	real(kind=dbl), intent(in), optional :: nbr
+	integer, intent(in), optional :: intval
 	character(len=*), intent(in) :: fmt
 	logical, intent(in), optional :: lf
-	integer :: unit, ierror
+
+    integer :: unit, ierror
 	character(len=3) :: c_advance
-	
+
 	unit = 25
-	
+
 	if (present(lf)) then
 		if (lf) then
 			c_advance = 'YES'
@@ -65,28 +67,40 @@ contains
 	else
 		c_advance = 'YES'
 	end if
-	
+
 	open(unit, file=full_log_file, status='OLD', ACTION='WRITE', iostat=ierror, access='APPEND')
-	
+
 	if (present(str) .and. present(nbr)) then
 		write (unit,'(a)',advance='NO') str
 		write (unit,fmt,advance=c_advance) nbr
 		write(*, '(a)', advance='NO') str
 		write(*, fmt, advance=c_advance) nbr
 	else
-		if (present(str)) then
-			write (unit,fmt,advance=c_advance) str
-			write(*, fmt, advance=c_advance) str
-		else
-			if (present(nbr)) then
-				write (unit,fmt,advance=c_advance) nbr
-				write(*, fmt,advance=c_advance) nbr
-			else
-				write (unit,'(a)',advance=c_advance) 'ERROR ----> No String or Number value given to Logging:scr_and_log'
-				write(*, fmt, advance=c_advance) 'ERROR ----> No String or Number value given to Logging:scr_and_log'
-			end if
-		end if
-	end if
+	    if (present(str) .and. present(intval)) then
+		    write (unit,'(a)',advance='NO') str
+		    write (unit,fmt,advance=c_advance) intval
+		    write(*, '(a)', advance='NO') str
+		    write(*, fmt, advance=c_advance) intval
+        else
+		    if (present(str)) then
+			    write (unit,fmt,advance=c_advance) str
+			    write(*, fmt, advance=c_advance) str
+		    else
+			    if (present(nbr)) then
+				    write (unit,fmt,advance=c_advance) nbr
+				    write(*, fmt,advance=c_advance) nbr
+			    else
+                    if (present(intval)) then
+                        write (unit,fmt,advance=c_advance) intval
+                        write(*, fmt,advance=c_advance) intval
+                    else
+				        write (unit,'(a)',advance=c_advance) 'ERROR ----> No String or Number value given to Logging:scr_and_log'
+				        write(*, fmt, advance=c_advance) 'ERROR ----> No String or Number value given to Logging:scr_and_log'
+                    end if
+			    end if
+		    end if
+        end if	
+    end if
 	
 	close(unit)
 
