@@ -20,7 +20,7 @@ contains
 
 !******************************************
 !
-! Test the turn_pt routine
+! turn_pt subroutine: Test 001
 !
 !******************************************
 
@@ -34,6 +34,8 @@ subroutine turn_pt_001
     integer         ::  turn1
     integer         ::  turn2
     real(kind=dbl)  ::  WKB
+    real(kind=dbl)  ::  E0
+    real(kind=dbl)  ::  rho
 
     integer :: A1
     integer :: A2
@@ -53,8 +55,11 @@ subroutine turn_pt_001
     rho0_A1 = rho0_2pF(A1,radius1,0.5_dbl)
     rho0_A2 = rho0_2pF(A2,radius2,0.5_dbl)
 
-    ! turn_pt(R,      Rstep  ,Rmax   ,E0                   , mu,A1,A2,SQM_A2 , Z1, Z2, radius1, radius2, rho0_A1, rho0_A2, L, partition, turn1,turn2,WKB)
-    call turn_pt(393.4_dbl,1.0_dbl,23,53.707226090017635_dbl,mu,A1,A2,0.0_dbl, Z1, Z2, radius1, radius2, rho0_A1, rho0_A2, 0, 15       , turn1,turn2,WKB)
+    rho = 5500000000000.0029_dbl
+    E0 = E0_Energy(Z1,Z2,A1,A2,rho)
+
+    ! turn_pt(R,      Rstep  ,Rmax   ,E0,mu,A1,A2,SQM_A2 , Z1, Z2, radius1, radius2, rho0_A1, rho0_A2, L, partition, turn1,turn2,WKB)
+    call turn_pt(393.4_dbl,1.0_dbl,23,E0,mu,A1,A2,0.0_dbl, Z1, Z2, radius1, radius2, rho0_A1, rho0_A2, 0, 15       , turn1,turn2,WKB)
 
     call scr_and_log(str='WKB =',nbr=WKB,fmt='(ES13.5)',lf=.TRUE.)    
     call scr_and_log(str='turn1 =',intval=turn1,fmt='(I5)',lf=.TRUE.)    
@@ -62,6 +67,35 @@ subroutine turn_pt_001
 
 end subroutine turn_pt_001
 
+!******************************************
+!
+! E0_Energy Function: Test 001
+!
+!******************************************
+
+subroutine E0_Energy_001
+
+    real(kind=dbl)  ::  E0
+    real(kind=dbl)  ::  rho
+
+    integer :: A1
+    integer :: A2
+    integer :: Z1
+    integer :: Z2
+
+    call scr_and_log_str ('TEST: E0_Energy_001:')
+
+    A1 = 56
+    A2 = 40
+    Z1 = 26
+    Z2 = 26
+    rho = 5500000000000.0029_dbl
+
+    E0 = E0_Energy(Z1,Z2, A1, A2, rho)
+
+    call scr_and_log(str='E0 = ',nbr=E0,fmt='(ES13.5)',lf=.TRUE.)
+
+end subroutine E0_Energy_001
 	
 end module tests
 

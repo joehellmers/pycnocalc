@@ -261,5 +261,55 @@ end subroutine react_rate_zero_temp
 
     end function Vcoulomb
 	
+!*****************************************************************
+!
+! Lattice + Vibrational Energy
+! For Anisotropic Harmonic Oscillator
+! Close to -0.5*hbar*w
+! Output in unit of Rydberg Energy
+!
+!*****************************************************************
+    real(kind=dbl) function E0_Energy(Z1_int,Z2_int, A1_int, A2_int, rho)
+
+        implicit none
+
+        integer, intent(in)         :: Z1_int, Z2_int   ! proton number for target (1) and projectile (2) nuclei, respectively
+        integer, intent(in)         :: A1_int, A2_int   ! nucleon number for target (1) and projectile (2) nuclei, respectively
+        real(kind=dbl), intent(in)  :: rho          ! density
+
+        real(kind=dbl)  :: ln_rstar     ! natural log of Salpeter and VanHorn Bohr radius term
+        real(kind=dbl)  :: ln_Estar     ! natural log of energy function from Salpeter and Vanhorn
+        real(kind=dbl)  :: ln_lambda	! log of dimensionless length factor of Salpter and VanHorn
+        real(kind=dbl)  :: ln_Ebcc		! natural log of the Salpeter bcc lattice energy - electrostatic interaction energy just from sitting in the lattice amidst other ions
+        real(kind=dbl)  :: ln_Evib		! natural log of vibrational energy (salpeter)
+        real(kind=dbl)  :: mn_mass, mn_chrg
+        real(kind=dbl)  :: A1, A2, Z1, Z2
+
+        A1 = real(A1_int,dbl)
+        A2 = real(A2_int,dbl)
+        Z1 = real(Z1_int,dbl)
+        Z2 = real(Z2_int,dbl)
+
+
+        ln_rstar=log(real(A1+A2,dbl))-log(real(A1*A2*Z1*Z2,dbl))-31.87_dbl
+
+        mn_mass=real((2*A1*A2)/(A1+A2),dbl)
+        mn_chrg=real((Z1*A2+Z2*A1)/(A1+A2),dbl)
+
+        ! I'm wondering if we can some how use the inverse length function in this module
+        ln_lambda=-log(Z1**(1.0_dbl/3.0_dbl)+Z2**(1.0_dbl/3.0_dbl))+log((A1+A2)/(A1*A2*Z1*Z2))+(1.0_dbl/3.0_dbl)*log(rho)+(1.0_dbl/3.0_dbl)*log(mn_chrg)-(1.0_dbl/3.0_dbl)*log(mn_mass)-8.5455_dbl
+
+        ! energy parameter, called Rydberg energy, based on ground state energy from Bohr model of the hydrogen atom
+        ln_Estar=log(real(Z1*Z2,dbl))-ln_rstar-34.174_dbl
+
+        ln_Ebcc = 0.5986_dbl + ln_lambda + ln_Estar
+        ln_Evib = 0.6162_dbl + 0.5_dbl * ln_lambda + ln_Ebcc
+
+        E0_Energy = exp(ln_Ebcc) + exp(ln_Evib)
+
+    end function
+
+
+
 end module astrophysics
 
