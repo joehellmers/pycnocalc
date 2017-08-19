@@ -11,6 +11,7 @@ use folding_potential
 use astrophysics
 use integration
 use logging
+use general_nuclear
 
 implicit none
 
@@ -134,5 +135,127 @@ contains
         end if
 
     end subroutine turn_pt
-	
+
+
+!*****************************************************************
+!
+! Calculate the S Factor
+!
+! REF: Golf Thesis
+!
+!*****************************************************************
+
+    real(kind=dbl) function Sfactor(A1_int, A2_int, Z1_int, Z2_int, rho, Rstep, SQM_A2, partition)
+
+        integer, intent(in)         :: A1_int, A2_int, Z1_int, Z2_int
+        real(kind=dbl), intent(in)  :: rho
+        real(kind=dbl), intent(in)  :: Rstep
+        real(kind=dbl), intent(in)  :: SQM_A2
+        integer, intent(in)         :: partition
+
+        real(kind=dbl)  :: A1, A2, Z1, Z2
+        integer         :: L = 0
+        real(kind=dbl)  :: E0
+        real(kind=dbl)  :: ln_sigma
+        real(kind=dbl)  :: R
+        integer         :: Rmax
+        real(kind=dbl)  :: mu
+        real(kind=dbl)  :: radius1, radius2
+        real(kind=dbl)  :: rho0_A1, rho0_A2
+        integer         :: turn1, turn2
+        real(kind=dbl)  :: WKB
+        real(kind=dbl)  :: ln_S
+        real(kind=dbl)  :: ln_Trans_total
+        integer         :: i
+
+        A1 = real(A1_int,dbl)
+        A2 = real(A2_int,dbl)
+        Z1 = real(Z1_int,dbl)
+        Z2 = real(Z2_int,dbl)
+
+        R = sqrt(3.0_dbl)*0.5_dbl*lattice(rho,A1,Z1)
+        Rmax = (R/Rstep)+1
+        mu = reduced_mass(A1_int, Z1_int, A2_int, Z2_int)
+        radius1 = nuclear_radius(A1_int)
+        radius2 = nuclear_radius(A2_int)
+        rho0_A1 = rho0_2pF(A1_int,radius1,0.5_dbl)
+        rho0_A2 = rho0_2pF(A2_int,radius2,0.5_dbl)
+
+!	Calculate E of "incoming" (ground state vibrating) particle coming toward lattice-bound target particle
+        E0=E0_Energy(Z1_int,Z2_int, A1_int, A2_int, rho)
+        print*,'E0 =',E0
+
+!	Calculate Veffective and WKB integration INSIDE turn_pts function - you should have all other input parameters at this point
+!		AND you CAN'T carry the V_arrays back into the main program because Rmax is a DERIVED paramater - and used as the array dimension
+        ln_sigma = 0.0
+        do i = 0,L
+            call turn_pt(R,Rstep,Rmax,E0,mu,A1_int,A2_int,SQM_A2,Z1_int,Z2_int,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB)
+            ! ln of Total transmission Probability: ',ln_Trans_total
+            ln_Trans_total = -WKB
+            ln_sigma=ln_sigma+log(612.459_dbl)-log(mu*E0)+log(2.0_dbl*real(i,dbl)+1.0_dbl)+ln_Trans_total
+        end do
+
+        ln_S=ln_sigma+log(E0)+(Z1)*(Z2)*.0324_dbl*sqrt(mu/E0)
+        print*,'ln_S =',ln_S
+        print*,'log10_S =',(ln_S)*.4343
+        Sfactor = exp(ln_S)
+	end function Sfactor
+
+!*****************************************************************
+!
+! Calculate Pycnonuclear reaction rates
+! This version also calculates the Folding potential
+!
+! REF: Golf Thesis
+!
+!*****************************************************************
+
+    real(kind=dbl) function pycnoRate(A1_int, A2_int, Z1_int, Z2_int, rho, Rstep, SQM_A2, partition)
+
+        implicit none
+
+        integer, intent(in)         :: A1_int, A2_int, Z1_int, Z2_int
+        real(kind=dbl), intent(in)  :: rho
+        real(kind=dbl), intent(in)  :: Rstep
+        real(kind=dbl), intent(in)  :: SQM_A2
+        integer, intent(in)         :: partition
+
+        real(kind=dbl)              :: ln_P0
+        real(kind=dbl)              :: P0
+        real(kind=dbl)              :: lambda
+        real(kind=dbl)              :: ln_lambda
+        real(kind=dbl)              :: ln_S
+        real(kind=dbl)              :: S
+        real(kind=dbl)              :: mn_mass, mn_chrg
+
+        real(kind=dbl)              :: A1, A2, Z1, Z2
+
+        A1 = real(A1_int,dbl)
+        A2 = real(A2_int,dbl)
+        Z1 = real(Z1_int,dbl)
+        Z2 = real(Z2_int,dbl)
+
+        S = Sfactor(A1_int, A2_int, Z1_int, Z2_int, rho, Rstep, SQM_A2, partition)
+        ln_S = log(S)
+        print *,'ln_S = ', ln_S
+
+        ! These lambda calculations are duplicated from the E0_Energy function.  We need to resolve this
+        mn_mass=real((2*A1*A2)/(A1+A2),dbl)
+        mn_chrg=real((Z1*A2+Z2*A1)/(A1+A2),dbl)
+        ln_lambda=-log(Z1**(1.0_dbl/3.0_dbl)+Z2**(1.0_dbl/3.0_dbl))+log((A1+A2)/(A1*A2*Z1*Z2))+(1.0_dbl/3.0_dbl)*log(rho)+(1.0_dbl/3.0_dbl)*log(mn_chrg)-(1.0_dbl/3.0_dbl)*log(mn_mass)-8.5455_dbl
+        lambda = exp(ln_lambda)
+        ln_P0=-2.638_dbl/(sqrt(lambda))+log(rho)+log(A1*A2)-log(A1+A2)+2.0_dbl*log(Z1*Z2)+ln_S+1.75_dbl*ln_lambda+109.36_dbl
+
+        print *, 'mn_mass = ', mn_mass
+        print *, 'mn_chrg = ', mn_chrg
+        print *, 'ln_lambda = ', ln_lambda
+        print *, 'lambda = ', lambda
+        print *, 'ln_P0 = ', ln_P0
+
+        P0 = exp(ln_P0)
+
+        pycnoRate = P0
+
+    end function pycnoRate
+
 end module rate_calc

@@ -56,6 +56,14 @@ do i=1, function_cnt
 		call E0_Energy_001
 	end if
 
+	if (function_list(i)%function_name .EQ. 'Sfactor_001') then
+		call Sfactor_001
+	end if
+
+	if (function_list(i)%function_name .EQ. 'pycnoRate_001') then
+		call pycnoRate_001
+	end if
+
 end do
 
 call printending 

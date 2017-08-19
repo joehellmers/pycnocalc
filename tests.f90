@@ -97,5 +97,75 @@ subroutine E0_Energy_001
 
 end subroutine E0_Energy_001
 	
+
+!******************************************
+!
+! Sfactor function: Test 001
+!
+!******************************************
+
+subroutine Sfactor_001
+
+    integer :: A1
+    integer :: A2
+    integer :: Z1
+    integer :: Z2
+    real(kind=dbl)  ::  rho
+    real(kind=dbl)  ::  Rstep = 1.0_dbl
+    real(kind=dbl)  ::  SQM_A2 = 0.0_dbl
+    integer :: partition = 15
+
+    real(kind=dbl)  ::  S
+
+    call scr_and_log_str ('TEST: Sfactor_001:')
+
+    A1 = 56
+    A2 = 40
+    Z1 = 26
+    Z2 = 26
+
+    rho = 5500000000000.0029_dbl
+
+    S = Sfactor(A1, A2, Z1, Z2, rho, Rstep, SQM_A2, partition)
+
+    call scr_and_log(str='S =',nbr=S,fmt='(ES13.5)',lf=.TRUE.)
+
+end subroutine Sfactor_001
+
+!******************************************
+!
+! pycnoRate function: Test 001
+!
+!******************************************
+subroutine pycnoRate_001
+
+    integer :: A1
+    integer :: A2
+    integer :: Z1
+    integer :: Z2
+    real(kind=dbl)  ::  rho
+    real(kind=dbl)  ::  Rstep = 1.0_dbl
+    real(kind=dbl)  ::  SQM_A2 = 0.0_dbl
+    integer :: partition = 15
+
+    real(kind=dbl)  ::  rate
+
+    call scr_and_log_str ('TEST: pycnoRate_001:')
+
+    A1 = 56
+    A2 = 40
+    Z1 = 26
+    Z2 = 26
+
+    rho = 5500000000000.0029_dbl
+
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, SQM_A2, partition)
+
+    call scr_and_log(str='Rate =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+
+end subroutine pycnoRate_001
+
+
 end module tests
+
 

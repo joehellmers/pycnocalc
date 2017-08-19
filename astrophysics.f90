@@ -309,7 +309,22 @@ end subroutine react_rate_zero_temp
 
     end function
 
+    real(8) function lattice(rho,A,Z)   !output in units of fermi
+!	Replace with bcc_spacing PYCNO
+! 	function calculates the spacing between target particles - the exterior cube around a central body in the lattice of the crust
 
+        implicit none
+
+            real(kind=dbl), intent(in)    :: A, Z     !nucleon and proton number, respectively
+            real(kind=dbl), intent(in)    :: rho      !density of crust in GRAMS/CM^3
+
+            real(kind=dbl)    :: V                    !volume around each nucleus
+
+            V=log10(Z*m_proton_mev+(A-Z)*m_neutron_mev) - log10(rho) + 12.25119_dbl	!in this line V is actually the log(V)
+            V=10.0**V													!in this line, log(V) become V
+            lattice = V**(1.0_dbl/3.0_dbl)  !output is in fermi
+
+    end function
 
 end module astrophysics
 

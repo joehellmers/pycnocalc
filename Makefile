@@ -74,7 +74,7 @@ integration.mod: constants.mod
 cmdline.mod:
 	$(F90COMP) -c cmdline.f90 $(SWITCHES)
 
-rate_calc.mod: constants.mod folding_potential.mod astrophysics.mod integration.mod
+rate_calc.mod: constants.mod folding_potential.mod astrophysics.mod integration.mod logging.mod general_nuclear.mod
 	$(F90COMP) -c rate_calc.f90 $(SWITCHES)
 
 tests.mod: constants.mod rate_calc.mod general_nuclear.mod logging.mod
