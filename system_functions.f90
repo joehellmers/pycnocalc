@@ -193,13 +193,13 @@ diffuse2	= ConvertStrToReal(getParamValue('FoldingSimple','diffuse2'))
 if (checkParam('FoldingSimple','tot_radius1')) then
 	tot_radius1	= ConvertStrToReal(getParamValue('FoldingSimple','tot_radius1')) + diffuse1
 else
-	tot_radius1 = nuclear_radius(A1)
+	tot_radius1 = nuclear_radius(real(A1,dbl))
 end if
 
 if (checkParam('FoldingSimple','tot_radius2')) then
 	tot_radius2	= ConvertStrToReal(getParamValue('FoldingSimple','tot_radius2')) + diffuse2
 else
-	tot_radius2 = nuclear_radius(A2)
+	tot_radius2 = nuclear_radius(real(A2,dbl))
 end if
 
 ! if the central densities are given use them, otherwise calculate
@@ -207,13 +207,13 @@ end if
 if (checkParam('FoldingSimple','rho0_1')) then
 	rho0_1	= ConvertStrToReal(getParamValue('FoldingSimple','rho0_1'))
 else
-	rho0_1 = rho0_2pF(A1, tot_radius1, diffuse1)
+	rho0_1 = rho0_2pF(real(A1,dbl), tot_radius1, diffuse1)
 end if
 
 if (checkParam('FoldingSimple','rho0_2')) then
 	rho0_2	= ConvertStrToReal(getParamValue('FoldingSimple','rho0_2'))
 else
-	rho0_2 = rho0_2pF(A2, tot_radius2, diffuse2)
+	rho0_2 = rho0_2pF(real(A2,dbl), tot_radius2, diffuse2)
 end if
 
 
@@ -248,7 +248,7 @@ do
 	if (this_r > max_r) then
 		exit
 	end if
-	this_vfold = vfold_spherically_symmetric(this_r,A1,A2,Z1,Z2,n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2,0.85_dbl)
+	this_vfold = vfold_spherically_symmetric(this_r,A1,real(A2,dbl),Z1,real(Z2,dbl),n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2,0.85_dbl,.FALSE.)
 	!this_vfold =  -1.0_dbl*vfold_spherically_symmetric(0.1_dbl*r_iterator,58,16,4.230848400_dbl,2.460993151_dbl,15,0.50_dbl,0.50_dbl,0.1606844454_dbl,0.1820414223_dbl,6.0_dbl,6.0_dbl)
 	call scr_and_log(nbr = this_r, fmt='(F10.5)')
     write (unit,*) this_r,delimiter,this_vfold,delimiter, log10(-1.0_dbl*this_vfold)

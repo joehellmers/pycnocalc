@@ -238,20 +238,19 @@ end subroutine react_rate_zero_temp
 !
 !*****************************************************************
 
-    real(kind=dbl) function Vcoulomb(Z1_int,Z2_int,r,radius1,radius2)
+    real(kind=dbl) function Vcoulomb(Z1_int,Z2,r,radius1,radius2)
 
         implicit none
 
-        real(kind=dbl), intent(in) :: r             ! distance (starts in fermi!)
-        real(kind=dbl), intent(in) :: radius1       ! radius of ion 1
-        real(kind=dbl), intent(in) :: radius2	    ! radius of ion 2
-        integer, intent(in) :: Z1_int                   ! proton count for nucleus 1
-        integer, intent(in) :: Z2_int  			        ! proton count for nucleus 2
+        real(kind=dbl), intent(in)  :: r             ! distance (starts in fermi!)
+        real(kind=dbl), intent(in)  :: radius1       ! radius of ion 1
+        real(kind=dbl), intent(in)  :: radius2	    ! radius of ion 2
+        integer, intent(in)         :: Z1_int                   ! proton count for nucleus 1
+        real(kind=dbl), intent(in)  :: Z2  			        ! proton count for nucleus 2
 
-        real(kind=dbl) :: Z1, Z2
+        real(kind=dbl) :: Z1
 
         Z1 = dfloat(Z1_int)
-        Z2 = dfloat(Z2_int)
 
         if (r .lt. (radius1+radius2)) then
             Vcoulomb=((3.0_dbl*(radius1+radius2)**2.0_dbl)-(r**2.0_dbl))*(Z1*Z2*1.4397_dbl)/(2.0_dbl*(radius1+radius2)**3.0_dbl)	! Vcoulomb is in MeV
@@ -269,12 +268,14 @@ end subroutine react_rate_zero_temp
 ! Output in unit of Rydberg Energy
 !
 !*****************************************************************
-    real(kind=dbl) function E0_Energy(Z1_int,Z2_int, A1_int, A2_int, rho)
+    real(kind=dbl) function E0_Energy(Z1_int,Z2, A1_int, A2, rho)
 
         implicit none
 
-        integer, intent(in)         :: Z1_int, Z2_int   ! proton number for target (1) and projectile (2) nuclei, respectively
-        integer, intent(in)         :: A1_int, A2_int   ! nucleon number for target (1) and projectile (2) nuclei, respectively
+        integer, intent(in)         :: Z1_int           ! proton number for target (1)
+        real(kind=dbl), intent(in)  :: Z2               ! proton number for target (2)
+        integer, intent(in)         :: A1_int           ! nucleon number for target (1)
+        real(kind=dbl), intent(in)  :: A2               ! nucleon number for target (2)
         real(kind=dbl), intent(in)  :: rho          ! density
 
         real(kind=dbl)  :: ln_rstar     ! natural log of Salpeter and VanHorn Bohr radius term
@@ -283,12 +284,10 @@ end subroutine react_rate_zero_temp
         real(kind=dbl)  :: ln_Ebcc		! natural log of the Salpeter bcc lattice energy - electrostatic interaction energy just from sitting in the lattice amidst other ions
         real(kind=dbl)  :: ln_Evib		! natural log of vibrational energy (salpeter)
         real(kind=dbl)  :: mn_mass, mn_chrg
-        real(kind=dbl)  :: A1, A2, Z1, Z2
+        real(kind=dbl)  :: A1, Z1
 
         A1 = real(A1_int,dbl)
-        A2 = real(A2_int,dbl)
         Z1 = real(Z1_int,dbl)
-        Z2 = real(Z2_int,dbl)
 
 
         ln_rstar=log(real(A1+A2,dbl))-log(real(A1*A2*Z1*Z2,dbl))-31.87_dbl

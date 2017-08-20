@@ -30,30 +30,30 @@ contains
 !
 !*****************************************************************
 
-    subroutine turn_pt(R,Rstep,Rmax,E0,mu,A1,A2,SQM_A2,Z1,Z2,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB)
+    subroutine turn_pt(R,Rstep,Rmax,E0,mu,A1,A2,Z1,Z2,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB,inSQMFlag)
 
         implicit none
 
-        real(kind=dbl), intent(in)  :: R            ! Distance between nuclei in fermi (10e-15 m)
-        real(kind=dbl), intent(in)  :: Rstep        ! lattice step size (user input)
-        integer, intent(in)         :: Rmax         ! max size of array for R lattice
-        real(kind=dbl), intent(in)  :: E0           ! zero-pt vibrational energy of incoming nucleon (1st)
-        real(kind=dbl), intent(in)  :: mu           ! reduced mass value holder 
-        integer, intent(in)  :: A1                  ! number of nucleons in the first nucleus
-        integer, intent(in)  :: A2                  ! number of nucleons in the second nucleus
-        real(kind=dbl), intent(in)  :: SQM_A2       ! baryon number for second nuclei if SQM involved
-        integer, intent(in)  :: Z1                  ! proton count for nuclei 1
-        integer, intent(in)  :: Z2                  ! proton count for nuclei 2
-        real(kind=dbl), intent(in)  :: radius1      ! radius of the first nuclei in fermi
-        real(kind=dbl), intent(in)  :: radius2      ! radius of the second nuclei in fermi
-        real(kind=dbl), intent(in)  :: rho0_A1      ! central densities for first nucleus
-        real(kind=dbl), intent(in)  :: rho0_A2      ! central densities for second nucleus
-        integer, intent(in)         :: L            ! orbital angular momentum (not in use) 
-        integer, intent(in)         :: partition    ! number of subdivisions to use for the calculation
-        integer, intent(out)        :: turn1        ! position along R-axis of first turning point
-        integer, intent(out)        :: turn2        ! position along R-axis of second turning point
-        real(kind=dbl), intent(out) :: WKB			! value of WKB calculation to get through total barrier (not just coulomb barrier) between incoming and target nuclei
-        
+        real(kind=dbl), intent(in)      :: R            ! Distance between nuclei in fermi (10e-15 m)
+        real(kind=dbl), intent(in)      :: Rstep        ! lattice step size (user input)
+        integer, intent(in)             :: Rmax         ! max size of array for R lattice
+        real(kind=dbl), intent(in)      :: E0           ! zero-pt vibrational energy of incoming nucleon (1st)
+        real(kind=dbl), intent(in)      :: mu           ! reduced mass value holder 
+        integer, intent(in)             :: A1           ! number of nucleons in the first nucleus
+        real(kind=dbl), intent(in)      :: A2           ! number of nucleons in the second nucleus
+        integer, intent(in)             :: Z1           ! proton count for nuclei 1
+        real(kind=dbl), intent(in)      :: Z2           ! proton count for nuclei 2
+        real(kind=dbl), intent(in)      :: radius1      ! radius of the first nuclei in fermi
+        real(kind=dbl), intent(in)      :: radius2      ! radius of the second nuclei in fermi
+        real(kind=dbl), intent(in)      :: rho0_A1      ! central densities for first nucleus
+        real(kind=dbl), intent(in)      :: rho0_A2      ! central densities for second nucleus
+        integer, intent(in)             :: L            ! orbital angular momentum (not in use) 
+        integer, intent(in)             :: partition    ! number of subdivisions to use for the calculation
+        integer, intent(out)            :: turn1        ! position along R-axis of first turning point
+        integer, intent(out)            :: turn2        ! position along R-axis of second turning point
+        real(kind=dbl), intent(out)     :: WKB			! value of WKB calculation to get through total barrier (not just coulomb barrier) between incoming and target nuclei
+        logical, intent(in), optional   :: inSQMFlag    ! Indicate if we are using SQM for nuclei/nugget 2    
+
         real(kind=dbl) :: ln_WKB                    ! natural log of the value of the WKB calculation to get through the total barrier
         real(kind=dbl) :: V_2fold					! double folding potential calculated with distance of R between incoming and target nuclei
         real(kind=dbl) :: ndensity1, ndensity2		! number density of nuclei 1 and 2, calculated using baryon number
@@ -67,7 +67,15 @@ contains
         real(kind=dbl) :: S							! astrophysical S-factor - calculated using equation from PHYS REV C69 --rule of thumb model fitted to data
         real(kind=dbl) :: ln_S						! natural log of astrophysical S-factor
         integer        :: new_Rmax                  ! new Rmax based upon cutoff
-         
+        logical        :: SQMFlag = .FALSE.         ! Used internally
+
+        if (present(inSQMFlag)) then
+            if (inSQMFlag) then
+                SQMFlag = .TRUE.
+            end if
+        end if
+
+
         i = 0
         turn_counter = 0
         turn1 = -1
@@ -80,11 +88,11 @@ contains
 
         do i = 0,Rmax
             R_pos = i * Rstep
-            V_2fold = vfold_spherically_symmetric (R_pos, A1, A2, Z1, Z2, partition,0.5_dbl,0.5_dbl,rho0_A1, rho0_A2, radius1, radius2, E0)
+            V_2fold = vfold_spherically_symmetric (R_pos, A1, A2, Z1, Z2, partition,0.5_dbl,0.5_dbl,rho0_A1, rho0_A2, radius1, radius2, E0, SQMFlag)
             print *,"V_2fold at ", R_pos, " = ", V_2fold            
             Vnucarray(Rmax-i) = V_2fold
             Vcoulary(Rmax-i) = Vcoulomb(Z1,Z2,R_pos,radius1,radius2)
-            VEcheck(Rmax-i) = V_2fold + Vcoulomb(Z1,Z2,R_pos,radius1,radius2) - E0
+            VEcheck(Rmax-i) = V_2fold + Vcoulary(Rmax-i) - E0
         end do
 	  
 !	now check the VEcheck array for turning point(s) - there may be more than one - especially if the total energy of the incoming particle starts out high (greater than the potential)
@@ -145,15 +153,16 @@ contains
 !
 !*****************************************************************
 
-    real(kind=dbl) function Sfactor(A1_int, A2_int, Z1_int, Z2_int, rho, Rstep, SQM_A2, partition)
+    real(kind=dbl) function Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, inSQMFlag)
 
-        integer, intent(in)         :: A1_int, A2_int, Z1_int, Z2_int
-        real(kind=dbl), intent(in)  :: rho
-        real(kind=dbl), intent(in)  :: Rstep
-        real(kind=dbl), intent(in)  :: SQM_A2
-        integer, intent(in)         :: partition
+        integer, intent(in)             :: A1_int, Z1_int
+        real(kind=dbl), intent(in)             :: A2, Z2
+        real(kind=dbl), intent(in)      :: rho
+        real(kind=dbl), intent(in)      :: Rstep
+        integer, intent(in)             :: partition
+        logical, intent(in), optional   :: inSQMFlag
 
-        real(kind=dbl)  :: A1, A2, Z1, Z2
+        real(kind=dbl)  :: A1, Z1
         integer         :: L = 0
         real(kind=dbl)  :: E0
         real(kind=dbl)  :: ln_sigma
@@ -167,29 +176,38 @@ contains
         real(kind=dbl)  :: ln_S
         real(kind=dbl)  :: ln_Trans_total
         integer         :: i
+        logical         :: SQMFlag = .FALSE.
+
+        if (present(inSQMFlag)) then
+            if (inSQMFlag) then
+                SQMFlag = .TRUE.
+            end if
+        end if
 
         A1 = real(A1_int,dbl)
-        A2 = real(A2_int,dbl)
         Z1 = real(Z1_int,dbl)
-        Z2 = real(Z2_int,dbl)
 
         R = sqrt(3.0_dbl)*0.5_dbl*lattice(rho,A1,Z1)
         Rmax = (R/Rstep)+1
-        mu = reduced_mass(A1_int, Z1_int, A2_int, Z2_int)
-        radius1 = nuclear_radius(A1_int)
-        radius2 = nuclear_radius(A2_int)
-        rho0_A1 = rho0_2pF(A1_int,radius1,0.5_dbl)
-        rho0_A2 = rho0_2pF(A2_int,radius2,0.5_dbl)
+        mu = reduced_mass(A1_int, Z1_int, A2, Z2)
+        
+        radius1 = nuclear_radius(A1,.FALSE.)
+        radius2 = nuclear_radius(A2, SQMFlag)
+        rho0_A1 = rho0_2pF(A1,radius1,0.5_dbl)
+        rho0_A2 = rho0_2pF(A2,radius2,0.5_dbl)
+        
+        print*, "radius1 = ", radius1
+        print*, "radius2 = ", radius2
 
 !	Calculate E of "incoming" (ground state vibrating) particle coming toward lattice-bound target particle
-        E0=E0_Energy(Z1_int,Z2_int, A1_int, A2_int, rho)
+        E0=E0_Energy(Z1_int,Z2, A1_int, A2, rho)
         print*,'E0 =',E0
 
 !	Calculate Veffective and WKB integration INSIDE turn_pts function - you should have all other input parameters at this point
 !		AND you CAN'T carry the V_arrays back into the main program because Rmax is a DERIVED paramater - and used as the array dimension
         ln_sigma = 0.0
         do i = 0,L
-            call turn_pt(R,Rstep,Rmax,E0,mu,A1_int,A2_int,SQM_A2,Z1_int,Z2_int,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB)
+            call turn_pt(R,Rstep,Rmax,E0,mu,A1_int,A2,Z1_int,Z2,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB,SQMFlag)
             ! ln of Total transmission Probability: ',ln_Trans_total
             ln_Trans_total = -WKB
             ln_sigma=ln_sigma+log(612.459_dbl)-log(mu*E0)+log(2.0_dbl*real(i,dbl)+1.0_dbl)+ln_Trans_total
@@ -210,15 +228,16 @@ contains
 !
 !*****************************************************************
 
-    real(kind=dbl) function pycnoRate(A1_int, A2_int, Z1_int, Z2_int, rho, Rstep, SQM_A2, partition)
+    real(kind=dbl) function pycnoRate(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, inSQMFlag)
 
         implicit none
 
-        integer, intent(in)         :: A1_int, A2_int, Z1_int, Z2_int
-        real(kind=dbl), intent(in)  :: rho
-        real(kind=dbl), intent(in)  :: Rstep
-        real(kind=dbl), intent(in)  :: SQM_A2
-        integer, intent(in)         :: partition
+        integer, intent(in)             :: A1_int, Z1_int
+        real(kind=dbl), intent(in)      :: A2, Z2
+        real(kind=dbl), intent(in)      :: rho
+        real(kind=dbl), intent(in)      :: Rstep
+        integer, intent(in)             :: partition
+        logical, intent(in), optional   :: inSQMFlag
 
         real(kind=dbl)              :: ln_P0
         real(kind=dbl)              :: P0
@@ -228,14 +247,21 @@ contains
         real(kind=dbl)              :: S
         real(kind=dbl)              :: mn_mass, mn_chrg
 
-        real(kind=dbl)              :: A1, A2, Z1, Z2
+        real(kind=dbl)              :: A1, Z1
+
+        logical         :: SQMFlag = .FALSE.
+
+        if (present(inSQMFlag)) then
+            if (inSQMFlag) then
+                SQMFlag = .TRUE.
+            end if
+        end if
+
 
         A1 = real(A1_int,dbl)
-        A2 = real(A2_int,dbl)
         Z1 = real(Z1_int,dbl)
-        Z2 = real(Z2_int,dbl)
 
-        S = Sfactor(A1_int, A2_int, Z1_int, Z2_int, rho, Rstep, SQM_A2, partition)
+        S = Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, SQMFlag)
         ln_S = log(S)
         print *,'ln_S = ', ln_S
 
