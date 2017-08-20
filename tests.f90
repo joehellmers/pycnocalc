@@ -41,6 +41,7 @@ subroutine turn_pt_001
     real(kind=dbl)  :: A2
     integer         :: Z1
     real(kind=dbl)  :: Z2
+    integer         :: nucIntType = 1
 
     call scr_and_log_str ('TEST: trun_pt_001:')
 
@@ -59,7 +60,7 @@ subroutine turn_pt_001
     E0 = E0_Energy(Z1,Z2,A1,A2,rho)
 
     ! turn_pt(R,      Rstep  ,Rmax   ,E0,mu,A1,A2,SQM_A2 , Z1, Z2, radius1, radius2, rho0_A1, rho0_A2, L, partition, turn1,turn2,WKB)
-    call turn_pt(393.4_dbl,1.0_dbl,23,E0,mu,A1,A2, Z1, Z2, radius1, radius2, rho0_A1, rho0_A2, 0, 15       , turn1,turn2,WKB, .FALSE.)
+    call turn_pt(393.4_dbl,1.0_dbl,23,E0,mu,A1,A2, Z1, Z2, radius1, radius2, rho0_A1, rho0_A2, 0, 15       , turn1,turn2,WKB,nucIntType, .FALSE.)
 
     call scr_and_log(str='WKB =',nbr=WKB,fmt='(ES13.5)',lf=.TRUE.)    
     call scr_and_log(str='turn1 =',intval=turn1,fmt='(I5)',lf=.TRUE.)    
@@ -114,6 +115,7 @@ subroutine Sfactor_001
     real(kind=dbl)  :: Rstep = 1.0_dbl
     real(kind=dbl)  :: SQM_A2 = 0.0_dbl
     integer :: partition = 15
+    integer :: nucIntType = 1
 
     real(kind=dbl)  ::  S
 
@@ -126,7 +128,7 @@ subroutine Sfactor_001
 
     rho = 5500000000000.0029_dbl
 
-    S = Sfactor(A1, A2, Z1, Z2, rho, Rstep, partition, .FALSE.)
+    S = Sfactor(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE.)
 
     call scr_and_log(str='S =',nbr=S,fmt='(ES13.5)',lf=.TRUE.)
 
@@ -146,6 +148,7 @@ subroutine pycnoRate_001
     real(kind=dbl)  ::  rho
     real(kind=dbl)  ::  Rstep = 1.0_dbl
     integer         :: partition = 15
+    integer         :: nucIntType = 1
 
     real(kind=dbl)  ::  rate
 
@@ -158,7 +161,7 @@ subroutine pycnoRate_001
 
     rho = 5500000000000.0029_dbl
 
-    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, .FALSE.)
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE.)
 
     call scr_and_log(str='Rate =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
 
@@ -181,6 +184,7 @@ subroutine pycnoRate_002
     real(kind=dbl)  :: Rstep = 1.0_dbl
     integer         :: partition = 15
     integer         :: CFL
+    integer         :: nucIntType = 1
     real(kind=dbl)  :: SQM_A2
     real(kind=dbl)  :: SQM_mass
 
@@ -201,7 +205,7 @@ subroutine pycnoRate_002
 
     call adjust_for_SQM(CFL, SQM_A2, SQM_mass, A2, Z2)
 
-    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, .TRUE.)
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .TRUE.)
 
     call scr_and_log(str='Rate =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
 
@@ -223,6 +227,7 @@ subroutine pycnoRate_003
     real(kind=dbl)  :: rho
     real(kind=dbl)  :: Rstep = 1.0_dbl
     integer         :: partition = 15
+    integer         :: nucIntType = 1
     integer         :: CFL
     real(kind=dbl)  :: SQM_A2
     real(kind=dbl)  :: SQM_mass
@@ -244,11 +249,44 @@ subroutine pycnoRate_003
 
     call adjust_for_SQM(CFL, SQM_A2, SQM_mass, A2, Z2)
 
-    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, .TRUE.)
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .TRUE.)
 
     call scr_and_log(str='Rate =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
 
 end subroutine pycnoRate_003
+
+!******************************************
+!
+! pycnoRate function: Test 004
+!
+!******************************************
+subroutine pycnoRate_004
+
+    integer         :: A1
+    real(kind=dbl)  :: A2
+    integer         :: Z1
+    real(kind=dbl)  :: Z2
+    real(kind=dbl)  ::  rho
+    real(kind=dbl)  ::  Rstep = 1.0_dbl
+    integer         :: partition = 15
+    integer         :: nucIntType = 2
+
+    real(kind=dbl)  ::  rate
+
+    call scr_and_log_str ('TEST: pycnoRate_004:')
+
+    A1 = 56
+    A2 = 40.0_dbl
+    Z1 = 26
+    Z2 = 26.0_dbl
+
+    rho = 5500000000000.0029_dbl
+
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE.)
+
+    call scr_and_log(str='Rate =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+
+end subroutine pycnoRate_004
 
 !******************************************
 !

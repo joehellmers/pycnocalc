@@ -14,7 +14,7 @@ save
 
 contains
 
-	real(kind=dbl) function vfold_spherically_symmetric (R, A1, A2, Z1, Z2, partition,diffuse1,diffuse2,rho0_1, rho0_2,tot_radius1, tot_radius2, E0, inSQMFlag)
+	real(kind=dbl) function vfold_spherically_symmetric (R, A1, A2, Z1, Z2, partition,diffuse1,diffuse2,rho0_1, rho0_2,tot_radius1, tot_radius2, E0, nucIntType, inSQMFlag)
 	
 	! R  : Distance between nuclei in fermi (10e-15 m)
 	! A1 : The number of nucleons in the first nucleus
@@ -53,6 +53,7 @@ contains
 	real(kind=dbl), intent(in)      :: tot_radius1
 	real(kind=dbl), intent(in)      :: tot_radius2
 	real(kind=dbl), intent(in)      :: E0
+	integer, intent(in)             :: nucIntType
 	logical, intent(in), optional   :: inSQMFlag
 	
 	integer :: r1
@@ -153,11 +154,11 @@ contains
 							dy = this_r2*sin(this_theta2)*sin(this_phi2) - this_r1*sin(this_theta1)*sin(this_phi1)
 							dz = this_r2*cos(this_theta2) - this_r1*cos(this_theta1)
 							d = sqrt(dx*dx + dy*dy + dz*dz)
-                            ! if (foldingNuclearInteraction .eq. '1') then
-							!   accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2))
-                            !else
+                            if (nucIntType .eq. 1) then
 							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonSaoPaulo(d,E0,mu)
-                            !end if
+                            else
+							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2))
+                            end if
 							my_cnt = my_cnt + 1
 						end do
 					end do

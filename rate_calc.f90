@@ -30,7 +30,7 @@ contains
 !
 !*****************************************************************
 
-    subroutine turn_pt(R,Rstep,Rmax,E0,mu,A1,A2,Z1,Z2,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB,inSQMFlag)
+    subroutine turn_pt(R,Rstep,Rmax,E0,mu,A1,A2,Z1,Z2,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB,nucIntType,inSQMFlag)
 
         implicit none
 
@@ -52,6 +52,7 @@ contains
         integer, intent(out)            :: turn1        ! position along R-axis of first turning point
         integer, intent(out)            :: turn2        ! position along R-axis of second turning point
         real(kind=dbl), intent(out)     :: WKB			! value of WKB calculation to get through total barrier (not just coulomb barrier) between incoming and target nuclei
+        integer, intent(in)             :: nucIntType   ! Type of nuclear interaction to use
         logical, intent(in), optional   :: inSQMFlag    ! Indicate if we are using SQM for nuclei/nugget 2    
 
         real(kind=dbl) :: ln_WKB                    ! natural log of the value of the WKB calculation to get through the total barrier
@@ -88,7 +89,7 @@ contains
 
         do i = 0,Rmax
             R_pos = i * Rstep
-            V_2fold = vfold_spherically_symmetric (R_pos, A1, A2, Z1, Z2, partition,0.5_dbl,0.5_dbl,rho0_A1, rho0_A2, radius1, radius2, E0, SQMFlag)
+            V_2fold = vfold_spherically_symmetric (R_pos, A1, A2, Z1, Z2, partition,0.5_dbl,0.5_dbl,rho0_A1, rho0_A2, radius1, radius2, E0, nucIntType, SQMFlag)
             print *,"V_2fold at ", R_pos, " = ", V_2fold            
             Vnucarray(Rmax-i) = V_2fold
             Vcoulary(Rmax-i) = Vcoulomb(Z1,Z2,R_pos,radius1,radius2)
@@ -153,13 +154,14 @@ contains
 !
 !*****************************************************************
 
-    real(kind=dbl) function Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, inSQMFlag)
+    real(kind=dbl) function Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag)
 
         integer, intent(in)             :: A1_int, Z1_int
-        real(kind=dbl), intent(in)             :: A2, Z2
+        real(kind=dbl), intent(in)      :: A2, Z2
         real(kind=dbl), intent(in)      :: rho
         real(kind=dbl), intent(in)      :: Rstep
         integer, intent(in)             :: partition
+        integer, intent(in)             :: nucIntType
         logical, intent(in), optional   :: inSQMFlag
 
         real(kind=dbl)  :: A1, Z1
@@ -207,7 +209,7 @@ contains
 !		AND you CAN'T carry the V_arrays back into the main program because Rmax is a DERIVED paramater - and used as the array dimension
         ln_sigma = 0.0
         do i = 0,L
-            call turn_pt(R,Rstep,Rmax,E0,mu,A1_int,A2,Z1_int,Z2,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB,SQMFlag)
+            call turn_pt(R,Rstep,Rmax,E0,mu,A1_int,A2,Z1_int,Z2,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB,nucIntType,SQMFlag)
             ! ln of Total transmission Probability: ',ln_Trans_total
             ln_Trans_total = -WKB
             ln_sigma=ln_sigma+log(612.459_dbl)-log(mu*E0)+log(2.0_dbl*real(i,dbl)+1.0_dbl)+ln_Trans_total
@@ -228,7 +230,7 @@ contains
 !
 !*****************************************************************
 
-    real(kind=dbl) function pycnoRate(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, inSQMFlag)
+    real(kind=dbl) function pycnoRate(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag)
 
         implicit none
 
@@ -237,6 +239,7 @@ contains
         real(kind=dbl), intent(in)      :: rho
         real(kind=dbl), intent(in)      :: Rstep
         integer, intent(in)             :: partition
+        integer, intent(in)             :: nucIntType
         logical, intent(in), optional   :: inSQMFlag
 
         real(kind=dbl)              :: ln_P0
@@ -261,7 +264,7 @@ contains
         A1 = real(A1_int,dbl)
         Z1 = real(Z1_int,dbl)
 
-        S = Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, SQMFlag)
+        S = Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, SQMFlag)
         ln_S = log(S)
         print *,'ln_S = ', ln_S
 

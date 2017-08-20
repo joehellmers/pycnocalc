@@ -72,6 +72,10 @@ do i=1, function_cnt
 		call pycnoRate_003
 	end if
 
+	if (function_list(i)%function_name .EQ. 'pycnoRate_004') then
+		call pycnoRate_004
+	end if
+
 	if (function_list(i)%function_name .EQ. 'adjust_for_SQM_001') then
 		call adjust_for_SQM_001
 	end if
