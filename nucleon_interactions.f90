@@ -18,7 +18,7 @@ contains
 	real(kind=dbl) :: r
 	real(kind=dbl) :: delta_0
 	
-	nucleonM3Y = (7999.0*exp(-4.0*r)/(4*r) - 2134.0*exp(-2.5*r)/(2.5*r)) 	
+	nucleonM3Y = (7999.0_dbl*exp(-4.0_dbl*r)/(4.0_dbl*r) - 2134.0_dbl*exp(-2.5_dbl*r)/(2.5_dbl*r)) 	
 	if (r < delta_0) then
 		nucleonM3Y = nucleonM3Y - 262.0_dbl
 	end if

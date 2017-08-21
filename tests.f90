@@ -159,7 +159,7 @@ subroutine pycnoRate_001
     Z1 = 26
     Z2 = 26.0_dbl
 
-    rho = 5500000000000.0029_dbl
+    rho = 550000000000000.0029_dbl
 
     rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE.)
 

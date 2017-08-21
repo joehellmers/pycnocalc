@@ -55,20 +55,24 @@ contains
         integer, intent(in)             :: nucIntType   ! Type of nuclear interaction to use
         logical, intent(in), optional   :: inSQMFlag    ! Indicate if we are using SQM for nuclei/nugget 2    
 
-        real(kind=dbl) :: ln_WKB                    ! natural log of the value of the WKB calculation to get through the total barrier
-        real(kind=dbl) :: V_2fold					! double folding potential calculated with distance of R between incoming and target nuclei
-        real(kind=dbl) :: ndensity1, ndensity2		! number density of nuclei 1 and 2, calculated using baryon number
-        real(kind=dbl) :: VEcheck(0:Rmax)	 	    ! array to hold difference between Veff and E of incoming particle at every point R (between incoming & target nuclei)
-        real(kind=dbl) :: Vnucarray(0:Rmax)	    	! array to hold Veff between target & incoming particle at every point along R (between incoming & target nuclei)
-        real(kind=dbl) :: Vcoulary(0:Rmax)			! array to hold Vcoulomb between traget and incoming particle at every point along R (between incoming & target nuclei)
-        integer :: i, turn_counter                  ! ad hoc counter, counter for the number of turning points 
-        real(kind=dbl) :: R_pos						! current position along R axis --this is the CURRENT separation between target and incoming particle	  
-        real(kind=dbl) :: Energy					! function that calculates the Energy of incoming (or just second (projectile) nucleon)
-        real(kind=dbl) :: Integrand(0:Rmax)  		! array to hold Integrand of S-factor calculation
-        real(kind=dbl) :: S							! astrophysical S-factor - calculated using equation from PHYS REV C69 --rule of thumb model fitted to data
-        real(kind=dbl) :: ln_S						! natural log of astrophysical S-factor
-        integer        :: new_Rmax                  ! new Rmax based upon cutoff
-        logical        :: SQMFlag = .FALSE.         ! Used internally
+        real(kind=dbl)  :: ln_WKB                    ! natural log of the value of the WKB calculation to get through the total barrier
+        real(kind=dbl)  :: V_2fold					! double folding potential calculated with distance of R between incoming and target nuclei
+        real(kind=dbl)  :: ndensity1, ndensity2		! number density of nuclei 1 and 2, calculated using baryon number
+        real(kind=dbl)  :: VEcheck(0:Rmax)	 	    ! array to hold difference between Veff and E of incoming particle at every point R (between incoming & target nuclei)
+        real(kind=dbl)  :: Vnucarray(0:Rmax)	    	! array to hold Veff between target & incoming particle at every point along R (between incoming & target nuclei)
+        real(kind=dbl)  :: Vcoulary(0:Rmax)			! array to hold Vcoulomb between traget and incoming particle at every point along R (between incoming & target nuclei)
+        integer         :: i, turn_counter                  ! ad hoc counter, counter for the number of turning points 
+        real(kind=dbl)  :: R_pos						! current position along R axis --this is the CURRENT separation between target and incoming particle	  
+        real(kind=dbl)  :: Energy					! function that calculates the Energy of incoming (or just second (projectile) nucleon)
+        real(kind=dbl)  :: Integrand(0:Rmax)  		! array to hold Integrand of S-factor calculation
+        real(kind=dbl)  :: S							! astrophysical S-factor - calculated using equation from PHYS REV C69 --rule of thumb model fitted to data
+        real(kind=dbl)  :: ln_S						! natural log of astrophysical S-factor
+        integer         :: new_Rmax                  ! new Rmax based upon cutoff
+        logical         :: SQMFlag = .FALSE.         ! Used internally
+
+        integer         ::v_fold_threshold_flg, v_fold_first_time
+        real(kind=dbl)  :: v_fold_max
+        real(kind=dbl)  :: v_fold_min
 
         if (present(inSQMFlag)) then
             if (inSQMFlag) then
@@ -76,6 +80,10 @@ contains
             end if
         end if
 
+        v_fold_min = 1e-10
+        v_fold_max = 0
+        v_fold_threshold_flg = 0
+        v_fold_first_time = 1
 
         i = 0
         turn_counter = 0
@@ -89,7 +97,22 @@ contains
 
         do i = 0,Rmax
             R_pos = i * Rstep
-            V_2fold = vfold_spherically_symmetric (R_pos, A1, A2, Z1, Z2, partition,0.5_dbl,0.5_dbl,rho0_A1, rho0_A2, radius1, radius2, E0, nucIntType, SQMFlag)
+            if (v_fold_threshold_flg .EQ. 0) then 
+                V_2fold = vfold_spherically_symmetric (R_pos, A1, A2, Z1, Z2, partition,0.5_dbl,0.5_dbl,rho0_A1, rho0_A2, radius1, radius2, E0, nucIntType, SQMFlag)
+                if (v_fold_max .LT. abs(v_2fold)) then
+                    v_fold_max = abs(v_2fold)
+                end if
+                if (v_fold_first_time .EQ. 1) then
+                    v_fold_first_time = 0
+                else
+                    if ((abs(v_2fold)/v_fold_max) .LT. v_fold_min) then
+                        v_fold_threshold_flg = 1			
+                        v_2fold = 0.0_dbl
+                    end if
+                end if  
+            else
+                v_2fold = 0.0_dbl
+            end if
             print *,"V_2fold at ", R_pos, " = ", V_2fold            
             Vnucarray(Rmax-i) = V_2fold
             Vcoulary(Rmax-i) = Vcoulomb(Z1,Z2,R_pos,radius1,radius2)
