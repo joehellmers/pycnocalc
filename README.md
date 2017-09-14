@@ -6,21 +6,9 @@ PycnoCalc is a program used to perform calculations related to Pycnonuclear Reac
 
 This repository is used to keep track of issues with PycnoCalc, as well as source code revisions
 
-### How do I get set up? ###
+### Versions ###
+* Ver 3.1: Incorporate changes from Barbara Golf and Whitney Ryan (nee Currier) Master Theses
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
+* Ver 3.0: Initial Checkin from Joe Hellmers B.S. Thesis
+### For more information Conact: ###
 * Joe Hellmers (hellmersjl@icloud.com)
