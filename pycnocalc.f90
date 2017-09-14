@@ -84,6 +84,14 @@ do i=1, function_cnt
 		call adjust_for_SQM_002
 	end if
 
+	if (function_list(i)%function_name .EQ. 'adjust_for_SQM_002') then
+		call adjust_for_SQM_002
+	end if
+
+	if (function_list(i)%function_name .EQ. 'vfold_cubes_001') then
+		call vfold_cubes_001
+	end if
+
 end do
 
 call printending 

@@ -351,6 +351,34 @@ subroutine adjust_for_SQM_002
 
 end subroutine adjust_for_SQM_002
 
+subroutine vfold_cubes_001
+
+    real(kind=dbl)  :: vfold
+    real(kind=dbl)  :: E0
+
+    integer         :: A1
+    real(kind=dbl)  :: A2
+    integer         :: Z1
+    real(kind=dbl)  :: Z2
+    real(kind=dbl)  :: rho
+    integer(kind=dbl) :: N1 = 10000000000_dbl
+
+    call scr_and_log_str ('TEST: vfold_cubes_001:')
+
+    A1 = 56
+    A2 = 40.0_dbl
+    Z1 = 26
+    Z2 = 26.0_dbl
+
+    rho = 5500000000000.0029_dbl
+    E0 = E0_Energy(Z1,Z2,A1,A2,rho)
+
+    vfold = vfold_cubes(5.0_dbl, A1, A2, Z1, Z2, N1, 1_dbl, 2.0_dbl, 0.1_dbl, E0, 1, .FALSE.)
+    call scr_and_log(str='vfold =',nbr=vfold,fmt='(ES13.5)',lf=.TRUE.)
+
+
+end subroutine vfold_cubes_001
+
 end module tests
 
 

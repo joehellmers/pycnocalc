@@ -173,4 +173,66 @@ contains
 	
 	end function vfold_spherically_symmetric
 	
+
+    real(kind=dbl) function vfold_cubes(R, A1, A2, Z1, Z2, N1, N2, side1, side2, E0, nucIntType, inSQMFlag)
+    
+	use nucleon_interactions
+	use general_nuclear
+ 
+    real(kind=dbl), intent(in)      :: R            ! Distance between centers of cubes
+	integer, intent(in)             :: A1
+	real(kind=dbl), intent(in)      :: A2
+	integer, intent(in)             :: Z1
+	real(kind=dbl), intent(in)      :: Z2
+	integer(kind=dbl), intent(in)             :: N1, N2       ! Number of increments to split the cubes into 
+	real(kind=dbl), intent(in)      :: side1        ! Length of side for cube 1
+	real(kind=dbl), intent(in)      :: side2        ! Length of side for cube 2
+	real(kind=dbl), intent(in)      :: E0
+	integer, intent(in)             :: nucIntType
+	logical, intent(in), optional   :: inSQMFlag
+
+    real(kind=dbl)                  :: dx1, dy1, dz1
+    real(kind=dbl)                  :: dx2, dy2, dz2
+    real(kind=dbl)                  :: dV1, dV2
+    real(kind=dbl)                  :: d
+    integer                         :: i
+    real(kind=dbl)                  :: accumulator
+
+	real(kind=dbl) :: ndensity1
+	real(kind=dbl) :: ndensity2
+	real(kind=dbl) :: mu
+
+    dx1 = side1/N1
+    dy1 = side1/N1
+    dz1 = side1/N1
+
+    dx2 = side2/N2
+    dy2 = side2/N2
+    dz2 = side2/N2
+    
+    dV1 = dx1 * dy1 * dz1
+	dV2 = dx2 * dy2 * dz2
+
+
+    ndensity1 = A1/dV1
+    ndensity2 = A2/dV2
+   
+    mu = reduced_mass(A1,Z1,A2,Z2)
+
+    print *,"dx1=",dx1
+    print *,"side1=",side1
+    do i = 1, N1+1
+        d = 0.0_dbl - side1/2.0_dbl + (i-1)*dx1
+        ! print *,i,":d=",d
+        if (nucIntType .eq. 1) then
+	        accumulator = accumulator + ndensity1*ndensity2*dV1*dV2*nucleonSaoPaulo(d,E0,mu)
+        else
+	        accumulator = accumulator + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(dx1+dx2))
+        end if
+    end do
+
+    vfold_cubes = accumulator
+
+    end function vfold_cubes
+
 end module folding_potential
