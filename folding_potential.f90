@@ -221,6 +221,8 @@ contains
 
     print *,"dx1=",dx1
     print *,"side1=",side1
+
+!$OMP PARALLEL DO
     do i = 1, N1+1
         d = 0.0_dbl - side1/2.0_dbl + (i-1)*dx1
         ! print *,i,":d=",d
@@ -230,6 +232,7 @@ contains
 	        accumulator = accumulator + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(dx1+dx2))
         end if
     end do
+!$OMP END PARALLEL DO
 
     vfold_cubes = accumulator
 
