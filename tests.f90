@@ -379,6 +379,66 @@ subroutine vfold_cubes_001
 
 end subroutine vfold_cubes_001
 
+subroutine mean_wt_001
+
+    integer  :: A1
+    integer  :: A2
+    integer  :: Z1
+    integer  :: Z2
+    real(kind=dbl)  :: X1
+    real(kind=dbl)  :: X2
+
+    real(kind=dbl)  :: mean_wt
+
+    A1 = 16
+    Z1 = 8
+    A2 = 16
+    Z2 = 8
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+
+    mean_wt = mean_wt_electron2comp(A1,Z1,X1,A2,Z2,X2)
+    call scr_and_log(str='O-O 50-50: mu_e =',nbr=mean_wt,fmt='(ES13.5)',lf=.TRUE.)
+
+    mean_wt = mean_wt_electron1comp(A1,Z1)
+    call scr_and_log(str='O-O 50-50 for 1 component: mu_e =',nbr=mean_wt,fmt='(ES13.5)',lf=.TRUE.)
+
+    mean_wt = mean_wt_nucleus2comp(A1,Z1,X1,A2,Z2,X2)
+    call scr_and_log(str='O-O 50-50: mu_A =',nbr=mean_wt,fmt='(ES13.5)',lf=.TRUE.)
+
+    mean_wt = mean_wt_nucleus1comp(A1,Z1)
+    call scr_and_log(str='O-O 50-50 for 1 component: mu_A =',nbr=mean_wt,fmt='(ES13.5)',lf=.TRUE.)
+
+
+    A1 = 16
+    Z1 = 8
+    A2 = 12
+    Z2 = 6
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+
+    mean_wt = mean_wt_electron2comp(A1,Z1,X1,A2,Z2,X2)
+    call scr_and_log(str='O-C 50-50: mu_e =',nbr=mean_wt,fmt='(ES13.5)',lf=.TRUE.)
+
+    mean_wt = mean_wt_nucleus2comp(A1,Z1,X1,A2,Z2,X2)
+    call scr_and_log(str='O-C 50-50: mu_A =',nbr=mean_wt,fmt='(ES13.5)',lf=.TRUE.)
+
+    A1 = 18
+    Z1 = 8
+    A2 = 12
+    Z2 = 6
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+
+    mean_wt = mean_wt_electron2comp(A1,Z1,X1,A2,Z2,X2)
+    call scr_and_log(str='O18-C 50-50: mu_e =',nbr=mean_wt,fmt='(ES13.5)',lf=.TRUE.)
+
+    mean_wt = mean_wt_nucleus2comp(A1,Z1,X1,A2,Z2,X2)
+    call scr_and_log(str='O18-C 50-50: mu_A =',nbr=mean_wt,fmt='(ES13.5)',lf=.TRUE.)
+
+
+end subroutine mean_wt_001
+
 end module tests
 
 

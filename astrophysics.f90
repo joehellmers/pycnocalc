@@ -18,11 +18,11 @@ contains
 !******************************************
 !
 ! Function to calculate the mean weight per nuclus based on Atomic Weight and Number
-!
+! For 1 component matter
 !******************************************
 
 
-real(kind=dbl) function mean_wt_nucleus (A, Z)
+real(kind=dbl) function mean_wt_nucleus1comp (A, Z)
 
 use constants
 
@@ -32,18 +32,59 @@ integer, intent(in) :: A ! Atomic Weight
 integer, intent(in) :: Z ! Atomic Number
 
 
-mean_wt_nucleus = A*(1.0 + ((Z * electron_mass)/(A*amu)))
+mean_wt_nucleus1comp = A*(1.0 + ((Z * electron_mass)/(A*amu)))
 
-end function mean_wt_nucleus
+end function mean_wt_nucleus1comp
+
+!******************************************
+!
+! Function to calculate the mean weight per nucleus 
+! based on Atomic Weight and Number for two component matter
+!
+! SPVH1969 (15)
+!
+!******************************************
+
+real(kind=dbl) function mean_wt_nucleus2comp(A1,Z1,X1,A2,Z2,X2)
+
+use constants
+
+implicit none
+
+integer, intent(in) :: A1 ! Atomic Weight species 1
+integer, intent(in) :: Z1 ! Atomic Number species 1
+real(kind=dbl), intent(in) :: X1 ! Fraction of species 1
+integer, intent(in) :: A2 ! Atomic Weight species 2
+integer, intent(in) :: Z2 ! Atomic Number species 2
+real(kind=dbl), intent(in) :: X2 ! Fraction of species 2
+
+real(kind=dbl) :: part1
+real(kind=dbl) :: part2
+real(kind=dbl) :: mu_e
+
+part1 = X1/A1
+part1 = part1/(1.0_dbl + (Z1*electron_mass)/(A1*amu))
+
+part2 = X2/A2
+part2 = part2/(1.0_dbl + (Z2*electron_mass)/(A2*amu))
+
+mu_e = 1.0_dbl/(part1+part2)
+
+mean_wt_nucleus2comp = mu_e
+
+end function mean_wt_nucleus2comp
 
 
 !******************************************
 !
-! Function to calculate the mean weight per electron based on Atomic Weight and Number
+! Function to calculate the mean weight per electron 
+! based on Atomic Weight and Number for one component matter
+!
+! SPVH1969 (1)
 !
 !******************************************
 
-real(kind=dbl) function mean_wt_electron(A,Z)
+real(kind=dbl) function mean_wt_electron1comp(A,Z)
 
 use constants
 
@@ -53,11 +94,50 @@ integer, intent(in) :: A ! Atomic Weight
 integer, intent(in) :: Z ! Atomic Number
 
 
-mean_wt_electron = mean_wt_nucleus(A,Z)/Z
+mean_wt_electron1comp = mean_wt_nucleus1comp(A,Z)/Z
 
-end function mean_wt_electron
+end function mean_wt_electron1comp
 
-!*******************************d***********
+!******************************************
+!
+! Function to calculate the mean weight per electron 
+! based on Atomic Weight and Number for two component matter
+!
+! SPVH1969 (15)
+!
+!******************************************
+
+real(kind=dbl) function mean_wt_electron2comp(A1,Z1,X1,A2,Z2,X2)
+
+use constants
+
+implicit none
+
+integer, intent(in) :: A1 ! Atomic Weight species 1
+integer, intent(in) :: Z1 ! Atomic Number species 1
+real(kind=dbl), intent(in) :: X1 ! Fraction of species 1
+integer, intent(in) :: A2 ! Atomic Weight species 2
+integer, intent(in) :: Z2 ! Atomic Number species 2
+real(kind=dbl), intent(in) :: X2 ! Fraction of species 2
+
+real(kind=dbl) :: part1
+real(kind=dbl) :: part2
+real(kind=dbl) :: mu_e
+
+part1 = (X1*Z1)/A1
+part1 = part1/(1.0_dbl + (Z1*electron_mass)/(A1*amu))
+
+part2 = (X2*Z2)/A2
+part2 = part2/(1.0_dbl + (Z2*electron_mass)/(A2*amu))
+
+mu_e = 1.0_dbl/(part1+part2)
+
+mean_wt_electron2comp = mu_e
+
+end function mean_wt_electron2comp
+
+
+!******************************************
 !
 ! Function to calculate the number density of nuclei based on 
 !	- matter density
@@ -76,31 +156,35 @@ real(kind=dbl), intent(in) :: rho ! mass density
 integer, intent(in) :: A ! Atomic Weight
 integer, intent(in) :: Z ! Atomic Number
 
-nbr_density_nucleus = rho/(mean_wt_nucleus(A,Z)*amu)
+nbr_density_nucleus = rho/(mean_wt_nucleus1comp(A,Z)*amu)
 
 end function nbr_density_nucleus
 
 !******************************************
 !
-! Function to calculate the number density of electrons based on 
+! Function to calculate the number density of electrons for 2 component matters
+!
 !	- matter density
-!	- Atomic Weight
+!	- Atomic Weight 1
 !   - Atomic Number
 !
+! For 1 component matter
+! 
+! REF: SPVH1969 (1)
+!
 !******************************************
-real(kind=dbl) function nbr_density_electron (rho, A, Z)
+real(kind=dbl) function nbr_density_electron1comp (rho, A, Z)
+
 use constants
 implicit none
-
-
 
 real(kind=dbl), intent(in) :: rho ! mass density 
 integer, intent(in) :: A ! Atomic Weight
 integer, intent(in) :: Z ! Atomic Number
 
-nbr_density_electron = rho/(mean_wt_electron(A,Z)*amu)
+nbr_density_electron1comp = rho/(mean_wt_electron1comp(A,Z)*amu)
 
-end function nbr_density_electron
+end function nbr_density_electron1comp
 
 !******************************************
 !
@@ -170,7 +254,7 @@ real(kind=dbl), intent(in) :: rho ! mass density
 integer, intent(in) :: A ! Atomic Weight
 integer, intent(in) :: Z ! Atomic Number
 
-inv_len_param = ((rho/(mean_wt_nucleus(A,Z)*inv_len_factor))**(1.0/3.0))/(A*Z*Z)
+inv_len_param = ((rho/(mean_wt_nucleus1comp(A,Z)*inv_len_factor))**(1.0/3.0))/(A*Z*Z)
 
 
 end function inv_len_param
@@ -224,7 +308,7 @@ real(kind=dbl) :: common_part
 lambda = inv_len_param(rho, A, Z)
 
 ! Calculate the common part first to reduce load on system
-common_part = (rho/mean_wt_nucleus(A,Z))*A*A*(Z**4)*S*1.00e46_dbl*(lambda**(7.0/4.0))
+common_part = (rho/mean_wt_nucleus1comp(A,Z))*A*A*(Z**4)*S*1.00e46_dbl*(lambda**(7.0/4.0))
 
 lower_rate = common_part*3.90_dbl*exp(-2.638_dbl/sqrt(lambda))
 
