@@ -96,6 +96,10 @@ do i=1, function_cnt
 		call mean_wt_001
 	end if
 
+	if (function_list(i)%function_name .EQ. 'beta_excite_001') then
+		call beta_excite_001
+	end if
+
 end do
 
 call printending 

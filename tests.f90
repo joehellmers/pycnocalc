@@ -439,6 +439,47 @@ subroutine mean_wt_001
 
 end subroutine mean_wt_001
 
+subroutine beta_excite_001
+
+    integer  :: A1
+    integer  :: A2
+    integer  :: Z1
+    integer  :: Z2
+    real(kind=dbl)  :: X1
+    real(kind=dbl)  :: X2
+    real(kind=dbl)  :: rho
+    real(kind=dbl)  :: Temp
+
+    real(kind=dbl)  :: beta
+
+    A1 = 1
+    Z1 = 1
+    A2 = 1
+    Z2 = 1
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+    Temp = 4.2579d7
+    rho = 1.6203d10
+
+    beta = beta_excitation2comp(A1,Z1,X1,A2,Z2,X2,rho,Temp)
+    call scr_and_log(str='H-H 50-50 Unitary Temp Unitary rho: beta =',nbr=beta,fmt='(ES13.5)',lf=.TRUE.)
+
+    A1 = 12
+    Z1 = 6
+    A2 = 12
+    Z2 = 6
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+    Temp = 4.2579d7
+    rho = 1.6203d10
+    beta = beta_excitation2comp(A1,Z1,X1,A2,Z2,X2,rho,Temp)
+
+    call scr_and_log(str='O-O 50-50 Unitary Temp Unitary rho: beta =',nbr=beta,fmt='(ES13.5)',lf=.TRUE.)
+
+
+end subroutine beta_excite_001
+
+
 end module tests
 
 

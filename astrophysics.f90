@@ -136,6 +136,65 @@ mean_wt_electron2comp = mu_e
 
 end function mean_wt_electron2comp
 
+!******************************************
+!
+! Coulomb Excitation parameter 
+!
+! SPVH1969 (23)
+!
+!******************************************
+
+real(kind=dbl) function beta_excitation2comp(A1_int,Z1_int,X1,A2_int,Z2_int,X2,rho,Temp)
+
+use constants
+
+implicit none
+
+integer, intent(in)         :: A1_int   ! Atomic Weight species 1
+integer, intent(in)         :: Z1_int   ! Atomic Number species 1
+real(kind=dbl), intent(in)  :: X1       ! Fraction of species1
+integer, intent(in)         :: A2_int   ! Atomic Weight species 2
+integer, intent(in)         :: Z2_int   ! Atomic Number species 2
+real(kind=dbl), intent(in)  :: X2       ! Fraction of species2
+real(kind=dbl), intent(in)  :: rho      ! mass density in g/cm^3
+real(kind=dbl), intent(in)  :: Temp     ! Temperature in Kelvin
+
+real(kind=dbl)   :: A1
+real(kind=dbl)   :: Z1
+real(kind=dbl)   :: A2
+real(kind=dbl)   :: Z2
+real(kind=dbl)  :: part1
+real(kind=dbl)  :: part2
+real(kind=dbl)  :: part3
+real(kind=dbl)  :: mu_e
+real(kind=dbl)  :: fivethirds, onethird
+
+A1 = real(A1_int,dbl)
+Z1 = real(Z1_int,dbl)
+A2 = real(A2_int,dbl)
+Z2 = real(Z2_int,dbl)
+
+fivethirds = (5.0_dbl/3.0_dbl)
+onethird = (1.0_dbl/3.0_dbl)
+
+mu_e = mean_wt_electron2comp(A1_int,Z1_int,X1,A2_int,Z2_int,X2)
+
+part1 = (Z1 + Z2)**(fivethirds) - Z1**(fivethirds) - Z2**(fivethirds)
+
+part2 = (Z1**2.0_dbl)*(Z2**2.0_dbl)*A1*A2
+part2 = (part2/(A1+A2))**onethird
+
+part1 = part1/part2
+
+
+part3 = (42579000_dbl/Temp)*(((rho/mu_e)/16023000000_dbl)**onethird)
+
+part1 = part1*part3
+
+beta_excitation2comp = part1
+
+end function beta_excitation2comp
+
 
 !******************************************
 !
