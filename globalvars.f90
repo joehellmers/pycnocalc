@@ -13,10 +13,10 @@ implicit none
 save
 
 ! Global Variables
-integer :: A1 ! Atomic Mass Number 1
-integer :: A2 ! Atomic Mass Number 2
-integer :: Z1 ! Atomic Number 1
-integer :: Z2 ! Atomic Number 2
+!integer :: A1 ! Atomic Mass Number 1
+!integer :: A2 ! Atomic Mass Number 2
+!integer :: Z1 ! Atomic Number 1
+!integer :: Z2 ! Atomic Number 2
 
 real(kind=dbl) :: matter_density ! Density in cm/g^3 
 

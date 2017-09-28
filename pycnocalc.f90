@@ -100,6 +100,10 @@ do i=1, function_cnt
 		call beta_excite_001
 	end if
 
+	if (function_list(i)%function_name .EQ. 'inv_len_001') then
+		call inv_len_001
+	end if
+
 end do
 
 call printending 

@@ -300,23 +300,54 @@ end function char_E
 !	REF: SPVH1969 (3)
 !
 !******************************************
-
-
-real(kind=dbl) function inv_len_param (rho, A, Z)
+real(kind=dbl) function inv_len_param1comp (rho, A, Z)
 use constants
 use globalvars
 implicit none
-
-
 
 real(kind=dbl), intent(in) :: rho ! mass density 
 integer, intent(in) :: A ! Atomic Weight
 integer, intent(in) :: Z ! Atomic Number
 
-inv_len_param = ((rho/(mean_wt_nucleus1comp(A,Z)*inv_len_factor))**(1.0/3.0))/(A*Z*Z)
+inv_len_param1comp = ((rho/(mean_wt_nucleus1comp(A,Z)*inv_len_factor))**(1.0/3.0))/(A*Z*Z)
+
+end function inv_len_param1comp
+
+!******************************************
+!
+! Function to calculate the inverse length parameter for two component material based on
+!	- Density
+!	- Atomic Weight1
+!   - Atomic Number1
+!   - Fraction of 1
+!	- Atomic Weight2
+!   - Atomic Number2
+!   - Fraction of 2
+! 
+!	REF: SPVH1969 (16)
+!
+!******************************************
+real(kind=dbl) function inv_len_param2comp (rho, A1, Z1, X1, A2, Z2, X2)
+use constants
+implicit none
+
+real(kind=dbl), intent(in)  :: rho  ! mass density 
+integer, intent(in)         :: A1   ! Atomic Weight
+integer, intent(in)         :: Z1   ! Atomic Number
+real(kind=dbl), intent(in)  :: X1   ! Fraction of species 1
+integer, intent(in)         :: A2   ! Atomic Weight
+integer, intent(in)         :: Z2   ! Atomic Number
+real(kind=dbl), intent(in)  :: X2   ! Fraction of species 2
+
+real(kind=dbl) :: mu_e
+
+mu_e = mean_wt_electron2comp(A1, Z1, X1, A2, Z2, X2)
+
+inv_len_param2comp = ((A1+A2)/(2.0_dbl*A1*A2*Z1*Z2))*((rho/((Z1*mu_e)*1.3574d11))**(1.0_dbl/3.0_dbl))
 
 
-end function inv_len_param
+end function inv_len_param2comp
+
 
 !*****************************************************************
 !
@@ -364,7 +395,7 @@ real(kind=dbl) :: common_part
 
 ! get the inverse length parameter
 
-lambda = inv_len_param(rho, A, Z)
+lambda = inv_len_param1comp(rho, A, Z)
 
 ! Calculate the common part first to reduce load on system
 common_part = (rho/mean_wt_nucleus1comp(A,Z))*A*A*(Z**4)*S*1.00e46_dbl*(lambda**(7.0/4.0))

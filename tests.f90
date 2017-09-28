@@ -479,6 +479,48 @@ subroutine beta_excite_001
 
 end subroutine beta_excite_001
 
+subroutine inv_len_001
+
+    integer         :: A1
+    integer         :: Z1
+    real(kind=dbl)  :: X1
+    integer         :: A2
+    integer         :: Z2
+    real(kind=dbl)  :: X2
+    real(kind=dbl)  :: rho
+
+    real(kind=dbl)  :: lambda
+    real(kind=dbl)  :: mu_e
+
+    A1 = 1
+    Z1 = 1
+    A2 = 1
+    Z2 = 1
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+    rho = 1.3574d11
+
+
+    lambda =    inv_len_param2comp(rho,A1,Z1,X1,A2,Z2,X2)
+    call scr_and_log(str='2comp: H-H 50-50 Unitary rho: lambda =',nbr=lambda,fmt='(ES13.5)',lf=.TRUE.)
+
+    A1 = 12
+    Z1 = 6
+    A2 = 12
+    Z2 = 6
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+    rho = 1.3574d11
+    
+    mu_e = mean_wt_electron2comp(A1,Z1,X1,A2,Z2,X2)
+    
+    lambda = inv_len_param2comp(rho,A1,Z1,X1,A2,Z2,X2)
+
+    call scr_and_log(str='2comp:O-O 50-50 Unitary rho: lambda =',nbr=lambda,fmt='(ES13.5)',lf=.TRUE.)
+    call scr_and_log(str='    mu_e =',nbr=mu_e,fmt='(ES13.5)',lf=.TRUE.)
+
+
+end subroutine inv_len_001
 
 end module tests
 
