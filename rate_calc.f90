@@ -310,4 +310,62 @@ contains
 
     end function pycnoRate
 
+!*****************************************************************
+!
+! Calculate the adjustment to the Pycno Reaction rate based on 
+! Termparature
+!
+! REF: SPVH1969 (45)
+!
+!*****************************************************************
+
+    real(kind=dbl) function tempRateAdjust(A1_int, Z1_int, X1, A2_int, Z2_int, X2, rho, Temp, inlowFlag)
+
+        implicit none
+        
+        integer, intent(in)             :: A1_int, Z1_int, A2_int, Z2_int
+        real(kind=dbl), intent(in)      :: X1, X2
+        real(kind=dbl), intent(in)      :: rho
+        real(kind=dbl), intent(in)      :: Temp   
+        logical, intent(in), optional   :: inlowFlag
+                        
+        real(kind=dbl)  :: beta_3halves_rt
+        real(kind=dbl)  :: beta_factor
+        real(kind=dbl)  :: inv_len_neg_sqrt
+        logical         :: lowFlag
+        real(kind=dbl)  :: param1, param2, param3, param4
+        real(kind=dbl)  :: factor
+                
+        if (present(inlowFlag)) then
+            lowFlag = inlowFlag
+        else
+            lowFlag = .true.
+        end if
+
+        if (lowFlag) then
+            param1 = 0.0430_dbl
+            param2 = 1.2624_dbl
+            param3 = 1.2231_dbl
+            param4 = 0.6310_dbl
+        else
+            param1 = 0.0485_dbl
+            param2 = 2.9314_dbl
+            param3 = 1.4331_dbl
+            param4 = 1.4654_dbl
+        end if
+
+        beta_3halves_rt = beta_excitation2comp(A1_int,Z1_int,X1,A2_int,Z2_int,X2,rho,Temp)**(3.0_dbl/2.0_dbl)
+        beta_factor = exp(-8.7833_dbl*beta_3halves_rt)
+        inv_len_neg_sqrt = inv_len_param2comp (rho, A1_int, Z1_int, X1, A2_int, Z2_int, X2)**(-1.0_dbl/2.0_dbl)
+
+        factor = 1.0_dbl - param4*beta_factor
+        factor = inv_len_neg_sqrt*param3*beta_factor*factor 
+        factor = exp(-7.272*beta_3halves_rt + factor)
+        factor = ((1.0_dbl + param2*beta_factor)**(-1.0_dbl/2.0_dbl))*factor
+        factor = 1.0_dbl + param1*inv_len_neg_sqrt*factor
+
+        tempRateAdjust = factor
+                    
+    end function tempRateAdjust
+    
 end module rate_calc

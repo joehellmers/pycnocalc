@@ -397,6 +397,8 @@ subroutine mean_wt_001
     X1 = 0.5_dbl
     X2 = 0.5_dbl
 
+    call scr_and_log_str ('TEST: mean_wt_001:')
+
     mean_wt = mean_wt_electron2comp(A1,Z1,X1,A2,Z2,X2)
     call scr_and_log(str='O-O 50-50: mu_e =',nbr=mean_wt,fmt='(ES13.5)',lf=.TRUE.)
 
@@ -461,6 +463,8 @@ subroutine beta_excite_001
     Temp = 4.2579d7
     rho = 1.6203d10
 
+    call scr_and_log_str ('TEST: beta_excite_001:')
+
     beta = beta_excitation2comp(A1,Z1,X1,A2,Z2,X2,rho,Temp)
     call scr_and_log(str='H-H 50-50 Unitary Temp Unitary rho: beta =',nbr=beta,fmt='(ES13.5)',lf=.TRUE.)
 
@@ -500,6 +504,7 @@ subroutine inv_len_001
     X2 = 0.5_dbl
     rho = 1.3574d11
 
+    call scr_and_log_str ('TEST: inv_len_001:')
 
     lambda =    inv_len_param2comp(rho,A1,Z1,X1,A2,Z2,X2)
     call scr_and_log(str='2comp: H-H 50-50 Unitary rho: lambda =',nbr=lambda,fmt='(ES13.5)',lf=.TRUE.)
@@ -521,6 +526,98 @@ subroutine inv_len_001
 
 
 end subroutine inv_len_001
+
+subroutine rate_temp_adjust_001
+
+    integer         :: A1
+    integer         :: Z1
+    real(kind=dbl)  :: X1
+    integer         :: A2
+    integer         :: Z2
+    real(kind=dbl)  :: X2
+    real(kind=dbl)  :: rho
+    real(kind=dbl)  :: temp
+    real(kind=dbl)  :: adjust
+    real(kind=dbl)  :: work1, work2
+    integer         :: i
+    
+    call scr_and_log_str ('TEST: rate_temp_adjust_001:')
+
+    A1 = 16
+    Z1 = 8
+    A2 = 12
+    Z2 = 6
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+    rho = 1.3574d11
+    temp = 10000000000.0_dbl
+
+    adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
+
+    call scr_and_log(str='O-C 50-50 rho    = ',nbr=rho,fmt='(ES13.5)',lf=.TRUE.)
+    call scr_and_log(str='          temp   = ',nbr=temp,fmt='(ES13.5)',lf=.TRUE.)
+    call scr_and_log(str='          adjust = ',nbr=adjust,fmt='(ES13.5)',lf=.TRUE.)
+
+    A1 = 16
+    Z1 = 8
+    A2 = 12
+    Z2 = 6
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+    rho = 1.3574d11
+    temp = 100000.0_dbl
+
+    adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
+
+    call scr_and_log(str='O-C 50-50 rho    = ',nbr=rho,fmt='(ES13.5)',lf=.TRUE.)
+    call scr_and_log(str='          temp   = ',nbr=temp,fmt='(ES13.5)',lf=.TRUE.)
+    call scr_and_log(str='          adjust = ',nbr=adjust,fmt='(ES13.5)',lf=.TRUE.)
+
+    A1 = 16
+    Z1 = 8
+    A2 = 12
+    Z2 = 6
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+    rho = 1.3574d11
+    temp = 0.0_dbl
+
+    adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
+
+    call scr_and_log(str='O-C 50-50 rho    = ',nbr=rho,fmt='(ES13.5)',lf=.TRUE.)
+    call scr_and_log(str='          temp   = ',nbr=temp,fmt='(ES13.5)',lf=.TRUE.)
+    call scr_and_log(str='          adjust = ',nbr=adjust,fmt='(ES13.5)',lf=.TRUE.)
+
+    A1 = 12
+    Z1 = 6
+    A2 = 12
+    Z2 = 6
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+    rho = 1.0d7
+    do i = 0,200
+        temp = 10_dbl**real(6.765_dbl + 0.01*i)
+        adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
+        print *,log10(rho),",",log10(temp),",",log10(adjust)        
+    end do
+
+    rho = 1.0d7
+    call react_rate_zero_temp(rho, A1, Z1, 4.0e16_dbl, work1, work2)
+    print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
+    rho = 1.0d8
+    call react_rate_zero_temp(rho, A1, Z1, 4.0e16_dbl, work1, work2)
+    print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
+    rho = 1.0d9
+    call react_rate_zero_temp(rho, A1, Z1, 4.0e16_dbl, work1, work2)
+    print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
+    rho = 1.0d10
+    call react_rate_zero_temp(rho, A1, Z1, 4.0e16_dbl, work1, work2)
+    print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
+    rho = 1.0d11
+    call react_rate_zero_temp(rho, A1, Z1, 4.0e16_dbl, work1, work2)
+    print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
+
+end subroutine rate_temp_adjust_001
 
 end module tests
 
