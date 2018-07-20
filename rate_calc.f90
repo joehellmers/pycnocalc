@@ -179,6 +179,8 @@ contains
 
     real(kind=dbl) function Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag)
 
+        implicit none
+        
         integer, intent(in)             :: A1_int, Z1_int
         real(kind=dbl), intent(in)      :: A2, Z2
         real(kind=dbl), intent(in)      :: rho
