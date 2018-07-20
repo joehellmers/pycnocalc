@@ -28,7 +28,7 @@ MODULES = globalvars.mod \
 	rate_calc.mod \
 	tests.mod
 SWITCHES = -ffree-line-length-none -O3 -fopenmp
-OUTDIR = /home/hellmersjl/bin
+OUTDIR = ~/bin
 
 pycnocalc: $(MODULES)
 	$(F90COMP) pycnocalc.f90 $(OBJS) -o $(OUTDIR)/pycnocalc $(SWITCHES)
