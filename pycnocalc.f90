@@ -104,8 +104,12 @@ do i=1, function_cnt
 		call inv_len_001
 	end if
 
-	if (function_list(i)%function_name .EQ. 'rate_temp_adjust_001') then
-		call rate_temp_adjust_001
+	if (function_list(i)%function_name .EQ. 'rate_temp_adjust_002') then
+		call rate_temp_adjust_002
+	end if
+
+	if (function_list(i)%function_name .EQ. 'rate_temp_adjust_003') then
+		call rate_temp_adjust_003
 	end if
 
 end do

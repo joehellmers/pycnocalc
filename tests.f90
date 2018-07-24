@@ -527,7 +527,41 @@ subroutine inv_len_001
 
 end subroutine inv_len_001
 
-subroutine rate_temp_adjust_001
+subroutine rate_temp_adjust_002
+
+    integer         :: A1
+    integer         :: Z1
+    real(kind=dbl)  :: X1
+    integer         :: A2
+    integer         :: Z2
+    real(kind=dbl)  :: X2
+    real(kind=dbl)  :: rho
+    real(kind=dbl)  :: temp
+    real(kind=dbl)  :: adjust
+    real(kind=dbl)  :: work1, work2
+    integer         :: i
+    
+    call scr_and_log_str ('TEST: rate_temp_adjust_002:')
+
+    A1 = 12
+    Z1 = 6
+    A2 = 12
+    Z2 = 6
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+    rho = 33337662.176436048_dbl
+    temp = 39317201.231798239_dbl
+
+    adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
+
+    call scr_and_log(str='C-C 50-50 rho    = ',nbr=rho,fmt='(ES13.5)',lf=.TRUE.)
+    call scr_and_log(str='          temp   = ',nbr=temp,fmt='(ES13.5)',lf=.TRUE.)
+    call scr_and_log(str='          adjust = ',nbr=adjust,fmt='(ES13.5)',lf=.TRUE.)
+
+
+end subroutine rate_temp_adjust_002
+
+subroutine rate_temp_adjust_003
 
     integer         :: A1
     integer         :: Z1
@@ -543,57 +577,21 @@ subroutine rate_temp_adjust_001
     
     call scr_and_log_str ('TEST: rate_temp_adjust_001:')
 
-    A1 = 16
-    Z1 = 8
-    A2 = 12
-    Z2 = 6
-    X1 = 0.5_dbl
-    X2 = 0.5_dbl
-    rho = 1.3574d11
-    temp = 10000000000.0_dbl
-
-    adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
-
-    call scr_and_log(str='O-C 50-50 rho    = ',nbr=rho,fmt='(ES13.5)',lf=.TRUE.)
-    call scr_and_log(str='          temp   = ',nbr=temp,fmt='(ES13.5)',lf=.TRUE.)
-    call scr_and_log(str='          adjust = ',nbr=adjust,fmt='(ES13.5)',lf=.TRUE.)
-
-    A1 = 16
-    Z1 = 8
-    A2 = 12
-    Z2 = 6
-    X1 = 0.5_dbl
-    X2 = 0.5_dbl
-    rho = 1.3574d11
-    temp = 100000.0_dbl
-
-    adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
-
-    call scr_and_log(str='O-C 50-50 rho    = ',nbr=rho,fmt='(ES13.5)',lf=.TRUE.)
-    call scr_and_log(str='          temp   = ',nbr=temp,fmt='(ES13.5)',lf=.TRUE.)
-    call scr_and_log(str='          adjust = ',nbr=adjust,fmt='(ES13.5)',lf=.TRUE.)
-
-    A1 = 16
-    Z1 = 8
-    A2 = 12
-    Z2 = 6
-    X1 = 0.5_dbl
-    X2 = 0.5_dbl
-    rho = 1.3574d11
-    temp = 0.0_dbl
-
-    adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
-
-    call scr_and_log(str='O-C 50-50 rho    = ',nbr=rho,fmt='(ES13.5)',lf=.TRUE.)
-    call scr_and_log(str='          temp   = ',nbr=temp,fmt='(ES13.5)',lf=.TRUE.)
-    call scr_and_log(str='          adjust = ',nbr=adjust,fmt='(ES13.5)',lf=.TRUE.)
-
     A1 = 12
-    Z1 = 6
+    Z1 = 8
     A2 = 12
     Z2 = 6
     X1 = 0.5_dbl
     X2 = 0.5_dbl
+    rho = 33337662.176436048_dbl
+    temp = 39317201.231798239_dbl
+
+    adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
+
+    call scr_and_log(str='C-C 50-50 rho    = ',nbr=rho,fmt='(ES13.5)',lf=.TRUE.)
+    call scr_and_log(str='          temp   = ',nbr=temp,fmt='(ES13.5)',lf=.TRUE.)
+    call scr_and_log(str='          adjust = ',nbr=adjust,fmt='(ES13.5)',lf=.TRUE.)
+
     rho = 1.0d7
     do i = 0,200
         temp = 10_dbl**real(6.765_dbl + 0.01*i)
@@ -617,7 +615,8 @@ subroutine rate_temp_adjust_001
     call react_rate_zero_temp(rho, A1, Z1, 4.0e16_dbl, work1, work2)
     print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
 
-end subroutine rate_temp_adjust_001
+end subroutine rate_temp_adjust_003
+
 
 end module tests
 
