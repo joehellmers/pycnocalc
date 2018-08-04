@@ -11,6 +11,7 @@ module tests
 use constants
 use general_nuclear
 use rate_calc
+use rate_data
 
 implicit none
 
@@ -616,6 +617,11 @@ subroutine rate_temp_adjust_003
     print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
 
 end subroutine rate_temp_adjust_003
+
+subroutine check_enum_001
+    implicit none
+    call check_enum
+end subroutine check_enum_001
 
 
 end module tests

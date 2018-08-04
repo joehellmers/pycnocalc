@@ -9,7 +9,7 @@ module rate_calc
 use constants
 use folding_potential
 use astrophysics
-use integration
+use mathintegration
 use logging
 use general_nuclear
 
@@ -113,7 +113,7 @@ contains
             else
                 v_2fold = 0.0_dbl
             end if
-            print *,"V_2fold at ", R_pos, " = ", V_2fold            
+            !print *,"V_2fold at ", R_pos, " = ", V_2fold            
             Vnucarray(Rmax-i) = V_2fold
             Vcoulary(Rmax-i) = Vcoulomb(Z1,Z2,R_pos,radius1,radius2)
             VEcheck(Rmax-i) = V_2fold + Vcoulary(Rmax-i) - E0
@@ -223,12 +223,12 @@ contains
         rho0_A1 = rho0_2pF(A1,radius1,0.5_dbl)
         rho0_A2 = rho0_2pF(A2,radius2,0.5_dbl)
         
-        print*, "radius1 = ", radius1
-        print*, "radius2 = ", radius2
+        !print*, "radius1 = ", radius1
+        !print*, "radius2 = ", radius2
 
 !	Calculate E of "incoming" (ground state vibrating) particle coming toward lattice-bound target particle
         E0=E0_Energy(Z1_int,Z2, A1_int, A2, rho)
-        print*,'E0 =',E0
+        !print*,'E0 =',E0
 
 !	Calculate Veffective and WKB integration INSIDE turn_pts function - you should have all other input parameters at this point
 !		AND you CAN'T carry the V_arrays back into the main program because Rmax is a DERIVED paramater - and used as the array dimension
@@ -241,8 +241,8 @@ contains
         end do
 
         ln_S=ln_sigma+log(E0)+(Z1)*(Z2)*.0324_dbl*sqrt(mu/E0)
-        print*,'ln_S =',ln_S
-        print*,'log10_S =',(ln_S)*.4343
+        !print*,'ln_S =',ln_S
+        !print*,'log10_S =',(ln_S)*.4343
         Sfactor = exp(ln_S)
 	end function Sfactor
 
@@ -291,7 +291,7 @@ contains
 
         S = Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, SQMFlag)
         ln_S = log(S)
-        print *,'ln_S = ', ln_S
+        !print *,'ln_S = ', ln_S
 
         ! These lambda calculations are duplicated from the E0_Energy function.  We need to resolve this
         mn_mass=real((2*A1*A2)/(A1+A2),dbl)
@@ -300,11 +300,11 @@ contains
         lambda = exp(ln_lambda)
         ln_P0=-2.638_dbl/(sqrt(lambda))+log(rho)+log(A1*A2)-log(A1+A2)+2.0_dbl*log(Z1*Z2)+ln_S+1.75_dbl*ln_lambda+109.36_dbl
 
-        print *, 'mn_mass = ', mn_mass
-        print *, 'mn_chrg = ', mn_chrg
-        print *, 'ln_lambda = ', ln_lambda
-        print *, 'lambda = ', lambda
-        print *, 'ln_P0 = ', ln_P0
+        !print *, 'mn_mass = ', mn_mass
+        !print *, 'mn_chrg = ', mn_chrg
+        !print *, 'ln_lambda = ', ln_lambda
+        !print *, 'lambda = ', lambda
+        !print *, 'ln_P0 = ', ln_P0
 
         P0 = exp(ln_P0)
 

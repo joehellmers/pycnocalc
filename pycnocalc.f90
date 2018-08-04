@@ -48,6 +48,11 @@ do i=1, function_cnt
 		call sample_folding_potential_calcs
 	end if
 
+	if (function_list(i)%function_name .EQ. 'genCCRates') then
+		call genCCRates
+	end if
+
+
 	if (function_list(i)%function_name .EQ. 'turn_pt_001') then
 		call turn_pt_001
 	end if
@@ -110,6 +115,10 @@ do i=1, function_cnt
 
 	if (function_list(i)%function_name .EQ. 'rate_temp_adjust_003') then
 		call rate_temp_adjust_003
+	end if
+
+	if (function_list(i)%function_name .EQ. 'check_enum_001') then
+		call check_enum_001
 	end if
 
 end do

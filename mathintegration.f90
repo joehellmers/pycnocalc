@@ -1,11 +1,11 @@
 !
-!	integration.f90
+!	mathintegration.f90
 !	PycnoCalc
 !
 !	Created by hellmersjl on 5/13/08.
 !
 
-module integration
+module mathintegration
 
 use constants
 
@@ -104,4 +104,4 @@ contains
 
     end function trapezoidArray
 	
-end module integration
+end module mathintegration

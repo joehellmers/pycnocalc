@@ -8,10 +8,11 @@ OBJS = globalvars.o \
 	configuration.o \
 	utilities.o \
 	general_nuclear.o \
-	integration.o \
+	mathintegration.o \
 	system_functions.o \
 	cmdline.o \
 	rate_calc.o \
+	rate_data.o \
 	tests.o
 MODULES = globalvars.mod \
 	logging.mod \
@@ -22,10 +23,11 @@ MODULES = globalvars.mod \
 	configuration.mod \
 	utilities.mod \
 	general_nuclear.mod \
-	integration.mod \
+	mathintegration.mod \
 	system_functions.mod \
 	cmdline.mod \
 	rate_calc.mod \
+	rate_data.mod \
 	tests.mod
 SWITCHES = -ffree-line-length-none -O3 -fopenmp
 OUTDIR = ~/bin
@@ -62,22 +64,25 @@ utilities.mod: constants.mod
 configuration.mod: constants.mod logging.mod utilities.mod globalvars.mod
 	$(F90COMP) -c configuration.f90 $(SWITCHES)
 
-general_nuclear.mod: constants.mod integration.mod
+general_nuclear.mod: constants.mod mathintegration.mod
 	$(F90COMP) -c general_nuclear.f90 $(SWITCHES)
 
-system_functions.mod: constants.mod astrophysics.mod logging.mod folding_potential.mod configuration.mod utilities.mod general_nuclear.mod integration.mod
+system_functions.mod: constants.mod astrophysics.mod logging.mod folding_potential.mod configuration.mod utilities.mod general_nuclear.mod mathintegration.mod rate_calc.mod
 	$(F90COMP) -c system_functions.f90 $(SWITCHES)
 
-integration.mod: constants.mod
-	$(F90COMP) -c integration.f90 $(SWITCHES)
+mathintegration.mod: constants.mod
+	$(F90COMP) -c mathintegration.f90 $(SWITCHES)
+
+rate_data.mod: constants.mod
+	$(F90COMP) -c rate_data.f90 $(SWITCHES)
 
 cmdline.mod:
 	$(F90COMP) -c cmdline.f90 $(SWITCHES)
 
-rate_calc.mod: constants.mod folding_potential.mod astrophysics.mod integration.mod logging.mod general_nuclear.mod
+rate_calc.mod: constants.mod folding_potential.mod astrophysics.mod mathintegration.mod logging.mod general_nuclear.mod
 	$(F90COMP) -c rate_calc.f90 $(SWITCHES)
 
-tests.mod: constants.mod rate_calc.mod general_nuclear.mod logging.mod
+tests.mod: constants.mod rate_calc.mod general_nuclear.mod logging.mod rate_data.mod
 	$(F90COMP) -c tests.f90 $(SWITCHES)
 
 dist:

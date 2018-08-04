@@ -149,7 +149,7 @@ use configuration
 use utilities
 use logging
 use general_nuclear
-use integration
+use mathintegration
 
 implicit none
 
@@ -265,6 +265,59 @@ close(unit)
 
 end subroutine sample_folding_potential_calcs
 
-	
+!******************************************
+!
+! Generate C-C rates for a range of densities
+!
+!******************************************
+
+
+subroutine genCCRates
+
+use rate_calc
+
+    integer         :: A1
+    real(kind=dbl)  :: A2
+    integer         :: Z1
+    real(kind=dbl)  :: Z2
+    real(kind=dbl)  :: initial_rho
+    real(kind=dbl)  :: final_rho
+    real(kind=dbl)  :: current_rho 
+    real(kind=dbl)  :: delta_rho
+    real(kind=dbl)  :: Rstep = 0.1 _dbl
+    integer         :: partition = 15
+    integer         :: nucIntType = 1
+    integer         :: i
+    real(kind=dbl)  :: rate
+    integer         :: N = 100 ! Number of intervals
+    
+    call scr_and_log_str ('CALCULATION: genCCRates:')
+
+    A1 = 12
+    A2 = 12.0_dbl
+    Z1 = 6
+    Z2 = 6.0_dbl
+
+    initial_rho = 1000000000.0_dbl
+    final_rho = 100000000000.0_dbl
+    delta_rho = (final_rho-initial_rho)/N
+    
+
+    call scr_and_log(str='nuclei,nn-interation,density,pycno_rate',fmt='(a)',lf=.TRUE.)
+    do i = 1, N+1
+        current_rho = initial_rho + delta_rho*(i-1)
+        call scr_and_log(str='C-C,',fmt='(a)',lf=.FALSE.)
+        if (nucIntType .eq. 1) then
+            call scr_and_log(str='SAOPAULO,',fmt='(a)',lf=.FALSE.)
+        else
+            call scr_and_log(str='M3Y,',fmt='(a)',lf=.FALSE.)
+        end if
+        call scr_and_log(str='',nbr=current_rho,fmt='(ES13.5)',lf=.FALSE.)
+        rate = pycnoRate(A1, A2, Z1, Z2, current_rho, Rstep, partition, nucIntType, .FALSE.)
+        call scr_and_log(str=',',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+    end do
+            
+end subroutine genCCRates	
+
 end module system_functions
 

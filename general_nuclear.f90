@@ -106,7 +106,7 @@ contains
 
 	real(kind=dbl) function rho0_2pF(A, radius, diffuseness)
 
-	use integration
+	use mathintegration
 
 	implicit none
 	
