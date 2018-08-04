@@ -8,6 +8,7 @@
 module system_functions
 
 use constants
+use configuration
 
 implicit none
 
@@ -145,7 +146,6 @@ subroutine sample_folding_potential_calcs
 
 use constants
 use folding_potential
-use configuration
 use utilities
 use logging
 use general_nuclear
@@ -161,11 +161,11 @@ real(kind=dbl) :: this_vfold
 real(kind=dbl) :: int_result
 
 real(kind=dbl)		:: min_r, max_r, delta_r
-integer			:: A1, A2, Z1, Z2, n
+integer			    :: A1, A2, Z1, Z2, n
 real(kind=dbl)		:: diffuse1, diffuse2
 real(kind=dbl)		:: rho0_1, rho0_2
 real(kind=dbl)		:: tot_radius1, tot_radius2
-integer			:: unit,ierror
+integer			    :: unit,ierror
 character(len=1)	:: delimiter
 character(len=80)	:: outputfile
 real(kind=dbl) 		:: start, finish, tot_time
@@ -287,9 +287,15 @@ use rate_calc
     real(kind=dbl)  :: Rstep = 0.1 _dbl
     integer         :: partition = 15
     integer         :: nucIntType = 1
+    character(len=1) :: nucIntTypeStr
     integer         :: i
     real(kind=dbl)  :: rate
     integer         :: N = 100 ! Number of intervals
+
+    character(len=1)	:: delimiter
+    character(len=120)	:: outputfile
+    integer			    :: unit,ierror
+    character(len=20)   :: nucIntTypeDesc
     
     call scr_and_log_str ('CALCULATION: genCCRates:')
 
@@ -302,18 +308,38 @@ use rate_calc
     final_rho = 100000000000.0_dbl
     delta_rho = (final_rho-initial_rho)/N
     
+    nucIntTypeStr = getParamValue('genCCRates','nucIntType')
+    read(nucIntTypeStr,*) nucIntType
+    delimiter	= getParamValue('genCCRates','delimiter')
+    outputfile	= getParamValue('genCCRates','outputfile')
 
+    if (nucIntType .eq. 1) then
+        nucIntTypeDesc = 'SAOPAULO'
+    else
+        nucIntTypeDesc = 'M3Y'
+    end if
+    
+    open(unit, file='./' // results_dir // '/' // trim(outputfile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    if (ierror .NE. 0) then
+	    print *, 'Error opening data file for output'
+	    print *, ierror
+	    stop
+    end if
+
+
+    write(unit,*) 'nuclei,nn-interation,density,pycno_rate'
     call scr_and_log(str='nuclei,nn-interation,density,pycno_rate',fmt='(a)',lf=.TRUE.)
     do i = 1, N+1
         current_rho = initial_rho + delta_rho*(i-1)
         call scr_and_log(str='C-C,',fmt='(a)',lf=.FALSE.)
-        if (nucIntType .eq. 1) then
+        if (nucIntType .eq. 1) then        
             call scr_and_log(str='SAOPAULO,',fmt='(a)',lf=.FALSE.)
         else
             call scr_and_log(str='M3Y,',fmt='(a)',lf=.FALSE.)
         end if
         call scr_and_log(str='',nbr=current_rho,fmt='(ES13.5)',lf=.FALSE.)
         rate = pycnoRate(A1, A2, Z1, Z2, current_rho, Rstep, partition, nucIntType, .FALSE.)
+        write (unit,*) "C-C",delimiter,nucIntTypeDesc,delimiter,current_rho,delimiter,rate
         call scr_and_log(str=',',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
     end do
             

@@ -46,10 +46,10 @@ subroutine turn_pt_001
 
     call scr_and_log_str ('TEST: trun_pt_001:')
 
-    A1 = 56
-    A2 = 40.0_dbl
-    Z1 = 26
-    Z2 = 16.0_dbl
+    A1 = 12
+    A2 = 12.0_dbl
+    Z1 = 6
+    Z2 = 6.0_dbl
 
     mu = reduced_mass(A1, Z1, A2, Z2)
     radius1 = nuclear_radius(real(A1,dbl),.FALSE.)
@@ -57,7 +57,7 @@ subroutine turn_pt_001
     rho0_A1 = rho0_2pF(real(A1,dbl),radius1,0.5_dbl)
     rho0_A2 = rho0_2pF(A2,radius2,0.5_dbl)
 
-    rho = 5500000000000.0029_dbl
+    rho = 1000000000.0_dbl
     E0 = E0_Energy(Z1,Z2,A1,A2,rho)
 
     ! turn_pt(R,      Rstep  ,Rmax   ,E0,mu,A1,A2,SQM_A2 , Z1, Z2, radius1, radius2, rho0_A1, rho0_A2, L, partition, turn1,turn2,WKB)
@@ -87,11 +87,11 @@ subroutine E0_Energy_001
 
     call scr_and_log_str ('TEST: E0_Energy_001:')
 
-    A1 = 56
-    A2 = 40.0_dbl
-    Z1 = 26
-    Z2 = 26.0_dbl
-    rho = 5500000000000.0029_dbl
+    A1 = 12
+    A2 = 12.0_dbl
+    Z1 = 6
+    Z2 = 6.0_dbl
+    rho = 1000000000.0_dbl
 
     E0 = E0_Energy(Z1,Z2, A1, A2, rho)
 
@@ -116,18 +116,18 @@ subroutine Sfactor_001
     real(kind=dbl)  :: Rstep = 1.0_dbl
     real(kind=dbl)  :: SQM_A2 = 0.0_dbl
     integer :: partition = 15
-    integer :: nucIntType = 1
+    integer :: nucIntType = 2
 
     real(kind=dbl)  ::  S
 
     call scr_and_log_str ('TEST: Sfactor_001:')
 
-    A1 = 56
-    A2 = 40_dbl
-    Z1 = 26
-    Z2 = 26_dbl
+    A1 = 12
+    A2 = 12.0_dbl
+    Z1 = 8
+    Z2 = 8.0_dbl
 
-    rho = 5500000000000.0029_dbl
+    rho = 1000000000.0_dbl
 
     S = Sfactor(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE.)
 
@@ -149,18 +149,18 @@ subroutine pycnoRate_001
     real(kind=dbl)  ::  rho
     real(kind=dbl)  ::  Rstep = 1.0_dbl
     integer         :: partition = 15
-    integer         :: nucIntType = 1
+    integer         :: nucIntType = 2
 
     real(kind=dbl)  ::  rate
 
     call scr_and_log_str ('TEST: pycnoRate_001:')
 
-    A1 = 56
-    A2 = 40.0_dbl
-    Z1 = 26
-    Z2 = 26.0_dbl
+    A1 = 12
+    A2 = 12.0_dbl
+    Z1 = 6
+    Z2 = 6.0_dbl
 
-    rho = 550000000000000.0029_dbl
+    rho = 1000000000.0_dbl
 
     rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE.)
 

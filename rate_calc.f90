@@ -70,7 +70,8 @@ contains
         integer         :: new_Rmax                  ! new Rmax based upon cutoff
         logical         :: SQMFlag = .FALSE.         ! Used internally
 
-        integer         ::v_fold_threshold_flg, v_fold_first_time
+        logical         :: v_fold_threshold_flg
+        logical         :: v_fold_first_time
         real(kind=dbl)  :: v_fold_max
         real(kind=dbl)  :: v_fold_min
 
@@ -82,8 +83,8 @@ contains
 
         v_fold_min = 1e-10
         v_fold_max = 0
-        v_fold_threshold_flg = 0
-        v_fold_first_time = 1
+        v_fold_threshold_flg = .false.
+        v_fold_first_time = .true.
 
         i = 0
         turn_counter = 0
@@ -95,18 +96,20 @@ contains
 !		to the starting separation distance of R ...   you are calculating VEcheck array IN REVERSE, starting where nuclei are touching (Rpos = 0) and then moving incoming
 !		particle backward to Rpos = R...  So, for my visual sake, we are filling in VEcheck array from right to left (starting at Rmax and moving left to 0)
 
+        !print *,"r,TotEnergy"
         do i = 0,Rmax
             R_pos = i * Rstep
-            if (v_fold_threshold_flg .EQ. 0) then 
+            if (.not. v_fold_threshold_flg) then 
                 V_2fold = vfold_spherically_symmetric (R_pos, A1, A2, Z1, Z2, partition,0.5_dbl,0.5_dbl,rho0_A1, rho0_A2, radius1, radius2, E0, nucIntType, SQMFlag)
+                !print *, V_2fold
                 if (v_fold_max .LT. abs(v_2fold)) then
                     v_fold_max = abs(v_2fold)
                 end if
-                if (v_fold_first_time .EQ. 1) then
-                    v_fold_first_time = 0
+                if (v_fold_first_time) then
+                    v_fold_first_time = .false.
                 else
                     if ((abs(v_2fold)/v_fold_max) .LT. v_fold_min) then
-                        v_fold_threshold_flg = 1			
+                        v_fold_threshold_flg = .true.			
                         v_2fold = 0.0_dbl
                     end if
                 end if  
@@ -117,6 +120,8 @@ contains
             Vnucarray(Rmax-i) = V_2fold
             Vcoulary(Rmax-i) = Vcoulomb(Z1,Z2,R_pos,radius1,radius2)
             VEcheck(Rmax-i) = V_2fold + Vcoulary(Rmax-i) - E0
+            !print *, Rmax-i, "Electrostatic ", Vcoulary(Rmax-i)
+            !print *,R_pos, ",", VEcheck(Rmax-i)
         end do
 	  
 !	now check the VEcheck array for turning point(s) - there may be more than one - especially if the total energy of the incoming particle starts out high (greater than the potential)
@@ -144,28 +149,41 @@ contains
 !			(Veff[R,E] - E) is the VEcheck array.
 !			See notes for "Integrand - 24 April 2008"
 
-        if (turn2.lt.0) then
+        !if (turn2.lt.0) then
         !	THERE MAY ONLY BE ONE TURNING POINT - STILL NEED TO INTEGRATE THROUGH BARRIER
-            do i = 0,Rmax
-                if (i.gt.turn1) then
-                    Integrand(i) = 0.0
-                else
-                    Integrand(i) = .01432*sqrt(mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
-                end if
-            end do		  	  
-            WKB = trapezoidArray(Rmax,turn1,Integrand,Rstep)	
-        else	  
+        !    do i = 0,Rmax
+        !        if (i.gt.turn1) then
+        !            Integrand(i) = 0.0
+        !        else
+        !            Integrand(i) = .01432*sqrt(mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
+        !        end if
+        !        !print *, Integrand(i),VEcheck(i)
+        !    end do		  	  
+        !    WKB = trapezoidArray(Rmax,turn1,Integrand,Rstep)	
+        !else	  
         !	THERE ARE USUALLY TWO TURNING POINTS WHEN USING SALPETER AND VAN HORN... NEED TO INTEGRATE THROUGH BARRIER
-            do i = 0,Rmax
-                if ((i.le.turn1).or.(i.gt.turn2)) then
-                    Integrand(i) = 0.0
-                else
-                    Integrand(i) = .01432*sqrt(mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
-                end if
-            end do	  
-            WKB = trapezoidArray(Rmax,turn2,Integrand,Rstep)
-        end if
+        !    do i = 0,Rmax
+        !        if ((i.le.turn1).or.(i.gt.turn2)) then
+        !            Integrand(i) = 0.0_dbl
+        !        else
+        !            Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
+        !        end if
+                !print *, Integrand(i),VEcheck(i)
+        !    end do	  
+            !print *,"mu=",mu
+        !    WKB = trapezoidArray(Rmax,turn2,Integrand,Rstep)
+        !end if
 
+        ! New, simpler way, just include positive energies
+        do i = 0, Rmax
+            if (VEcheck(i) .gt. 0) then
+                Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))
+            else
+                Integrand(i) = 0.0_dbl
+            end if
+        end do
+        WKB = trapezoidArray(Rmax,Rmax,Integrand,Rstep)
+        
     end subroutine turn_pt
 
 

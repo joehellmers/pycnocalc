@@ -92,9 +92,10 @@ all: pycnocalc dist
 
 
 clean:
-	rm *.mod
-	rm *.o
-	rm $(OUTDIR)/pycnocalc
+	rm -rf *.mod
+	rm -rf *.o
+	rm -rf .DS_Store
+	rm -rf $(OUTDIR)/pycnocalc
 
 clean_local:
 	rm *.mod

@@ -24,7 +24,7 @@ integer, parameter :: max_function_cnt = 25
 integer, parameter :: max_param_cnt = 100
 integer, parameter :: max_function_name_size = 20
 integer, parameter :: max_param_name_size = 20
-integer, parameter :: max_param_value_size = 20
+integer, parameter :: max_param_value_size = 30
 
 type :: function_param_type
 	character (len=max_param_name_size) :: param_name				!name of parameter

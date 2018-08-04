@@ -54,32 +54,34 @@ contains
 	logical, intent(in), optional :: lf
 
     integer :: unit, ierror
-	character(len=3) :: c_advance
+	character(len=:),allocatable :: c_advance
 
 	unit = 25
 
 	if (present(lf)) then
 		if (lf) then
-			c_advance = 'YES'
+		    allocate(character(3)::c_advance)
+			c_advance = 'yes'
 		else
-			c_advance = 'NO'
+		    allocate(character(2)::c_advance)
+			c_advance = 'no'
 		end if
 	else
-		c_advance = 'YES'
+		c_advance = 'yes'
 	end if
 
 	open(unit, file=full_log_file, status='OLD', ACTION='WRITE', iostat=ierror, access='APPEND')
 
 	if (present(str) .and. present(nbr)) then
-		write (unit,'(a)',advance='NO') str
+		write (unit,fmt='(a)',advance='no') str
 		write (unit,fmt,advance=c_advance) nbr
-		write(*, '(a)', advance='NO') str
+		write(*, fmt='(a)', advance='no') str
 		write(*, fmt, advance=c_advance) nbr
 	else
 	    if (present(str) .and. present(intval)) then
-		    write (unit,'(a)',advance='NO') str
+		    write (unit,fmt='(a)',advance='no') str
 		    write (unit,fmt,advance=c_advance) intval
-		    write(*, '(a)', advance='NO') str
+		    write(*, fmt='(a)', advance='no') str
 		    write(*, fmt, advance=c_advance) intval
         else
 		    if (present(str)) then
@@ -94,7 +96,7 @@ contains
                         write (unit,fmt,advance=c_advance) intval
                         write(*, fmt,advance=c_advance) intval
                     else
-				        write (unit,'(a)',advance=c_advance) 'ERROR ----> No String or Number value given to Logging:scr_and_log'
+				        write (unit,fmt='(a)',advance=c_advance) 'ERROR ----> No String or Number value given to Logging:scr_and_log'
 				        write(*, fmt, advance=c_advance) 'ERROR ----> No String or Number value given to Logging:scr_and_log'
                     end if
 			    end if
@@ -103,7 +105,6 @@ contains
     end if
 	
 	close(unit)
-
 			
 	end subroutine scr_and_log
 
