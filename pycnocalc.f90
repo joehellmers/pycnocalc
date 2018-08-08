@@ -52,6 +52,10 @@ do i=1, function_cnt
 		call genCCRates
 	end if
 
+	if (function_list(i)%function_name .EQ. 'graphM3Y') then
+		call graphM3Y
+	end if
+
 
 	if (function_list(i)%function_name .EQ. 'turn_pt_001') then
 		call turn_pt_001

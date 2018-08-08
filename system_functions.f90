@@ -345,5 +345,22 @@ use rate_calc
             
 end subroutine genCCRates	
 
+subroutine graphM3Y
+
+    use nucleon_interactions
+    
+    real(kind=dbl)  :: delta_r, r
+    integer         :: i
+    integer         :: N
+    
+    delta_r = 0.1_dbl
+    N = 40
+    do i = 0, N
+        r = i*delta_r
+        print *, r , ",", nucleonM3Y(r,0.01_dbl)
+    end do
+
+end subroutine
+
 end module system_functions
 
