@@ -11,7 +11,6 @@ module tests
 use constants
 use general_nuclear
 use rate_calc
-use rate_data
 
 implicit none
 
@@ -618,11 +617,140 @@ subroutine rate_temp_adjust_003
 
 end subroutine rate_temp_adjust_003
 
-subroutine check_enum_001
-    implicit none
-    call check_enum
-end subroutine check_enum_001
+subroutine tridag_001
 
+    use mathlinearalg
+    
+	integer, parameter :: NP=20
+	integer                         :: k,n
+	real(kind=dbl), dimension(NP)   :: diag,superd,subd,rhs,u
+	character                       :: txt*3
+
+    call scr_and_log_str ('TEST: tridag_001:')
+
+	open(7,file='testdata/matrx2.dat',status='old')
+	do
+		read(7,'(a3)') txt
+		if (txt == 'END') exit
+		read(7,*)
+		read(7,*) n
+		read(7,*)
+		read(7,*) (diag(k), k=1,n)
+		read(7,*)
+		read(7,*) (superd(k), k=1,n-1)
+		read(7,*)
+		read(7,*) (subd(k), k=2,n)
+		read(7,*)
+		read(7,*) (rhs(k), k=1,n)
+!	carry out solution
+!	use tridag_par since it also tests tridag_ser!
+		call tridag_par(subd(2:n),diag(1:n), &
+			superd(1:n-1),rhs(1:n),u(1:n))
+		write(*,*) 'The solution vector is:'
+		write(*,'(1x,6f12.6)') (u(k), k=1,n)
+!	test solution
+		write(*,*) '(matrix)*(sol''n vector) should be:'
+		write(*,'(1x,6f12.6)') (rhs(k), k=1,n)
+		write(*,*) 'Actual result is:'
+		rhs(1)=diag(1)*u(1) + superd(1)*u(2)
+		rhs(2:n-1)=subd(2:n-1)*u(1:n-2) + diag(2:n-1)*u(2:n-1) +&
+					superd(2:n-1)*u(3:n)
+		rhs(n)=subd(n)*u(n-1) + diag(n)*u(n)
+		write(*,'(1x,6f12.6)') (rhs(k), k=1,n)
+		write(*,*) '***********************************'
+		write(*,*) 'Next problem...'
+	end do
+	close(7)
+
+end subroutine tridag_001
+
+
+subroutine spline_001
+    
+    use mathutils
+    use mathinterpolation
+    
+    implicit none
+    
+	integer, parameter              :: N=40
+	integer                         :: i
+	real(kind=dbl)                  :: yp1,ypn
+	real(kind=dbl), dimension(N)    :: x,y,y2
+
+    call scr_and_log_str ('TEST: spline_001:')
+	
+	write(*,*) 'Second-derivatives for sin(x) from 0 to PI'
+!	generate array for interpolation
+	! x(1:N) = arth_d(1.0_dbl,1.0_dbl,N)*PI/N
+	do i = 1,N
+	    x(i) = (i-1)*2.0_dbl*PI/(N-1)
+	end do
+	y(:) = sin(x(:))
+!	calculate 2nd derivative with SPLINE
+	yp1 = cos(x(1))
+	ypn = cos(x(N))
+	call spline(x,y,yp1,ypn,y2)
+!	test result
+	write(*,'(t19,a,t35,a)') 'spline','actual'
+	write(*,'(t6,a,t17,a,t33,a)') 'angle','2nd deriv','2nd deriv'
+	do i = 1,N
+		write(*,'(1x,f8.2,2f16.6)') x(i),y2(i),-sin(x(i))
+	end do
+
+end subroutine spline_001
+
+subroutine spline_002
+
+    use mathinterpolation
+
+    implicit none
+
+	integer, parameter :: NP=40
+	integer :: i,nfunc
+	real(kind=dbl)                  :: f,x,y,yp1,ypn
+	real(kind=dbl), dimension(NP)   :: xa,ya,y2
+	
+	do nfunc=1,2
+		if (nfunc == 1) then
+			write(*,*) 'Sine function from 0 to 2*PI'
+			!xa(1:NP)=arth(1,1,NP)*PI/NP
+            do i = 1,NP
+                xa(i) = (i-1)*2.0_dbl*PI/(NP-1) 
+            end do
+			ya(:)=sin(xa(:))
+			yp1=cos(xa(1))
+			ypn=cos(xa(NP))
+		else if (nfunc == 2) then
+			write(*,*) 'Exponential function from 0 to 1'
+			!xa(1:NP)=arth(1.0_sp,1.0_sp,NP)/NP
+            do i = 1,NP
+                xa(i) = (i-1)*1.0/(NP-1) 
+            end do
+			ya(:)=exp(xa(:))
+			yp1=exp(xa(1))
+			ypn=exp(xa(NP))
+		else
+			stop
+		end if
+!	call SPLINE to get second derivatives
+		call spline(xa,ya,yp1,ypn,y2)
+!	call SPLINT for interpolations
+		write(*,'(1x,t10,a1,t20,a4,t28,a13)') 'x','f(x)','interpolation'
+		do i=1,10
+			if (nfunc == 1) then
+				x=(-0.05_dbl+i/10.0_dbl)*2.0*PI
+				f=sin(x)
+			else if (nfunc == 2) then
+				x=-0.05_dbl+i/10.0_dbl
+				f=exp(x)
+			end if
+			y=splint(xa,ya,y2,x)
+			write(*,'(1x,3f18.12)') x,f,y
+		end do
+		write(*,*) '***********************************'
+	end do
+
+end subroutine spline_002
 
 end module tests
 

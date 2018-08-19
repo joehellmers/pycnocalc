@@ -56,6 +56,9 @@ do i=1, function_cnt
 		call graphM3Y
 	end if
 
+	if (function_list(i)%function_name .EQ. 'genPycnoRateSplines') then
+		call genPycnoRateSplines
+	end if
 
 	if (function_list(i)%function_name .EQ. 'turn_pt_001') then
 		call turn_pt_001
@@ -121,8 +124,16 @@ do i=1, function_cnt
 		call rate_temp_adjust_003
 	end if
 
-	if (function_list(i)%function_name .EQ. 'check_enum_001') then
-		call check_enum_001
+	if (function_list(i)%function_name .EQ. 'tridag_001') then
+		call tridag_001
+	end if
+
+	if (function_list(i)%function_name .EQ. 'spline_001') then
+		call spline_001
+	end if
+
+	if (function_list(i)%function_name .EQ. 'spline_002') then
+		call spline_002
 	end if
 
 end do

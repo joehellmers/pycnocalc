@@ -362,5 +362,65 @@ subroutine graphM3Y
 
 end subroutine
 
+subroutine genPycnoRateSplines
+    
+    use logging
+
+    integer, parameter              :: N = 101      
+    real(kind=dbl),  dimension(N)   :: densities, saopaulorates, m3yrates
+    integer			                :: unit,ierror
+    real(kind=dbl)                  :: real_ierror
+    character(:), allocatable       :: ratefile        
+    logical                         :: firstLine = .true.
+    real(kind=dbl)                  :: density, saopaulorate, m3yrate
+    integer                         :: counter = 0
+    integer                         :: i
+        
+! First we need to load the arrays
+
+    allocate(character(13) :: ratefile)
+    ratefile = 'researchdata/combined_rates.csv'
+    unit = 199
+    open (unit,file=ratefile,status='OLD',action='READ', iostat=ierror)
+	if (ierror .NE. 0) then
+			call scr_and_log_str('Cannot open combined rates file')
+	        call scr_and_log_str('File: ',lf=.FALSE.)	
+			call scr_and_log_str(ratefile)
+			call scr_and_log_str('Error: ',lf=.FALSE.)
+			real_ierror =real(ierror)
+			call scr_and_log(nbr=real_ierror,fmt='(f5.0)')
+			stop
+	end if
+
+	readloop: Do
+	
+        if (firstLine) then
+		    firstLine = .false.
+		    read(unit,*,iostat=ierror) ! Ignore the headers in the first line
+        end if
+        read(unit,*,iostat=ierror) density, saopaulorate, m3yrate
+	    
+	    if (ierror .EQ. -1) then
+			! End of file
+			exit
+		end if
+		
+		if (ierror .GT. 0) then
+				print *, ierror
+				call scr_and_log_str('Error reading combined rates file: ' // ratefile)
+				stop
+		end if
+		counter = counter + 1
+		densities(counter) = density
+		saopaulorates(counter) = saopaulorate
+		m3yrates(counter) = m3yrate
+	end do readloop
+
+    do i = 1, N
+        print *, i, densities(i), saopaulorates(i), m3yrates(i)
+    end do
+    
+end subroutine 
+
 end module system_functions
 
