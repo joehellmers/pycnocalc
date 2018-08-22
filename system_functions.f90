@@ -365,25 +365,37 @@ end subroutine
 subroutine genPycnoRateSplines
     
     use logging
+    use mathinterpolation
+    use rate_calc
 
     integer, parameter              :: N = 101      
-    real(kind=dbl),  dimension(N)   :: densities, saopaulorates, m3yrates
+    real(kind=dbl),  dimension(N)   :: densities, rates, rate_2nd_derivs
     integer			                :: unit,ierror
     real(kind=dbl)                  :: real_ierror
     character(:), allocatable       :: ratefile        
     logical                         :: firstLine = .true.
-    real(kind=dbl)                  :: density, saopaulorate, m3yrate
+    real(kind=dbl)                  :: density, rate, rate_prime1, rate_primeN
     integer                         :: counter = 0
     integer                         :: i
-        
+    character(:), allocatable       :: species, nninteraction
+    real(kind=dbl)                  :: thisrate, thisdensity
+ 
+    integer         :: A1
+    real(kind=dbl)  :: A2
+    integer         :: Z1
+    real(kind=dbl)  :: Z2
+    real(kind=dbl)  :: Rstep = 0.1 _dbl
+    integer         :: partition = 15
+    integer         :: nucIntType = 2
+
 ! First we need to load the arrays
 
     allocate(character(13) :: ratefile)
-    ratefile = 'researchdata/combined_rates.csv'
+    ratefile = 'researchdata/pycnorates_cc_m3y.csv'
     unit = 199
     open (unit,file=ratefile,status='OLD',action='READ', iostat=ierror)
 	if (ierror .NE. 0) then
-			call scr_and_log_str('Cannot open combined rates file')
+			call scr_and_log_str('Cannot open rate file')
 	        call scr_and_log_str('File: ',lf=.FALSE.)	
 			call scr_and_log_str(ratefile)
 			call scr_and_log_str('Error: ',lf=.FALSE.)
@@ -398,7 +410,7 @@ subroutine genPycnoRateSplines
 		    firstLine = .false.
 		    read(unit,*,iostat=ierror) ! Ignore the headers in the first line
         end if
-        read(unit,*,iostat=ierror) density, saopaulorate, m3yrate
+        read(unit,*,iostat=ierror) species, nninteraction, density, rate
 	    
 	    if (ierror .EQ. -1) then
 			! End of file
@@ -407,18 +419,39 @@ subroutine genPycnoRateSplines
 		
 		if (ierror .GT. 0) then
 				print *, ierror
-				call scr_and_log_str('Error reading combined rates file: ' // ratefile)
+				call scr_and_log_str('Error reading rate file: ' // ratefile)
 				stop
 		end if
 		counter = counter + 1
 		densities(counter) = density
-		saopaulorates(counter) = saopaulorate
-		m3yrates(counter) = m3yrate
+		rates(counter) = rate
 	end do readloop
 
-    do i = 1, N
-        print *, i, densities(i), saopaulorates(i), m3yrates(i)
+    close(unit)
+
+! Now we need to calculate the spline (i.e. 2nd Derivates)
+
+    rate_prime1 = (rates(2)-rates(1))/(densities(2)-densities(1))
+    rate_primeN = (rates(N)-rates(N-1))/(densities(N)-densities(N-1))
+	call spline(densities,rates,rate_prime1,rate_primeN,rate_2nd_derivs)
+
+! For Sanity Check calculate the values at the "known" densities and rates
+
+	do i = 1, N
+	    thisrate=splint(densities,rates,rate_2nd_derivs,densities(i))
+	    print *, densities(i), rates(i), thisrate
     end do
+
+! Do some spot checking
+    
+    A1 = 12
+    A2 = 12.0_dbl
+    Z1 = 6
+    Z2 = 6.0_dbl
+
+    thisdensity = 74260000000.000000_dbl + ((75250000000.000000_dbl - 74260000000.000000_dbl)/3.0_dbl)
+    thisrate = splint(densities,rates,rate_2nd_derivs,thisdensity)
+    print *, thisdensity, thisrate, pycnoRate(A1, A2, Z1, Z2, thisdensity, Rstep, partition, nucIntType, .FALSE.)
     
 end subroutine 
 

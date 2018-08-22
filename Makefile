@@ -71,7 +71,7 @@ configuration.mod: constants.mod logging.mod utilities.mod globalvars.mod
 general_nuclear.mod: constants.mod mathintegration.mod
 	$(F90COMP) -c general_nuclear.f90 $(SWITCHES)
 
-system_functions.mod: constants.mod astrophysics.mod logging.mod folding_potential.mod configuration.mod utilities.mod general_nuclear.mod mathintegration.mod rate_calc.mod
+system_functions.mod: constants.mod astrophysics.mod logging.mod folding_potential.mod configuration.mod utilities.mod general_nuclear.mod mathintegration.mod rate_calc.mod mathinterpolation.mod
 	$(F90COMP) -c system_functions.f90 $(SWITCHES)
 
 mathutils.mod: constants.mod
@@ -80,7 +80,7 @@ mathutils.mod: constants.mod
 mathlinearalg.mod: constants.mod
 	$(F90COMP) -c mathlinearalg.f90 $(SWITCHES)
 
-mathinterpolation.mod: constants.mod
+mathinterpolation.mod: constants.mod mathlinearalg.mod mathutils.mod
 	$(F90COMP) -c mathinterpolation.f90 $(SWITCHES)
 
 mathintegration.mod: constants.mod
@@ -92,7 +92,7 @@ cmdline.mod:
 rate_calc.mod: constants.mod folding_potential.mod astrophysics.mod mathintegration.mod logging.mod general_nuclear.mod
 	$(F90COMP) -c rate_calc.f90 $(SWITCHES)
 
-tests.mod: constants.mod rate_calc.mod general_nuclear.mod logging.mod mathlinearalg.mod
+tests.mod: constants.mod rate_calc.mod general_nuclear.mod logging.mod mathlinearalg.mod mathinterpolation.mod
 	$(F90COMP) -c tests.f90 $(SWITCHES)
 
 dist:
