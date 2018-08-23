@@ -193,7 +193,7 @@ contains
                 exit
             end if
         end do
-        write(*,*) Integrand
+        ! write(*,*) Integrand
         WKB = trapezoidArray(Rmax,Rmax,Integrand,Rstep)
         
     end subroutine turn_pt
