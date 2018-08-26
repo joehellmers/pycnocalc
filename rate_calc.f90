@@ -175,24 +175,24 @@ contains
         !end if
 
         ! New, simpler way, just include positive energies
-        !do i = 0, Rmax
-        !    if (VEcheck(i) .gt. 0) then
-        !
-        !        Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))
-        !    else
-        !        Integrand(i) = 0.0_dbl
-        !    end if
-        !end do
-
-        ! New, even simpler way, just integrate to first turning point
-        Integrand = 0.0_dbl
         do i = 0, Rmax
             if (VEcheck(i) .gt. 0) then
+        
                 Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))
             else
-                exit
+                Integrand(i) = 0.0_dbl
             end if
         end do
+
+        ! New, even simpler way, just integrate to first turning point
+        !Integrand = 0.0_dbl
+        !do i = 0, Rmax
+        !    if (VEcheck(i) .gt. 0) then
+        !        Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))
+        !    else
+        !        exit
+        !    end if
+        !end do
         ! write(*,*) Integrand
         WKB = trapezoidArray(Rmax,Rmax,Integrand,Rstep)
         

@@ -11,19 +11,33 @@ module nucleon_interactions
 use constants
 
 contains
-	real(kind=dbl) function nucleonM3Y (r,delta_0)
+	real(kind=dbl) function nucleonM3Y (r, delta_0, inExcludeCore)
 	use vectors
 	implicit none
 	
-	real(kind=dbl) :: r
-	real(kind=dbl) :: delta_0
-	
-	if (r < delta_0) then
-		nucleonM3Y = (7999.0_dbl*exp(-4.0_dbl*delta_0)/(4.0_dbl*delta_0) - 2134.0_dbl*exp(-2.5_dbl*delta_0)/(2.5_dbl*delta_0)) - 262.0_dbl
-	else    
-	    nucleonM3Y = (7999.0_dbl*exp(-4.0_dbl*r)/(4.0_dbl*r) - 2134.0_dbl*exp(-2.5_dbl*r)/(2.5_dbl*r)) 	
-	end if
+	real(kind=dbl), intent(in)      :: r
+	real(kind=dbl), intent(in)      :: delta_0
+	logical, intent(in), optional   :: inExcludeCore
 
+	real(kind=dbl), parameter   :: core_cutoff = 0.56754316782759184345508174374117515981197357177734375_dbl
+    logical                     :: excludeCore = .false. 
+	
+	
+	if (present(inExcludeCore)) then
+        excludeCore = inExcludeCore
+    end if	     
+	
+	if (excludeCore .and. (r .lt. core_cutoff)) then
+	    nucleonM3Y = 0.0_dbl
+	else
+        if (r < delta_0) then
+            nucleonM3Y = (7999.0_dbl*exp(-4.0_dbl*delta_0)/(4.0_dbl*delta_0) - 2134.0_dbl*exp(-2.5_dbl*delta_0)/(2.5_dbl*delta_0)) - 262.0_dbl
+            !nucleonM3Y = - 262.0_dbl
+        else    
+            nucleonM3Y = (7999.0_dbl*exp(-4.0_dbl*r)/(4.0_dbl*r) - 2134.0_dbl*exp(-2.5_dbl*r)/(2.5_dbl*r)) 	
+        end if
+    end if
+    
 	end function nucleonM3Y
 
     real(kind=dbl) function nucleonSaoPaulo(r,E0,mu)

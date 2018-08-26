@@ -350,16 +350,54 @@ subroutine graphM3Y
     use nucleon_interactions
     
     real(kind=dbl)  :: delta_r, r
-    integer         :: i
-    integer         :: N
+    integer(kind=8) :: i
+    integer(kind=8) :: N
+    real(kind=dbl)  :: nn_potenergy
+    real(kind=dbl)  :: r_bottom, r_top
+    logical         :: change_pt_found = .false.
+    logical         :: excludeCore = .true.
+    real(kind=dbl)  :: r_start, r_end
     
-    delta_r = 0.1_dbl
-    N = 40
+    
+    print *, "r,m3y_v_nn"
+    N = 100
+    r_start = 0.0_dbl
+    r_end = 4.0_dbl
+    delta_r = (r_end - r_start)/N
     do i = 0, N
         r = i*delta_r
-        print *, r , ",", nucleonM3Y(r,0.01_dbl)
+        nn_potenergy = nucleonM3Y(r, 0.001_dbl, excludeCore)
+        print *, r , ",", nn_potenergy
+        !if (.not. (change_pt_found) .and. (nn_potenergy .lt. 0.0_dbl)) then
+        !    change_pt_found = .true.
+        !    r_top = r
+        !    r_bottom = r - delta_r
+        !end if
     end do
-
+    
+    ! Use this code to get the "root", where the interaction energy goes negative
+    !if (change_pt_found) then
+    !    change_pt_found = .false.
+    !    N = 100
+    !    r_bottom    = 0.56754316782759151_dbl
+    !    r_top       = 0.56754316782759207_dbl
+    !    delta_r = (r_top - r_bottom)/N        
+    !    do i = 0, N
+    !        r = r_bottom + i*delta_r
+    !        nn_potenergy = nucleonM3Y(r,0.001_dbl)
+    !        write (*,"(F100.98,2x,F100.98)") r, nn_potenergy
+    !        !if (.not. (change_pt_found) .and. (nn_potenergy .le. 0.0_dbl)) then
+            !    change_pt_found = .true.
+            !    r_top = r
+            !    r_bottom = r - delta_r
+            !    !write (*,"(a,f100.98,1x,a,f100.98)") "r_bottom = ", r_bottom, "r_top = ", r_top
+            !    !exit
+            !end if
+     !   end do
+    !end if
+    
+    !print *, nucleonM3Y(0.56754316782759184345508174374117515981197357177734375_dbl,0.001_dbl)
+    
 end subroutine
 
 subroutine genPycnoRateSplines

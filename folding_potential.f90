@@ -157,7 +157,7 @@ contains
                             if (nucIntType .eq. 1) then
 							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonSaoPaulo(d,E0,mu)
                             else
-							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2))
+							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2),.true.)
                             end if
 							my_cnt = my_cnt + 1
 						end do
