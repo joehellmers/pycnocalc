@@ -149,40 +149,47 @@ contains
 !			(Veff[R,E] - E) is the VEcheck array.
 !			See notes for "Integrand - 24 April 2008"
 
-        !if (turn2.lt.0) then
+        if (turn2.lt.0) then
         !	THERE MAY ONLY BE ONE TURNING POINT - STILL NEED TO INTEGRATE THROUGH BARRIER
-        !    do i = 0,Rmax
-        !        if (i.gt.turn1) then
-        !            Integrand(i) = 0.0
-        !        else
-        !            Integrand(i) = .01432*sqrt(mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
-        !        end if
-        !        !print *, Integrand(i),VEcheck(i)
-        !    end do		  	  
-        !    WKB = trapezoidArray(Rmax,turn1,Integrand,Rstep)	
-        !else	  
-        !	THERE ARE USUALLY TWO TURNING POINTS WHEN USING SALPETER AND VAN HORN... NEED TO INTEGRATE THROUGH BARRIER
-        !    do i = 0,Rmax
-        !        if ((i.le.turn1).or.(i.gt.turn2)) then
-        !            Integrand(i) = 0.0_dbl
-        !        else
-        !            Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
-        !        end if
+            do i = 0,Rmax
+                if (i.gt.turn1) then
+                    Integrand(i) = 0.0_dbl
+                else
+                    if (VEcheck(i) .ge. 0.0_dbl) then
+                        Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
+                    else
+                        Integrand(i) = -0.01432_dbl*sqrt(-1.0_dbl*mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
+                    end if
+                end if
                 !print *, Integrand(i),VEcheck(i)
-        !    end do	  
+            end do		  	  
+            WKB = trapezoidArray(Rmax,turn1,Integrand,Rstep)	
+        else	  
+        !	THERE ARE USUALLY TWO TURNING POINTS WHEN USING SALPETER AND VAN HORN... NEED TO INTEGRATE THROUGH BARRIER
+            do i = 0,Rmax
+                if ((i.le.turn1).or.(i.gt.turn2)) then
+                    Integrand(i) = 0.0_dbl
+                else
+                    if (VEcheck(i) .ge. 0.0_dbl) then
+                        Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
+                    else
+                        Integrand(i) = -0.01432_dbl*sqrt(-1.0_dbl*mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
+                    end if
+                end if
+                !print *, Integrand(i),VEcheck(i)
+            end do	  
             !print *,"mu=",mu
-        !    WKB = trapezoidArray(Rmax,turn2,Integrand,Rstep)
-        !end if
+            WKB = trapezoidArray(Rmax,turn2,Integrand,Rstep)
+        end if
 
         ! New, simpler way, just include positive energies
-        do i = 0, Rmax
-            if (VEcheck(i) .gt. 0) then
-        
-                Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))
-            else
-                Integrand(i) = 0.0_dbl
-            end if
-        end do
+        !do i = 0, Rmax
+        !    if (VEcheck(i) .gt. 0) then
+        !        Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))
+        !    else
+        !        Integrand(i) = 0.0_dbl
+        !    end if
+        !end do
 
         ! New, even simpler way, just integrate to first turning point
         !Integrand = 0.0_dbl
@@ -193,7 +200,7 @@ contains
         !        exit
         !    end if
         !end do
-        ! write(*,*) Integrand
+        !write(*,*) Integrand
         WKB = trapezoidArray(Rmax,Rmax,Integrand,Rstep)
         
     end subroutine turn_pt
