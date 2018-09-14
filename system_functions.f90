@@ -424,12 +424,16 @@ subroutine genPycnoRateSplines
     real(kind=dbl)  :: Z2
     real(kind=dbl)  :: Rstep = 0.1 _dbl
     integer         :: partition = 15
-    integer         :: nucIntType = 2
+    !integer         :: nucIntType = 2
+    integer         :: nucIntType = 1
+    character(len=120)	:: outputfile
 
 ! First we need to load the arrays
 
+
     allocate(character(13) :: ratefile)
-    ratefile = 'researchdata/pycnorates_cc_m3y.csv'
+    !ratefile = 'researchdata/pycno_rates_C-C_WD_M3Y.csv'
+    ratefile = 'researchdata/pycno_rates_C-C_WD_SaoPaulo.csv'
     unit = 199
     open (unit,file=ratefile,status='OLD',action='READ', iostat=ierror)
 	if (ierror .NE. 0) then
@@ -477,8 +481,24 @@ subroutine genPycnoRateSplines
 
 	do i = 1, N
 	    thisrate=splint(densities,rates,rate_2nd_derivs,densities(i))
-	    print *, densities(i), rates(i), thisrate
+	    print *, densities(i), rates(i), rate_2nd_derivs(i), thisrate
     end do
+
+
+! Ouput the spline
+    outputfile	= getParamValue('genPycnoRateSplines','splinefile')
+    open(unit, file='./' // results_dir // '/' // trim(outputfile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    if (ierror .NE. 0) then
+	    print *, 'Error opening data file for output'
+	    print *, ierror
+	    stop
+    end if
+
+	do i = 1, N
+        write (unit,*) densities(i), rates(i), rate_2nd_derivs(i)
+    end do
+    close(unit)
+
 
 ! Do some spot checking
     
@@ -490,6 +510,7 @@ subroutine genPycnoRateSplines
     thisdensity = 74260000000.000000_dbl + ((75250000000.000000_dbl - 74260000000.000000_dbl)/3.0_dbl)
     thisrate = splint(densities,rates,rate_2nd_derivs,thisdensity)
     print *, thisdensity, thisrate, pycnoRate(A1, A2, Z1, Z2, thisdensity, Rstep, partition, nucIntType, .FALSE.)
+    
     
 end subroutine 
 
