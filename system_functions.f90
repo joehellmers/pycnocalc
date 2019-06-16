@@ -358,7 +358,6 @@ subroutine graphM3Y
     logical         :: excludeCore = .true.
     real(kind=dbl)  :: r_start, r_end
     
-    
     print *, "r,m3y_v_nn"
     N = 100
     r_start = 0.0_dbl
@@ -414,7 +413,7 @@ subroutine genPycnoRateSplines
     logical                         :: firstLine = .true.
     real(kind=dbl)                  :: density, rate, rate_prime1, rate_primeN
     integer                         :: counter = 0
-    integer                         :: i
+    integer                         :: i, j
     character(:), allocatable       :: species, nninteraction
     real(kind=dbl)                  :: thisrate, thisdensity
  
@@ -424,16 +423,37 @@ subroutine genPycnoRateSplines
     real(kind=dbl)  :: Z2
     real(kind=dbl)  :: Rstep = 0.1 _dbl
     integer         :: partition = 15
-    !integer         :: nucIntType = 2
-    integer         :: nucIntType = 1
-    character(len=120)	:: outputfile
+    integer         :: nucIntType
+    character(len=1) :: nucIntTypeStr
+    character(len=120)	:: densitiesFile, ratesFile, secondDerivsFile
+    character(len=120)	:: outputfileRaw
+    
+    real(kind=dbl), dimension(10) :: A
+    
+    A = (/ &
+    1D-10, 2.3D-14, 3.0D0, 0.6666D99, 573D14, &
+    6.0D0, 7.0D0, 8.0D0, 9.0D0, 0.0D0 &
+    /)
 
 ! First we need to load the arrays
 
+    nucIntTypeStr = getParamValue('genPycnoRateSplines','nucIntType')
+    read(nucIntTypeStr,*) nucIntType
 
     allocate(character(13) :: ratefile)
-    !ratefile = 'researchdata/pycno_rates_C-C_WD_M3Y.csv'
-    ratefile = 'researchdata/pycno_rates_C-C_WD_SaoPaulo.csv'
+    
+    if (nucIntType .eq. 1) then
+        ratefile = 'researchdata/pycno_rates_C-C_WD_SaoPaulo.csv'
+        densitiesFile = 'densitiesSaoPaulo'
+        ratesFile = 'ratesSaoPaulo'
+        secondDerivsFile = 'secondDerivsSaoPaulo'
+    else
+        ratefile = 'researchdata/pycno_rates_C-C_WD_M3Y.csv'
+        densitiesFile = 'densitiesM3Y'
+        ratesFile = 'ratesM3Y'
+        secondDerivsFile = 'secondDerivsM3Y'
+    end if
+    
     unit = 199
     open (unit,file=ratefile,status='OLD',action='READ', iostat=ierror)
 	if (ierror .NE. 0) then
@@ -486,8 +506,8 @@ subroutine genPycnoRateSplines
 
 
 ! Ouput the spline
-    outputfile	= getParamValue('genPycnoRateSplines','splinefile')
-    open(unit, file='./' // results_dir // '/' // trim(outputfile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    outputfileRaw = getParamValue('genPycnoRateSplines','splinefile')
+    open(unit, file='./' // results_dir // '/' // trim(outputfileRaw), status='REPLACE', ACTION='WRITE', iostat=ierror)
     if (ierror .NE. 0) then
 	    print *, 'Error opening data file for output'
 	    print *, ierror
@@ -499,6 +519,51 @@ subroutine genPycnoRateSplines
     end do
     close(unit)
 
+! Ouput the spline to array initialization structures
+    open(unit, file='./' // results_dir // '/' // trim(densitiesFile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    if (ierror .NE. 0) then
+	    print *, 'Error opening data file for output'
+	    print *, ierror
+	    stop
+    end if
+
+    do i = 1, N
+        write (unit,fmt="(ES13.5,A)",advance="no") densities(i),","
+        if (mod(i,5) .eq. 0) then
+            write (unit,fmt="(AA)") " &"
+        end if
+    end do
+    close(unit)
+
+    open(unit, file='./' // results_dir // '/' // trim(ratesFile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    if (ierror .NE. 0) then
+	    print *, 'Error opening data file for output'
+	    print *, ierror
+	    stop
+    end if
+
+    do i = 1, N
+        write (unit,fmt="(ES13.5,A)",advance="no") rates(i),","
+        if (mod(i,5) .eq. 0) then
+            write (unit,fmt="(AA)") " &"
+        end if
+    end do
+    close(unit)
+
+    open(unit, file='./' // results_dir // '/' // trim(secondDerivsFile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    if (ierror .NE. 0) then
+	    print *, 'Error opening data file for output'
+	    print *, ierror
+	    stop
+    end if
+
+    do i = 1, N
+        write (unit,fmt="(ES13.5,A)",advance="no") rate_2nd_derivs(i),","
+        if (mod(i,5) .eq. 0) then
+            write (unit,fmt="(AA)") " &"
+        end if
+    end do
+    close(unit)
 
 ! Do some spot checking
     
@@ -509,10 +574,11 @@ subroutine genPycnoRateSplines
 
     thisdensity = 74260000000.000000_dbl + ((75250000000.000000_dbl - 74260000000.000000_dbl)/3.0_dbl)
     thisrate = splint(densities,rates,rate_2nd_derivs,thisdensity)
-    print *, thisdensity, thisrate, pycnoRate(A1, A2, Z1, Z2, thisdensity, Rstep, partition, nucIntType, .FALSE.)
+    !print *, thisdensity, thisrate, pycnoRate(A1, A2, Z1, Z2, thisdensity, Rstep, partition, nucIntType, .FALSE.)
     
+    print *, A
     
-end subroutine 
+end subroutine genPycnoRateSplines
 
 end module system_functions
 
