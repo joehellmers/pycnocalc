@@ -469,9 +469,8 @@ end subroutine react_rate_zero_temp
         mn_mass=real((2*A1*A2)/(A1+A2),dbl)
         mn_chrg=real((Z1*A2+Z2*A1)/(A1+A2),dbl)
 
-        ! I'm wondering if we can some how use the inverse length function in this module
-        ln_lambda=-log(Z1**(1.0_dbl/3.0_dbl)+Z2**(1.0_dbl/3.0_dbl))+log((A1+A2)/(A1*A2*Z1*Z2))+(1.0_dbl/3.0_dbl)*log(rho)+(1.0_dbl/3.0_dbl)*log(mn_chrg)-(1.0_dbl/3.0_dbl)*log(mn_mass)-8.5455_dbl
-
+        ln_lambda=log(inv_len_param2comp (rho, A1_int, Z1_int, 0.5_dbl, int(A2), int(Z2), 0.5_dbl))
+        
         ! energy parameter, called Rydberg energy, based on ground state energy from Bohr model of the hydrogen atom
         ln_Estar=log(real(Z1*Z2,dbl))-ln_rstar-34.174_dbl
 
@@ -500,4 +499,3 @@ end subroutine react_rate_zero_temp
     end function
 
 end module astrophysics
-

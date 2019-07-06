@@ -19,8 +19,10 @@ contains
 	real(kind=dbl), intent(in)      :: delta_0
 	logical, intent(in), optional   :: inExcludeCore
 
+	! Where did I get this number?
+	
 	real(kind=dbl), parameter   :: core_cutoff = 0.56754316782759184345508174374117515981197357177734375_dbl
-    logical                     :: excludeCore = .false. 
+   logical                     :: excludeCore = .false. 
 	
 	
 	if (present(inExcludeCore)) then
