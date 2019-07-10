@@ -55,6 +55,7 @@ contains
         ! USING THIS (4July):  using nucleon - nucleon interaction EQUATION 46, multiple times exp (-v2) term to get velocity
         ! dependent nucleon-nucleon interaction
         nucleonSaoPaulo=-456.0_dbl*exp(-8.0_dbl*E0/mu)*exp(-r/a_sub_m)*(1.0_dbl+(r/a_sub_m)+0.33_dbl*((r/a_sub_m)**2))/(64.0_dbl*pi*(a_sub_m**3))
+        ! TODO: Need to get this reference
         ! from eq. 46, Phys Rev C66, p11  AND from eq. 35, NL Desc Nuc Int. pdf, the units here are MeV*fm3
 
     end function nucleonSaoPaulo

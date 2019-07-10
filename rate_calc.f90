@@ -322,7 +322,6 @@ contains
             end if
         end if
 
-
         A1 = real(A1_int,dbl)
         Z1 = real(Z1_int,dbl)
 
@@ -330,11 +329,8 @@ contains
         ln_S = log(S)
         !print *,'ln_S = ', ln_S
 
-        ! These lambda calculations are duplicated from the E0_Energy function.  We need to resolve this
-        mn_mass=real((2*A1*A2)/(A1+A2),dbl)
-        mn_chrg=real((Z1*A2+Z2*A1)/(A1+A2),dbl)
-        ln_lambda=-log(Z1**(1.0_dbl/3.0_dbl)+Z2**(1.0_dbl/3.0_dbl))+log((A1+A2)/(A1*A2*Z1*Z2))+(1.0_dbl/3.0_dbl)*log(rho)+(1.0_dbl/3.0_dbl)*log(mn_chrg)-(1.0_dbl/3.0_dbl)*log(mn_mass)-8.5455_dbl
-        lambda = exp(ln_lambda)
+        lambda = inv_len_param2comp (rho, A1_int, Z1_int, 0.5_dbl, int(A2), int(Z2), 0.5_dbl)
+        ln_lambda = log(lambda)
         ln_P0=-2.638_dbl/(sqrt(lambda))+log(rho)+log(A1*A2)-log(A1+A2)+2.0_dbl*log(Z1*Z2)+ln_S+1.75_dbl*ln_lambda+109.36_dbl
 
         !print *, 'mn_mass = ', mn_mass
