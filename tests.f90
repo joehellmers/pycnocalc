@@ -161,9 +161,21 @@ subroutine pycnoRate_001
 
     rho = 1000000000.0_dbl
 
-    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE.)
-
-    call scr_and_log(str='Rate =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+    
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 0)    
+    call scr_and_log(str='Rate Original bcc =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 1)    
+    call scr_and_log(str='Rate Schramm/Koonin bcc static =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 2)    
+    call scr_and_log(str='Rate Schramm/Koonin bcc wigner-sietz =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 3)    
+    call scr_and_log(str='Rate Schramm/Koonin bcc relaxed =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 4)    
+    call scr_and_log(str='Rate Schramm/Koonin fcc static =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 5)    
+    call scr_and_log(str='Rate Schramm/Koonin fcc wigner-sietz =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+    rate = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 6)    
+    call scr_and_log(str='Rate Schramm/Koonin fcc relaxed =',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
 
 end subroutine pycnoRate_001
 

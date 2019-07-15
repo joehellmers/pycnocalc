@@ -289,6 +289,7 @@ use rate_calc
     integer         :: nucIntType = 1
     character(len=1) :: nucIntTypeStr
     integer         :: i
+    integer         :: rateCalcTypeIndex
     real(kind=dbl)  :: rate
     integer         :: N = 100 ! Number of intervals
 
@@ -296,6 +297,7 @@ use rate_calc
     character(len=120)	:: outputfile
     integer			    :: unit,ierror
     character(len=20)   :: nucIntTypeDesc
+    character(len=20)   :: rxnDesc
     
     call scr_and_log_str ('CALCULATION: genCCRates:')
 
@@ -321,28 +323,53 @@ use rate_calc
     
     open(unit, file='./' // results_dir // '/' // trim(outputfile), status='REPLACE', ACTION='WRITE', iostat=ierror)
     if (ierror .NE. 0) then
-	    print *, 'Error opening data file for output'
-	    print *, ierror
-	    stop
+        print *, 'Error opening data file for output'
+        print *, ierror
+        stop
     end if
-
-
     write(unit,*) 'nuclei,nn-interation,density,pycno_rate'
     call scr_and_log(str='nuclei,nn-interation,density,pycno_rate',fmt='(a)',lf=.TRUE.)
-    do i = 1, N+1
-        current_rho = initial_rho + delta_rho*(i-1)
-        call scr_and_log(str='C-C,',fmt='(a)',lf=.FALSE.)
-        if (nucIntType .eq. 1) then        
-            call scr_and_log(str='SAOPAULO,',fmt='(a)',lf=.FALSE.)
-        else
-            call scr_and_log(str='M3Y,',fmt='(a)',lf=.FALSE.)
-        end if
-        call scr_and_log(str='',nbr=current_rho,fmt='(ES13.5)',lf=.FALSE.)
-        rate = pycnoRate(A1, A2, Z1, Z2, current_rho, Rstep, partition, nucIntType, .FALSE.)
-        write (unit,*) "C-C",delimiter,nucIntTypeDesc,delimiter,current_rho,delimiter,rate
-        call scr_and_log(str=',',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+ 
+    do rateCalcTypeIndex = 0, 6
+        do i = 1, N+1
+            current_rho = initial_rho + delta_rho*(i-1)
+            call scr_and_log(str='C-C,',fmt='(a)',lf=.FALSE.)
+            if (rateCalcTypeIndex .eq. 0) then
+                rxnDesc = trim(nucIntTypeDesc) // '-SPVH'
+            end if
+            if (rateCalcTypeIndex .eq. 1) then
+                rxnDesc = trim(nucIntTypeDesc) // '-bcc-static'
+            end if
+            if (rateCalcTypeIndex .eq. 2) then
+                rxnDesc = trim(nucIntTypeDesc) // '-bcc-ws'
+            end if
+            if (rateCalcTypeIndex .eq. 3) then
+                rxnDesc = trim(nucIntTypeDesc) // '-bcc-relax'
+            end if
+            if (rateCalcTypeIndex .eq. 4) then
+                rxnDesc = trim(nucIntTypeDesc) // '-fcc-static'
+            end if
+            if (rateCalcTypeIndex .eq. 5) then
+                rxnDesc = trim(nucIntTypeDesc) // '-fcc-ws'
+            end if
+            if (rateCalcTypeIndex .eq. 6) then
+                rxnDesc = trim(nucIntTypeDesc) // '-fcc-relax'
+            end if             
+            if (nucIntType .eq. 1) then        
+                call scr_and_log(str=rxnDesc,fmt='(a)',lf=.FALSE.)
+            else
+                call scr_and_log(str=rxnDesc,fmt='(a)',lf=.FALSE.)
+            end if
+            call scr_and_log(str='',nbr=current_rho,fmt='(ES13.5)',lf=.FALSE.)
+            rate = pycnoRate(A1, A2, Z1, Z2, current_rho, Rstep, partition, nucIntType, .FALSE., rateCalcTypeIndex)
+            write (unit,*) "C-C",delimiter,rxnDesc,delimiter,current_rho,delimiter,rate
+            call scr_and_log(str=',',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+        end do
     end do
-            
+    
+    close(unit)
+    
+                
 end subroutine genCCRates	
 
 subroutine graphM3Y

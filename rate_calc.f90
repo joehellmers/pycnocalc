@@ -288,11 +288,12 @@ contains
 ! Calculate Pycnonuclear reaction rates
 ! This version also calculates the Folding potential
 !
-! REF: Golf Thesis
+! REF: Original source Golf Thesis
+!      Updated from Schramm and Koonin 1990, an equation near eq. 4, eq. 33, and table I
 !
 !*****************************************************************
 
-    real(kind=dbl) function pycnoRate(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag)
+    real(kind=dbl) function pycnoRate(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag, inCalcType)
 
         implicit none
 
@@ -303,6 +304,16 @@ contains
         integer, intent(in)             :: partition
         integer, intent(in)             :: nucIntType
         logical, intent(in), optional   :: inSQMFlag
+        integer, intent(in), optional   :: inCalcType 
+            !  0 - Original Calculation from Golf
+            !  1 - bcc, static
+            !  2 - bcc, wigner-sietz cell
+            !  3 - bcc, relaxed
+            !  4 - fcc, static
+            !  5 - fcc, wigner-sietz cell
+            !  6 - fcc, relaxed 
+        
+        real(kind=dbl)                  :: prepend, alpha1, alpha2, gamma
 
         real(kind=dbl)              :: ln_P0
         real(kind=dbl)              :: P0
@@ -315,11 +326,16 @@ contains
         real(kind=dbl)              :: A1, Z1
 
         logical         :: SQMFlag = .FALSE.
-
+        integer         :: calcType = 0
+        
         if (present(inSQMFlag)) then
             if (inSQMFlag) then
                 SQMFlag = .TRUE.
             end if
+        end if
+
+        if (present(inCalcType)) then
+            calcType = inCalcType
         end if
 
         A1 = real(A1_int,dbl)
@@ -327,21 +343,58 @@ contains
 
         S = Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, SQMFlag)
         ln_S = log(S)
-        !print *,'ln_S = ', ln_S
+        
+        if (calcType .eq. 0) then
+            lambda = inv_len_param2comp (rho, A1_int, Z1_int, 0.5_dbl, int(A2), int(Z2), 0.5_dbl)
+            ln_lambda = log(lambda)
+            ln_P0=-2.638_dbl/(sqrt(lambda))+log(rho)+log(A1*A2)-log(A1+A2)+2.0_dbl*log(Z1*Z2)+ln_S+1.75_dbl*ln_lambda+109.36_dbl        
+            P0 = exp(ln_P0)
+            pycnoRate = P0
+        else
+        
+            if (calcType .eq. 1 .or. calcType .eq. 2 .or. calcType .eq. 3) then
+                prepend = 1.06_dbl
+                gamma = 2.0_dbl
+            else
+                prepend = 2.69_dbl
+                gamma = 4.0_dbl
+            end if
 
-        lambda = inv_len_param2comp (rho, A1_int, Z1_int, 0.5_dbl, int(A2), int(Z2), 0.5_dbl)
-        ln_lambda = log(lambda)
-        ln_P0=-2.638_dbl/(sqrt(lambda))+log(rho)+log(A1*A2)-log(A1+A2)+2.0_dbl*log(Z1*Z2)+ln_S+1.75_dbl*ln_lambda+109.36_dbl
+            lambda = 0.0245*(A1**(-4.0_dbl/3.0_dbl))*(Z1**(-2.0_dbl))*(gamma**(-1.0_dbl/3.0_dbl))*((rho/(1.0d6))**(1.0_dbl/3.0_dbl))
 
-        !print *, 'mn_mass = ', mn_mass
-        !print *, 'mn_chrg = ', mn_chrg
-        !print *, 'ln_lambda = ', ln_lambda
-        !print *, 'lambda = ', lambda
-        !print *, 'ln_P0 = ', ln_P0
+            if (calcType .eq. 1) then
+                alpha1 = 2.639_dbl
+                alpha2 = -6.305_dbl
+            end if
 
-        P0 = exp(ln_P0)
+            if (calcType .eq. 2) then
+                alpha1 = 2.516_dbl
+                alpha2 = -6.793_dbl
+            end if
 
-        pycnoRate = P0
+            if (calcType .eq. 3) then
+                alpha1 = 2.517_dbl
+                alpha2 = -6.754_dbl
+            end if
+
+            if (calcType .eq. 4) then
+                alpha1 = 2.401_dbl
+                alpha2 = -6.315_dbl
+            end if
+
+            if (calcType .eq. 5) then
+                alpha1 = 2.265_dbl
+                alpha2 = -6.911_dbl
+            end if
+
+            if (calcType .eq. 6) then
+                alpha1 = 2.260_dbl
+                alpha2 = -6.841_dbl
+            end if
+        
+            P0 = prepend * 1.0d45 * S * rho*(A1*A2)*(Z1*Z1)*(Z2*Z2)*(lambda**(7.0_dbl/4.0_dbl))*exp(-alpha2-alpha1*lambda**(-1.0_dbl/2.0_dbl))
+        end if
+        pycnoRate = P0 
 
     end function pycnoRate
 
