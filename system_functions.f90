@@ -327,9 +327,8 @@ use rate_calc
         print *, ierror
         stop
     end if
-    write(unit,*) 'nuclei,nn-interation,density,pycno_rate'
-    call scr_and_log(str='nuclei,nn-interation,density,pycno_rate',fmt='(a)',lf=.TRUE.)
- 
+    write(unit,*) 'nuclei,nn-interaction,density,pycno_rate'
+    call scr_and_log(str='nuclei,nn-interaction,density,pycno_rate',fmt='(a)',lf=.TRUE.)
     do rateCalcTypeIndex = 0, 6
         do i = 1, N+1
             current_rho = initial_rho + delta_rho*(i-1)
@@ -354,7 +353,8 @@ use rate_calc
             end if
             if (rateCalcTypeIndex .eq. 6) then
                 rxnDesc = trim(nucIntTypeDesc) // '-fcc-relax'
-            end if             
+            end if
+            rxnDesc = trim(rxnDesc)             
             if (nucIntType .eq. 1) then        
                 call scr_and_log(str=rxnDesc,fmt='(a)',lf=.FALSE.)
             else
@@ -363,6 +363,7 @@ use rate_calc
             call scr_and_log(str='',nbr=current_rho,fmt='(ES13.5)',lf=.FALSE.)
             rate = pycnoRate(A1, A2, Z1, Z2, current_rho, Rstep, partition, nucIntType, .FALSE., rateCalcTypeIndex)
             write (unit,*) "C-C",delimiter,rxnDesc,delimiter,current_rho,delimiter,rate
+            close(unit,*)
             call scr_and_log(str=',',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
         end do
     end do
