@@ -363,7 +363,6 @@ use rate_calc
             call scr_and_log(str='',nbr=current_rho,fmt='(ES13.5)',lf=.FALSE.)
             rate = pycnoRate(A1, A2, Z1, Z2, current_rho, Rstep, partition, nucIntType, .FALSE., rateCalcTypeIndex)
             write (unit,*) "C-C",delimiter,rxnDesc,delimiter,current_rho,delimiter,rate
-            close(unit,*)
             call scr_and_log(str=',',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
         end do
     end do
