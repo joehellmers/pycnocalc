@@ -327,8 +327,8 @@ use rate_calc
         print *, ierror
         stop
     end if
-    write(unit,*) 'nuclei,nn-interaction,density,pycno_rate'
-    call scr_and_log(str='nuclei,nn-interaction,density,pycno_rate',fmt='(a)',lf=.TRUE.)
+    write(unit,*) 'nuclei,nninteraction,density,pycno_rate'
+    call scr_and_log(str='nuclei,nninteraction,density,pycno_rate',fmt='(a)',lf=.TRUE.)
     do rateCalcTypeIndex = 0, 6
         do i = 1, N+1
             current_rho = initial_rho + delta_rho*(i-1)
