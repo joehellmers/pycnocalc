@@ -15,7 +15,12 @@ OBJS = globalvars.o \
 	system_functions.o \
 	cmdline.o \
 	rate_calc.o \
-	tests.o
+	tests.o \
+	csv_kinds.o \
+	csv_module.o \
+	csv_parameters.o \
+	csv_utilities.o
+
 MODULES = globalvars.mod \
 	logging.mod \
 	vectors.mod \
@@ -32,14 +37,31 @@ MODULES = globalvars.mod \
 	system_functions.mod \
 	cmdline.mod \
 	rate_calc.mod \
-	tests.mod
-SWITCHES = -ffree-line-length-none -O3 -fopenmp -fbounds-check
+	tests.mod \
+	csv_kinds.mod \
+	csv_parameters.mod \
+	csv_utilities.mod \
+	csv_module.mod
+
+SWITCHES = -ffree-line-length-none -O3 -fopenmp -fbounds-check -cpp
 OUTDIR = ~/bin
 
 pycnocalc: $(MODULES)
 	$(F90COMP) pycnocalc.f90 $(OBJS) -o $(OUTDIR)/pycnocalc $(SWITCHES)
 	cp pycnocalc.cfg $(OUTDIR)
 	chmod ugo-x $(OUTDIR)/pycnocalc.cfg
+
+csv_kinds.mod: 
+	$(F90COMP) -c csv_kinds.f90 $(SWITCHES)
+
+csv_parameters.mod: csv_kinds.mod 
+	$(F90COMP) -c csv_parameters.f90 $(SWITCHES)
+
+csv_utilities.mod: csv_kinds.mod csv_parameters.mod 
+	$(F90COMP) -c csv_utilities.f90 $(SWITCHES)
+
+csv_module.mod: csv_kinds.mod csv_parameters.mod csv_utilities.mod 
+	$(F90COMP) -c csv_module.f90 $(SWITCHES)
 
 folding_potential.mod: constants.mod nucleon_interactions.mod general_nuclear.mod configuration.mod 
 	$(F90COMP) -c folding_potential.f90 $(SWITCHES)
