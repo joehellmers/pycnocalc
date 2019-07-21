@@ -106,7 +106,7 @@ clean:
 	rm -rf *.o
 	rm -rf .DS_Store
 	rm -rf $(OUTDIR)/pycnocalc
-
+	rm -rf notebooks/.ipynb_checkpoints/
 clean_local:
 	rm *.mod
 	rm *.o
