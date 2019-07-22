@@ -44,6 +44,7 @@ MODULES = globalvars.mod \
 	csv_module.mod
 
 SWITCHES = -ffree-line-length-none -O3 -fopenmp -fbounds-check -cpp
+SWITCHES2 = -ffree-line-length-none -O3 -fopenmp -cpp
 OUTDIR = ~/bin
 
 pycnocalc: $(MODULES)
@@ -52,16 +53,16 @@ pycnocalc: $(MODULES)
 	chmod ugo-x $(OUTDIR)/pycnocalc.cfg
 
 csv_kinds.mod: 
-	$(F90COMP) -c csv_kinds.f90 $(SWITCHES)
+	$(F90COMP) -c csv_kinds.f90 $(SWITCHES2)
 
 csv_parameters.mod: csv_kinds.mod 
-	$(F90COMP) -c csv_parameters.f90 $(SWITCHES)
+	$(F90COMP) -c csv_parameters.f90 $(SWITCHES2)
 
 csv_utilities.mod: csv_kinds.mod csv_parameters.mod 
-	$(F90COMP) -c csv_utilities.f90 $(SWITCHES)
+	$(F90COMP) -c csv_utilities.f90 $(SWITCHES2)
 
 csv_module.mod: csv_kinds.mod csv_parameters.mod csv_utilities.mod 
-	$(F90COMP) -c csv_module.f90 $(SWITCHES)
+	$(F90COMP) -c csv_module.f90 $(SWITCHES2)
 
 folding_potential.mod: constants.mod nucleon_interactions.mod general_nuclear.mod configuration.mod 
 	$(F90COMP) -c folding_potential.f90 $(SWITCHES)
@@ -93,7 +94,10 @@ configuration.mod: constants.mod logging.mod utilities.mod globalvars.mod
 general_nuclear.mod: constants.mod mathintegration.mod
 	$(F90COMP) -c general_nuclear.f90 $(SWITCHES)
 
-system_functions.mod: constants.mod astrophysics.mod logging.mod folding_potential.mod configuration.mod utilities.mod general_nuclear.mod mathintegration.mod rate_calc.mod mathinterpolation.mod
+system_functions.mod: 	constants.mod astrophysics.mod logging.mod \
+			folding_potential.mod configuration.mod utilities.mod \
+			general_nuclear.mod mathintegration.mod rate_calc.mod \
+			mathinterpolation.mod csv_module.mod
 	$(F90COMP) -c system_functions.f90 $(SWITCHES)
 
 mathutils.mod: constants.mod

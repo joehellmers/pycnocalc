@@ -428,11 +428,17 @@ end subroutine
 
 subroutine genPycnoRateSplines
     
+    ! Here we assume each rate type has 101 entries, and that they are in the csv file
+    ! in the proper order
+    
     use logging
     use mathinterpolation
     use rate_calc
+    use csv_module
 
-    integer, parameter              :: N = 101      
+    type(csv_file) :: f
+    
+    integer, parameter              :: N = 101, M = 7      
     real(kind=dbl),  dimension(N)   :: densities, rates, rate_2nd_derivs
     integer			                :: unit,ierror
     real(kind=dbl)                  :: real_ierror
@@ -444,6 +450,15 @@ subroutine genPycnoRateSplines
     character(:), allocatable       :: species, nninteraction
     real(kind=dbl)                  :: thisrate, thisdensity
  
+    character(len=60),dimension(:),allocatable :: rxnspecies
+    character(len=60),dimension(:),allocatable :: rxntypes
+    real(kind=dbl),dimension(:),allocatable    :: rxndensities
+    real(kind=dbl),dimension(:),allocatable    :: rxnrates
+     
+    logical :: status_ok
+    character(len=60),dimension(:),allocatable :: header 
+    integer,dimension(:),allocatable :: itypes 
+ 
     integer         :: A1
     real(kind=dbl)  :: A2
     integer         :: Z1
@@ -451,9 +466,17 @@ subroutine genPycnoRateSplines
     real(kind=dbl)  :: Rstep = 0.1 _dbl
     integer         :: partition = 15
     integer         :: nucIntType
+      ! 1 - M3Y
+      ! 2 - Sao Paulo
+    
     character(len=1) :: nucIntTypeStr
-    character(len=120)	:: densitiesFile, ratesFile, secondDerivsFile
+    character(len=120)	:: splineFile, densitiesFile, ratesFile, secondDerivsFile
+    character(len=120)	:: outputfileStub
     character(len=120)	:: outputfileRaw
+    character(len=120)	:: fileSuffix
+    character(len=10)	:: fileSuffixNN
+    integer             :: currIndex
+    
     
     real(kind=dbl), dimension(10) :: A
     
@@ -462,135 +485,144 @@ subroutine genPycnoRateSplines
     6.0D0, 7.0D0, 8.0D0, 9.0D0, 0.0D0 &
     /)
 
+! Get the 
+    nucIntTypeStr = getParamValue('genPycnoRateSplines','nucIntType')
+    outputfileStub = getParamValue('genPycnoRateSplines','splinefile')
+    read(nucIntTypeStr,*) nucIntType
+    call scr_and_log_str('Spline Output File Stub: ' // trim(outputfileStub))        
+
+
 ! First we need to load the arrays
 
-    nucIntTypeStr = getParamValue('genPycnoRateSplines','nucIntType')
-    read(nucIntTypeStr,*) nucIntType
-
-    allocate(character(13) :: ratefile)
-    
-    if (nucIntType .eq. 1) then
-        ratefile = 'researchdata/pycno_rates_C-C_WD_SaoPaulo.csv'
-        densitiesFile = 'densitiesSaoPaulo'
-        ratesFile = 'ratesSaoPaulo'
-        secondDerivsFile = 'secondDerivsSaoPaulo'
+    ! Instantiate the CSV file object
+    if (nucIntType .eq. 2) then
+        call scr_and_log_str('Generating Splines for WD M3Y Rates')        
+        call f%read('researchdata/pycno_rates_C-C_WD_M3Y.csv',header_row=1,status_ok=status_ok)
+        fileSuffixNN = '.m3y'
     else
-        ratefile = 'researchdata/pycno_rates_C-C_WD_M3Y.csv'
-        densitiesFile = 'densitiesM3Y'
-        ratesFile = 'ratesM3Y'
-        secondDerivsFile = 'secondDerivsM3Y'
+        call scr_and_log_str('Generating Splines for WD Sao Paulo Rates')        
+        call f%read('researchdata/pycno_rates_C-C_WD_SaoPaulo.csv',header_row=1,status_ok=status_ok)
+        fileSuffixNN = '.sp'
     end if
     
-    unit = 199
-    open (unit,file=ratefile,status='OLD',action='READ', iostat=ierror)
-	if (ierror .NE. 0) then
-			call scr_and_log_str('Cannot open rate file')
-	        call scr_and_log_str('File: ',lf=.FALSE.)	
-			call scr_and_log_str(ratefile)
-			call scr_and_log_str('Error: ',lf=.FALSE.)
-			real_ierror =real(ierror)
-			call scr_and_log(nbr=real_ierror,fmt='(f5.0)')
-			stop
-	end if
+    ! get the header and type info
+    call f%get_header(header,status_ok)
+    call f%variable_types(itypes,status_ok)
+    call f%get(1,rxnspecies,status_ok)
+    call f%get(2,rxntypes,status_ok)
+    call f%get(3,rxndensities,status_ok)
+    call f%get(4,rxnrates,status_ok)
+    ! Remove the CSV file object
+    call f%destroy()
+    
+    
+    ! Do a sanity check on the file contents
+	do i = 1, M
+        select case (i)
+            case (1)
+                fileSuffix = trim(fileSuffixNN) // '.spvh'    
+            case (2)
+                fileSuffix = trim(fileSuffixNN) // '.bcc-static'    
+            case (3)
+                fileSuffix = trim(fileSuffixNN) // '.bcc-ws'    
+            case (4)
+                fileSuffix = trim(fileSuffixNN) // '.bcc-relax'    
+            case (5)
+                fileSuffix = trim(fileSuffixNN) // '.fcc-static'    
+            case (6)
+                fileSuffix = trim(fileSuffixNN) // '.fcc-ws'    
+            case (7)
+                fileSuffix = trim(fileSuffixNN) // '.fcc-relax'    
+        end select
+        call scr_and_log_str('....file suffix =' // trim(fileSuffix))     
+        splineFile = 'spline' // trim(fileSuffix)
+        densitiesFile = 'densities' // trim(fileSuffix)
+        ratesFile = 'rates' // trim(fileSuffix)
+        secondDerivsFile = 'secondDerivs' // trim(fileSuffix)
+        call scr_and_log_str('....spline file    = ' // trim(splineFile))     
+        call scr_and_log_str('....density file    = ' // trim(densitiesFile))     
+        call scr_and_log_str('....rates file      = ' // trim(ratesFile))     
+        call scr_and_log_str('....2nd Derivs file = ' // trim(secondDerivsFile))     
+        ! first load the work arrays
+        do j = 1, N
+            currIndex = (i-1) * N + j
+            densities(j) = rxndensities(currIndex)
+            rates(j) = rxnrates(currIndex)
+        end do
+        
+        ! Now compute the spline
+        rate_prime1 = (rates(2)-rates(1))/(densities(2)-densities(1))
+        rate_primeN = (rates(N)-rates(N-1))/(densities(N)-densities(N-1))
+        call spline(densities,rates,rate_prime1,rate_primeN,rate_2nd_derivs)
+        
+        ! For Sanity Check calculate the values at the "known" densities and rates
+        !do j = 1, N
+	    !    thisrate=splint(densities,rates,rate_2nd_derivs,densities(j))
+	    !    print *, densities(j), rates(j), rate_2nd_derivs(j), thisrate
+        !end do
 
-	readloop: Do
-	
-        if (firstLine) then
-		    firstLine = .false.
-		    read(unit,*,iostat=ierror) ! Ignore the headers in the first line
+        ! Ouput the spline
+        open(unit, file='./' // results_dir // '/' // trim(splineFile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+        if (ierror .NE. 0) then
+	        print *, 'Error opening spline file for output'
+	        print *, ierror
+	        stop
         end if
-        read(unit,*,iostat=ierror) species, nninteraction, density, rate
-	    
-	    if (ierror .EQ. -1) then
-			! End of file
-			exit
-		end if
-		
-		if (ierror .GT. 0) then
-				print *, ierror
-				call scr_and_log_str('Error reading rate file: ' // ratefile)
-				stop
-		end if
-		counter = counter + 1
-		densities(counter) = density
-		rates(counter) = rate
-	end do readloop
 
-    close(unit)
+	    do j = 1, N
+            write (unit,*) densities(j), rates(j), rate_2nd_derivs(j)
+        end do
+        close(unit)
 
-! Now we need to calculate the spline (i.e. 2nd Derivates)
-
-    rate_prime1 = (rates(2)-rates(1))/(densities(2)-densities(1))
-    rate_primeN = (rates(N)-rates(N-1))/(densities(N)-densities(N-1))
-	call spline(densities,rates,rate_prime1,rate_primeN,rate_2nd_derivs)
-
-! For Sanity Check calculate the values at the "known" densities and rates
-
-	do i = 1, N
-	    thisrate=splint(densities,rates,rate_2nd_derivs,densities(i))
-	    print *, densities(i), rates(i), rate_2nd_derivs(i), thisrate
-    end do
-
-
-! Ouput the spline
-    outputfileRaw = getParamValue('genPycnoRateSplines','splinefile')
-    open(unit, file='./' // results_dir // '/' // trim(outputfileRaw), status='REPLACE', ACTION='WRITE', iostat=ierror)
-    if (ierror .NE. 0) then
-	    print *, 'Error opening data file for output'
-	    print *, ierror
-	    stop
-    end if
-
-	do i = 1, N
-        write (unit,*) densities(i), rates(i), rate_2nd_derivs(i)
-    end do
-    close(unit)
-
-! Ouput the spline to array initialization structures
-    open(unit, file='./' // results_dir // '/' // trim(densitiesFile), status='REPLACE', ACTION='WRITE', iostat=ierror)
-    if (ierror .NE. 0) then
-	    print *, 'Error opening data file for output'
-	    print *, ierror
-	    stop
-    end if
-
-    do i = 1, N
-        write (unit,fmt="(ES13.5,A)",advance="no") densities(i),","
-        if (mod(i,5) .eq. 0) then
-            write (unit,fmt="(AA)") " &"
+        ! Ouput the densities
+        open(unit, file='./' // results_dir // '/' // trim(densitiesFile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+        if (ierror .NE. 0) then
+            print *, 'Error opening densities file for output'
+            print *, ierror
+            stop
         end if
-    end do
-    close(unit)
 
-    open(unit, file='./' // results_dir // '/' // trim(ratesFile), status='REPLACE', ACTION='WRITE', iostat=ierror)
-    if (ierror .NE. 0) then
-	    print *, 'Error opening data file for output'
-	    print *, ierror
-	    stop
-    end if
+        do j = 1, N
+            write (unit,fmt="(ES13.5,A)",advance="no") densities(j),","
+            if (mod(j,5) .eq. 0) then
+                write (unit,fmt="(AA)") " &"
+            end if
+        end do
+        close(unit)
 
-    do i = 1, N
-        write (unit,fmt="(ES13.5,A)",advance="no") rates(i),","
-        if (mod(i,5) .eq. 0) then
-            write (unit,fmt="(AA)") " &"
+        open(unit, file='./' // results_dir // '/' // trim(ratesFile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+        if (ierror .NE. 0) then
+            print *, 'Error opening rates file for output'
+            print *, ierror
+            stop
         end if
-    end do
-    close(unit)
 
-    open(unit, file='./' // results_dir // '/' // trim(secondDerivsFile), status='REPLACE', ACTION='WRITE', iostat=ierror)
-    if (ierror .NE. 0) then
-	    print *, 'Error opening data file for output'
-	    print *, ierror
-	    stop
-    end if
+        do j = 1, N
+            write (unit,fmt="(ES13.5,A)",advance="no") rates(j),","
+            if (mod(j,5) .eq. 0) then
+                write (unit,fmt="(AA)") " &"
+            end if
+        end do
+        close(unit)
 
-    do i = 1, N
-        write (unit,fmt="(ES13.5,A)",advance="no") rate_2nd_derivs(i),","
-        if (mod(i,5) .eq. 0) then
-            write (unit,fmt="(AA)") " &"
+        open(unit, file='./' // results_dir // '/' // trim(secondDerivsFile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+        if (ierror .NE. 0) then
+            print *, 'Error opening 2nd Derivatives file for output'
+            print *, ierror
+            stop
         end if
+
+        do j = 1, N
+            write (unit,fmt="(ES13.5,A)",advance="no") rate_2nd_derivs(j),","
+            if (mod(j,5) .eq. 0) then
+                write (unit,fmt="(AA)") " &"
+            end if
+        end do
+        close(unit)
+
     end do
-    close(unit)
+    
+    return
 
 ! Do some spot checking
     
