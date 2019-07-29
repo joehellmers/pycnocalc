@@ -172,6 +172,7 @@ real(kind=dbl) 		:: start, finish, tot_time
 real(kind=dbl)      :: total_walltime
 
 integer count_0, count_1, count_rate, count_max
+integer nn_int_type
 
 t1 = secnds(0.0);
 
@@ -216,6 +217,13 @@ else
 	rho0_2 = rho0_2pF(real(A2,dbl), tot_radius2, diffuse2)
 end if
 
+if (checkParam('FoldingSimple','nuc_interaction_type')) then
+	nn_int_type	= ConvertStrToInt(getParamValue('FoldingSimple','nuc_interaction_type'))
+else
+	nn_int_type = 1
+end if
+
+print *, "Nuclear Interaction type: ", nn_int_type
 
 !print *, 'Total Radius 1 = ', tot_radius1
 !print *, 'Total Radius 2 = ', tot_radius2
@@ -248,7 +256,7 @@ do
 	if (this_r > max_r) then
 		exit
 	end if
-	this_vfold = vfold_spherically_symmetric(this_r,A1,real(A2,dbl),Z1,real(Z2,dbl),n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2,0.85_dbl,2,.FALSE.)
+	this_vfold = vfold_spherically_symmetric(this_r,A1,real(A2,dbl),Z1,real(Z2,dbl),n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2,0.85_dbl,nn_int_type,.FALSE.)
 	call scr_and_log(nbr = this_r, fmt='(F10.5)')
     write (unit,*) this_r,delimiter,this_vfold,delimiter, log10(-1.0_dbl*this_vfold)
 	this_r = this_r + delta_r
