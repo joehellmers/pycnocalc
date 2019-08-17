@@ -11,22 +11,24 @@ module nucleon_interactions
 use constants
 
 contains
-	real(kind=dbl) function nucleonM3Y (r, delta_0, inExcludeCore)
-	use vectors
+	real(kind=dbl) function nucleonM3Y (r, delta_0, inExcludeCore, inCore_cutoff)
+
 	implicit none
 	
-	real(kind=dbl), intent(in)      :: r
-	real(kind=dbl), intent(in)      :: delta_0
-	logical, intent(in), optional   :: inExcludeCore
-
-	! Where did I get this number?
+	real(kind=dbl), intent(in)              :: r
+	real(kind=dbl), intent(in)              :: delta_0
+	logical, intent(in), optional           :: inExcludeCore
+	real(kind=dbl), intent(in), optional    :: inCore_cutoff 
 	
-	real(kind=dbl), parameter   :: core_cutoff = 0.56754316782759184345508174374117515981197357177734375_dbl
-   logical                     :: excludeCore = .false. 
-	
-	
+	real(kind=dbl)              :: core_cutoff = 0.56754316782759184345508174374117515981197357177734375_dbl
+    logical                     :: excludeCore = .false. 
+		
 	if (present(inExcludeCore)) then
         excludeCore = inExcludeCore
+    end if	     
+
+	if (present(inCore_cutoff)) then
+        core_cutoff = inCore_cutoff
     end if	     
 	
 	if (excludeCore .and. (r .lt. core_cutoff)) then
@@ -41,6 +43,41 @@ contains
     end if
     
 	end function nucleonM3Y
+
+    ! Ref:  	J. Phys. G: Nucl. Part. Phys. 39, 025101 (2012)
+    !           arXiv:1011.5732v2
+	real(kind=dbl) function nucleonRMF (r, type)
+
+	implicit none
+	
+	real(kind=dbl), intent(in)    :: r
+	integer, intent(in)           :: type   ! See Table I
+	                                        !   1 - HS
+	                                        !   2 - Z
+	                                        !   3 - W
+	                                        !   4 - L1
+	                                        
+	integer, parameter   :: nbrParamSets = 4
+	
+    real(kind=dbl), dimension(nbrParamSets) :: m_sigma  = (/ 520.0, 551.31,  550.0, 550.0 /)
+    real(kind=dbl), dimension(nbrParamSets) :: m_omega  = (/ 783.0, 780.00,  783.0, 783.0 /)
+    real(kind=dbl), dimension(nbrParamSets) :: m_rho    = (/ 770.0, 763.00,    0.0,   0.0 /)
+
+    real(kind=dbl), dimension(nbrParamSets) :: g_sigma  = (/ 10.47, 11.19,  9.57, 10.30 /)
+    real(kind=dbl), dimension(nbrParamSets) :: g_omega  = (/ 13.80, 13.83, 11.67, 12.60 /)
+    real(kind=dbl), dimension(nbrParamSets) :: g_rho    = (/  8.08, 10.89,   0.0,   0.0 /)
+	
+    real(kind=dbl), dimension(nbrParamSets) :: g2sigmadivpi    = (/  6882.64,  7861.80, 5750.24, 6660.95 /)
+    real(kind=dbl), dimension(nbrParamSets) :: g2omegadivpi    = (/ 11956.94, 12008.98, 8550.74, 9967.88 /)
+    real(kind=dbl), dimension(nbrParamSets) :: g2rhodivpi      = (/  4099.06,  7445.91,    0.00,    0.00 /)
+	
+	
+
+	nucleonRMF = g2omegadivpi(type)*exp(-(m_omega(type)/197.3_dbl)*r)/(4.0_dbl*r)
+	nucleonRMF = nucleonRMF + g2rhodivpi(type)*exp(-(m_rho(type)/197.3_dbl)*r)/(4.0_dbl*r)
+	nucleonRMF = nucleonRMF - g2sigmadivpi(type)*exp(-(m_sigma(type)/197.3_dbl)*r)/(4.0_dbl*r)
+	
+	end function nucleonRMF
 
 !
 !	Reference: 

@@ -56,6 +56,14 @@ do i=1, function_cnt
 		call graphM3Y
 	end if
 
+	if (function_list(i)%function_name .EQ. 'graphSaoPaulo') then
+		call graphSaoPaulo
+	end if
+
+	if (function_list(i)%function_name .EQ. 'graphAllNN') then
+		call graphAllNN
+	end if
+
 	if (function_list(i)%function_name .EQ. 'genPycnoRateSplines') then
 		call genPycnoRateSplines
 	end if

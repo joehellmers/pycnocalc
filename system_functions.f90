@@ -434,6 +434,127 @@ subroutine graphM3Y
     
 end subroutine
 
+subroutine graphSaoPaulo
+
+    use nucleon_interactions
+    use astrophysics
+    use general_nuclear
+    
+    real(kind=dbl)  :: delta_r, r
+    integer(kind=8) :: i
+    integer(kind=8) :: N
+    real(kind=dbl)  :: nn_potenergy_min, nn_potenergy_max
+    real(kind=dbl)  :: r_bottom, r_top
+    logical         :: change_pt_found = .false.
+    real(kind=dbl)  :: r_start, r_end
+    real(kind=dbl)  :: E0_min, E0_max
+    real(kind=dbl)  :: rho_min = 1d7
+    real(kind=dbl)  :: rho_max = 1d9
+    integer         :: A1, Z1
+    real(kind=dbl)  :: A2, Z2
+    real(kind=dbl)  :: mu
+    
+    A1 = 12
+    Z1 = 6
+    A2 = 12.0_dbl
+    Z2 = 12.0_dbl
+    
+    
+    print *, "r,sao_paulo_v_nn_min,sao_paulo_v_nn_max"
+    N = 100
+    r_start = 0.0_dbl
+    r_end = 4.0_dbl
+    E0_min = E0_Energy(Z1,Z2, A1, A2, rho_min)
+    E0_max = E0_Energy(Z1,Z2, A1, A2, rho_max)
+    mu = reduced_mass(A1, Z1, A2, Z2)
+    delta_r = (r_end - r_start)/N
+    do i = 0, N
+        r = i*delta_r
+        nn_potenergy_min = nucleonSaoPaulo(r, E0_min, mu)
+        nn_potenergy_max = nucleonSaoPaulo(r, E0_max, mu)
+        print *, r , ",", nn_potenergy_min, nn_potenergy_max
+        !if (.not. (change_pt_found) .and. (nn_potenergy .lt. 0.0_dbl)) then
+        !    change_pt_found = .true.
+        !    r_top = r
+        !    r_bottom = r - delta_r
+        !end if
+    end do
+    
+    ! Use this code to get the "root", where the interaction energy goes negative
+    !if (change_pt_found) then
+    !    change_pt_found = .false.
+    !    N = 100
+    !    r_bottom    = 0.56754316782759151_dbl
+    !    r_top       = 0.56754316782759207_dbl
+    !    delta_r = (r_top - r_bottom)/N        
+    !    do i = 0, N
+    !        r = r_bottom + i*delta_r
+    !        nn_potenergy = nucleonM3Y(r,0.001_dbl)
+    !        write (*,"(F100.98,2x,F100.98)") r, nn_potenergy
+    !        !if (.not. (change_pt_found) .and. (nn_potenergy .le. 0.0_dbl)) then
+            !    change_pt_found = .true.
+            !    r_top = r
+            !    r_bottom = r - delta_r
+            !    !write (*,"(a,f100.98,1x,a,f100.98)") "r_bottom = ", r_bottom, "r_top = ", r_top
+            !    !exit
+            !end if
+     !   end do
+    !end if
+    
+    !print *, nucleonM3Y(0.56754316782759184345508174374117515981197357177734375_dbl,0.001_dbl)
+    
+end subroutine
+
+subroutine graphAllNN
+
+    use nucleon_interactions
+    use astrophysics
+    use general_nuclear
+    
+    real(kind=dbl)  :: delta_r, r
+    integer(kind=8) :: i
+    integer(kind=8) :: N
+    real(kind=dbl)  :: sp_potenergy_min, sp_potenergy_max
+    real(kind=dbl)  :: m3y_potenergy
+    real(kind=dbl)  :: rmf_potenergy
+    real(kind=dbl)  :: r_bottom, r_top
+    logical         :: change_pt_found = .false.
+    real(kind=dbl)  :: r_start, r_end
+    real(kind=dbl)  :: E0_min, E0_max
+    real(kind=dbl)  :: rho_min = 1d7
+    real(kind=dbl)  :: rho_max = 1d9
+    integer         :: A1, Z1
+    real(kind=dbl)  :: A2, Z2
+    real(kind=dbl)  :: mu
+    logical         :: excludeCore = .true.
+    real(kind=dbl)  :: coreCutoff = 0.01_dbl
+
+    A1 = 12
+    Z1 = 6
+    A2 = 12.0_dbl
+    Z2 = 12.0_dbl
+        
+    print *, "Radius(fm),Vnn(SP_min),Vnn(SP_max),Vnn(M3Y),Vnn(RMF)"
+    N = 100
+    r_start = 0.0_dbl
+    r_end = 4.0_dbl
+    E0_min = E0_Energy(Z1,Z2, A1, A2, rho_min)
+    E0_max = E0_Energy(Z1,Z2, A1, A2, rho_max)
+    mu = reduced_mass(A1, Z1, A2, Z2)
+    delta_r = (r_end - r_start)/N
+    do i = 0, N
+        r = i*delta_r
+        sp_potenergy_min = nucleonSaoPaulo(r, E0_min, mu)
+        sp_potenergy_max = nucleonSaoPaulo(r, E0_max, mu)
+        m3y_potenergy = nucleonM3Y(r, 0.001_dbl, excludeCore, coreCutoff)
+        rmf_potenergy = nucleonRMF(r,4) ! use L1 type of RMF nn-interaction
+        if (i .gt. 0) then
+            print *, r , ",", sp_potenergy_min,",", sp_potenergy_max,",", m3y_potenergy,",",rmf_potenergy
+        end if
+    end do
+        
+end subroutine
+
 subroutine genPycnoRateSplines
     
     ! Here we assume each rate type has 101 entries, and that they are in the csv file
