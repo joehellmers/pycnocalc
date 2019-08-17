@@ -536,21 +536,19 @@ subroutine graphAllNN
         
     print *, "Radius(fm),Vnn(SP_min),Vnn(SP_max),Vnn(M3Y),Vnn(RMF)"
     N = 100
-    r_start = 0.0_dbl
-    r_end = 4.0_dbl
+    r_start = 0.3_dbl
+    r_end = 2.5_dbl
     E0_min = E0_Energy(Z1,Z2, A1, A2, rho_min)
     E0_max = E0_Energy(Z1,Z2, A1, A2, rho_max)
     mu = reduced_mass(A1, Z1, A2, Z2)
     delta_r = (r_end - r_start)/N
     do i = 0, N
-        r = i*delta_r
+        r = r_start + i*delta_r
         sp_potenergy_min = nucleonSaoPaulo(r, E0_min, mu)
         sp_potenergy_max = nucleonSaoPaulo(r, E0_max, mu)
         m3y_potenergy = nucleonM3Y(r, 0.001_dbl, excludeCore, coreCutoff)
         rmf_potenergy = nucleonRMF(r,4) ! use L1 type of RMF nn-interaction
-        if (i .gt. 0) then
-            print *, r , ",", sp_potenergy_min,",", sp_potenergy_max,",", m3y_potenergy,",",rmf_potenergy
-        end if
+        print *, r , ",", sp_potenergy_min,",", sp_potenergy_max,",", m3y_potenergy,",",rmf_potenergy
     end do
         
 end subroutine
