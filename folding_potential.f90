@@ -29,6 +29,7 @@ contains
 	! tot_radius1 : the effective radius of the first nucleus
 	! tot_radius2 : the effective radius of the second nucleus
     ! E0: zero-point vibrational energy for first (incoming particle)
+    ! nucIntType : 1 - Sao Paulo, 2 - M3Y, 3 - RMF
     ! inSQMFlag: An optional input parameter indicating if we are doing an SQM calculation
 	
 	! returns the Folding potential in MeV
@@ -154,10 +155,18 @@ contains
 							dy = this_r2*sin(this_theta2)*sin(this_phi2) - this_r1*sin(this_theta1)*sin(this_phi1)
 							dz = this_r2*cos(this_theta2) - this_r1*cos(this_theta1)
 							d = sqrt(dx*dx + dy*dy + dz*dz)
+                            select case (nucIntType)
+                                case (1)
+							        accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonSaoPaulo(d,E0,mu)
+                                case (2)
+							        accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2),.true.)
+                                case (3)
+							        accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonRMF(d,4)
+                                case default
+							        accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2),.true.)
+                            end select
                             if (nucIntType .eq. 1) then
-							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonSaoPaulo(d,E0,mu)
                             else
-							    accumulator1 = accumulator1 + ndensity1*ndensity2*dV1*dV2*nucleonM3Y(d,(delta_r1+delta_r2),.true.)
                             end if
 							my_cnt = my_cnt + 1
 						end do

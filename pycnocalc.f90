@@ -144,6 +144,10 @@ do i=1, function_cnt
 		call spline_002
 	end if
 
+	if (function_list(i)%function_name .EQ. 'graphAllFolding') then
+		call graphAllFolding
+	end if
+
 end do
 
 call printending 

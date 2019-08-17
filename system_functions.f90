@@ -766,5 +766,133 @@ subroutine genPycnoRateSplines
     
 end subroutine genPycnoRateSplines
 
+!*************************************************
+!
+! Graph M3Y, Sao Paulo, and RMF Folding potentials
+!
+!*************************************************
+
+
+subroutine graphAllFolding
+
+use constants
+use folding_potential
+use utilities
+use logging
+use general_nuclear
+use mathintegration
+
+implicit none
+
+! Local Variables
+real(4) :: t1
+integer :: r_iterator
+real(kind=dbl) :: this_r
+real(kind=dbl) :: sp_vfold, m3y_vfold, rmf_vfold
+real(kind=dbl) :: int_result
+
+real(kind=dbl)		:: min_r, max_r, delta_r
+integer			    :: A1, A2, Z1, Z2, n
+real(kind=dbl)		:: diffuse1, diffuse2
+real(kind=dbl)		:: rho0_1, rho0_2
+real(kind=dbl)		:: tot_radius1, tot_radius2
+integer			    :: unit,ierror
+character(len=1)	:: delimiter
+character(len=80)	:: outputfile
+real(kind=dbl) 		:: start, finish, tot_time
+real(kind=dbl)      :: total_walltime
+
+integer count_0, count_1, count_rate, count_max
+integer nn_int_type
+
+t1 = secnds(0.0);
+
+unit = 150
+
+min_r		= ConvertStrToReal(getParamValue('graphAllFolding','r1'))
+max_r		= ConvertStrToReal(getParamValue('graphAllFolding','r2'))
+delta_r		= ConvertStrToReal(getParamValue('graphAllFolding','dr'))
+A1		= ConvertStrToInt(getParamValue('graphAllFolding','A1')) 
+A2		= ConvertStrToInt(getParamValue('graphAllFolding','A2')) 
+Z1		= ConvertStrToInt(getParamValue('graphAllFolding','Z1')) 
+Z2		= ConvertStrToInt(getParamValue('graphAllFolding','Z2')) 
+n		= ConvertStrToInt(getParamValue('graphAllFolding','n')) 
+diffuse1	= ConvertStrToReal(getParamValue('graphAllFolding','diffuse1')) 
+diffuse2	= ConvertStrToReal(getParamValue('graphAllFolding','diffuse2')) 
+
+! If the total radii are given, use them, otherwise calculate
+ 
+if (checkParam('graphAllFolding','tot_radius1')) then
+	tot_radius1	= ConvertStrToReal(getParamValue('graphAllFolding','tot_radius1')) + diffuse1
+else
+	tot_radius1 = nuclear_radius(real(A1,dbl))
+end if
+
+if (checkParam('graphAllFolding','tot_radius2')) then
+	tot_radius2	= ConvertStrToReal(getParamValue('graphAllFolding','tot_radius2')) + diffuse2
+else
+	tot_radius2 = nuclear_radius(real(A2,dbl))
+end if
+
+! if the central densities are given use them, otherwise calculate
+
+if (checkParam('graphAllFolding','rho0_1')) then
+	rho0_1	= ConvertStrToReal(getParamValue('graphAllFolding','rho0_1'))
+else
+	rho0_1 = rho0_2pF(real(A1,dbl), tot_radius1, diffuse1)
+end if
+
+if (checkParam('graphAllFolding','rho0_2')) then
+	rho0_2	= ConvertStrToReal(getParamValue('graphAllFolding','rho0_2'))
+else
+	rho0_2 = rho0_2pF(real(A2,dbl), tot_radius2, diffuse2)
+end if
+
+if (checkParam('graphAllFolding','nuc_interaction_type')) then
+	nn_int_type	= ConvertStrToInt(getParamValue('graphAllFolding','nuc_interaction_type'))
+else
+	nn_int_type = 1
+end if
+
+delimiter	= getParamValue('graphAllFolding','delimiter')
+outputfile	= getParamValue('graphAllFolding','outputfile')
+
+open(unit, file='./' // results_dir // '/' // trim(outputfile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+if (ierror .NE. 0) then
+	print *, 'Error opening data file for output'
+	print *, ierror
+	stop
+end if
+
+this_r = min_r
+
+call system_clock(count_0, count_rate, count_max)
+call cpu_time(start)
+
+write (unit,*) "Radius(fm)",delimiter,"Sao Paulo",delimiter,"M3Y",delimiter,"RMF"
+do 
+	if (this_r > max_r) then
+		exit
+	end if
+	sp_vfold = vfold_spherically_symmetric(this_r,A1,real(A2,dbl),Z1,real(Z2,dbl),n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2,0.85_dbl,1,.FALSE.)
+	m3y_vfold = vfold_spherically_symmetric(this_r,A1,real(A2,dbl),Z1,real(Z2,dbl),n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2,0.85_dbl,2,.FALSE.)
+	rmf_vfold = vfold_spherically_symmetric(this_r,A1,real(A2,dbl),Z1,real(Z2,dbl),n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2,0.85_dbl,3,.FALSE.)
+	call scr_and_log(nbr = this_r, fmt='(F10.5)')
+    write (unit,*) this_r,delimiter,sp_vfold,delimiter,m3y_vfold,delimiter,rmf_vfold
+	this_r = this_r + delta_r
+	
+end do
+call cpu_time(finish)
+call system_clock(count_1, count_rate, count_max)
+tot_time = finish - start
+total_walltime = (count_1 * 1.0 / count_rate)/1000
+call scr_and_log (str='Wall Time: ',nbr=total_walltime,fmt='(ES13.5)',lf=.true.)
+call scr_and_log (str='Total Time: ',nbr=tot_time,fmt='(ES13.5)',lf=.true.)
+
+close(unit)
+
+end subroutine graphAllFolding
+
+
 end module system_functions
 
