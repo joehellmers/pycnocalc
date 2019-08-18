@@ -323,11 +323,16 @@ use rate_calc
     delimiter	= getParamValue('genCCRates','delimiter')
     outputfile	= getParamValue('genCCRates','outputfile')
 
-    if (nucIntType .eq. 1) then
-        nucIntTypeDesc = 'SAOPAULO'
-    else
-        nucIntTypeDesc = 'M3Y'
-    end if
+    select case (nucIntType)
+        case (1)
+            nucIntTypeDesc = 'SAOPAULO'
+        case (2)
+            nucIntTypeDesc = 'M3Y'
+        case (3)
+            nucIntTypeDesc = 'RMF'
+        case default
+            nucIntTypeDesc = 'M3Y'
+    end select
     
     open(unit, file='./' // results_dir // '/' // trim(outputfile), status='REPLACE', ACTION='WRITE', iostat=ierror)
     if (ierror .NE. 0) then
