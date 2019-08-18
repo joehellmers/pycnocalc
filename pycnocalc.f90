@@ -148,6 +148,10 @@ do i=1, function_cnt
 		call graphAllFolding
 	end if
 
+	if (function_list(i)%function_name .EQ. 'graphAllTotPotential') then
+		call graphAllTotPotential
+	end if
+
 end do
 
 call printending 

@@ -772,7 +772,6 @@ end subroutine genPycnoRateSplines
 !
 !*************************************************
 
-
 subroutine graphAllFolding
 
 use constants
@@ -892,6 +891,118 @@ call scr_and_log (str='Total Time: ',nbr=tot_time,fmt='(ES13.5)',lf=.true.)
 close(unit)
 
 end subroutine graphAllFolding
+
+!*******************************************************
+!
+! Graph M3Y, Sao Paulo, and RMF Folding total potentials
+!
+!*******************************************************
+
+subroutine graphAllTotPotential
+
+use constants
+use folding_potential
+use utilities
+use logging
+use general_nuclear
+use mathintegration
+use astrophysics
+
+implicit none
+
+! Local Variables
+integer :: r_iterator
+real(kind=dbl) :: this_r
+real(kind=dbl) :: sp_vfold, m3y_vfold, rmf_vfold
+real(kind=dbl) :: Vcoul
+real(kind=dbl) :: int_result
+
+real(kind=dbl)		:: min_r, max_r, delta_r
+integer			    :: A1, A2, Z1, Z2, n
+real(kind=dbl)		:: diffuse1, diffuse2
+real(kind=dbl)		:: rho0_1, rho0_2
+real(kind=dbl)		:: tot_radius1, tot_radius2
+integer			    :: unit,ierror
+character(len=1)	:: delimiter
+character(len=120)	:: outputfile
+real(kind=dbl) 		:: start, finish, tot_time
+real(kind=dbl)      :: total_walltime
+
+integer count_0, count_1, count_rate, count_max
+integer nn_int_type
+
+unit = 150
+
+min_r		= ConvertStrToReal(getParamValue('graphAllTotPotential','r1'))
+max_r		= ConvertStrToReal(getParamValue('graphAllTotPotential','r2'))
+delta_r		= ConvertStrToReal(getParamValue('graphAllTotPotential','dr'))
+A1		= ConvertStrToInt(getParamValue('graphAllTotPotential','A1')) 
+A2		= ConvertStrToInt(getParamValue('graphAllTotPotential','A2')) 
+Z1		= ConvertStrToInt(getParamValue('graphAllTotPotential','Z1')) 
+Z2		= ConvertStrToInt(getParamValue('graphAllTotPotential','Z2')) 
+n		= ConvertStrToInt(getParamValue('graphAllTotPotential','n')) 
+diffuse1	= ConvertStrToReal(getParamValue('graphAllTotPotential','diffuse1')) 
+diffuse2	= ConvertStrToReal(getParamValue('graphAllTotPotential','diffuse2')) 
+
+! If the total radii are given, use them, otherwise calculate
+ 
+if (checkParam('graphAllTotPotential','tot_radius1')) then
+	tot_radius1	= ConvertStrToReal(getParamValue('graphAllTotPotential','tot_radius1')) + diffuse1
+else
+	tot_radius1 = nuclear_radius(real(A1,dbl))
+end if
+
+if (checkParam('graphAllTotPotential','tot_radius2')) then
+	tot_radius2	= ConvertStrToReal(getParamValue('graphAllTotPotential','tot_radius2')) + diffuse2
+else
+	tot_radius2 = nuclear_radius(real(A2,dbl))
+end if
+
+! if the central densities are given use them, otherwise calculate
+
+if (checkParam('graphAllTotPotential','rho0_1')) then
+	rho0_1	= ConvertStrToReal(getParamValue('graphAllTotPotential','rho0_1'))
+else
+	rho0_1 = rho0_2pF(real(A1,dbl), tot_radius1, diffuse1)
+end if
+
+if (checkParam('graphAllTotPotential','rho0_2')) then
+	rho0_2	= ConvertStrToReal(getParamValue('graphAllTotPotential','rho0_2'))
+else
+	rho0_2 = rho0_2pF(real(A2,dbl), tot_radius2, diffuse2)
+end if
+
+delimiter	= getParamValue('graphAllTotPotential','delimiter')
+outputfile	= getParamValue('graphAllTotPotential','outputfile')
+
+open(unit, file='./' // results_dir // '/' // trim(outputfile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+if (ierror .NE. 0) then
+	print *, 'Error opening data file for output'
+	print *, trim(outputfile)
+	print *, ierror
+	stop
+end if
+
+this_r = min_r
+
+write (unit,*) "Radius(fm)",delimiter,"Vcoul",delimiter,"Sao Paulo",delimiter,"M3Y",delimiter,"RMF-L1"
+do 
+	if (this_r > max_r) then
+		exit
+	end if
+	sp_vfold = vfold_spherically_symmetric(this_r,A1,real(A2,dbl),Z1,real(Z2,dbl),n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2,0.85_dbl,1,.FALSE.)
+	m3y_vfold = vfold_spherically_symmetric(this_r,A1,real(A2,dbl),Z1,real(Z2,dbl),n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2,0.85_dbl,2,.FALSE.)
+	rmf_vfold = vfold_spherically_symmetric(this_r,A1,real(A2,dbl),Z1,real(Z2,dbl),n,diffuse1,diffuse2,rho0_1,rho0_2,tot_radius1,tot_radius2,0.85_dbl,3,.FALSE.)	
+	Vcoul = Vcoulomb(Z1,real(Z2,dbl),this_r,tot_radius1,tot_radius2)
+	call scr_and_log(nbr = this_r, fmt='(F10.5)')
+    write (unit,*) this_r,delimiter,Vcoul,delimiter,sp_vfold+Vcoul,delimiter,m3y_vfold+Vcoul,delimiter,rmf_vfold+Vcoul
+	this_r = this_r + delta_r
+	
+end do
+
+close(unit)
+
+end subroutine graphAllTotPotential
 
 
 end module system_functions
