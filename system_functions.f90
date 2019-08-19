@@ -342,7 +342,8 @@ use rate_calc
     end if
     write(unit,*) 'nuclei,nninteraction,density,pycno_rate'
     call scr_and_log(str='nuclei,nninteraction,density,pycno_rate',fmt='(a)',lf=.TRUE.)
-    do rateCalcTypeIndex = 0, 6
+    ! TEMP: only do fcc rates
+    do rateCalcTypeIndex = 4, 6
         do i = 1, N+1
             current_rho = initial_rho + delta_rho*(i-1)
             call scr_and_log(str='C-C,',fmt='(a)',lf=.FALSE.)
