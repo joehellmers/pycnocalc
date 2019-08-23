@@ -152,6 +152,10 @@ do i=1, function_cnt
 		call graphAllTotPotential
 	end if
 
+	if (function_list(i)%function_name .EQ. 'graphSFactor') then
+		call graphSFactor
+	end if
+
 end do
 
 call printending 

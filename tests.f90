@@ -115,7 +115,7 @@ subroutine Sfactor_001
     real(kind=dbl)  :: Rstep = 1.0_dbl
     real(kind=dbl)  :: SQM_A2 = 0.0_dbl
     integer :: partition = 15
-    integer :: nucIntType = 2
+    integer :: nucIntType = 3
 
     real(kind=dbl)  ::  S
 
@@ -123,8 +123,8 @@ subroutine Sfactor_001
 
     A1 = 12
     A2 = 12.0_dbl
-    Z1 = 8
-    Z2 = 8.0_dbl
+    Z1 = 6
+    Z2 = 6.0_dbl
 
     rho = 1000000000.0_dbl
 

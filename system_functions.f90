@@ -343,7 +343,7 @@ use rate_calc
     write(unit,*) 'nuclei,nninteraction,density,pycno_rate'
     call scr_and_log(str='nuclei,nninteraction,density,pycno_rate',fmt='(a)',lf=.TRUE.)
     ! TEMP: only do fcc rates
-    do rateCalcTypeIndex = 4, 6
+    do rateCalcTypeIndex = 0, 6
         do i = 1, N+1
             current_rho = initial_rho + delta_rho*(i-1)
             call scr_and_log(str='C-C,',fmt='(a)',lf=.FALSE.)
@@ -1009,6 +1009,56 @@ end do
 close(unit)
 
 end subroutine graphAllTotPotential
+
+!******************************************
+!
+! Sfactor Graph
+!
+!******************************************
+
+subroutine graphSFactor
+
+    use rate_calc
+
+    integer         :: A1
+    real(kind=dbl)  :: A2
+    integer         :: Z1
+    real(kind=dbl)  :: Z2
+    real(kind=dbl)  :: rho
+    real(kind=dbl)  :: Rstep = 1.0_dbl
+    integer :: partition = 15
+    integer :: nucIntType
+    
+    real(kind=dbl)  ::  S_saopaulo, S_m3y, S_rmf
+    real(kind=dbl)  ::  delta_rho, this_rho, rho_min, rho_max
+    integer         ::  nbrDensities = 20
+    
+    call scr_and_log_str ('Generating S Factor Graphs:')
+    print *, 'Generating S Factor Graphs:'
+    A1 = 12
+    A2 = 12.0_dbl
+    Z1 = 6
+    Z2 = 6.0_dbl
+
+    rho_min = 1d9
+    rho_max = 1d11
+
+    delta_rho = (rho_max - rho_min)/nbrDensities
+    
+    print *, "Density,Sao Paulo,M3Y,RMF"
+    this_rho = rho_min
+    do 
+        if (this_rho > rho_max) then
+            exit
+        end if
+        S_saopaulo = Sfactor(A1, A2, Z1, Z2, this_rho, Rstep, partition, 1, .FALSE.)
+        S_m3y = Sfactor(A1, A2, Z1, Z2, this_rho, Rstep, partition, 2, .FALSE.)
+        S_rmf = Sfactor(A1, A2, Z1, Z2, this_rho, Rstep, partition, 3, .FALSE.)
+        print *,this_rho, ",", S_saopaulo, ",", S_m3y, ",",S_rmf
+        this_rho = this_rho + delta_rho
+    end do
+        
+end subroutine graphSFactor
 
 
 end module system_functions
