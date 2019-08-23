@@ -455,5 +455,381 @@ contains
         tempRateAdjust = factor
                     
     end function tempRateAdjust
+
+      real(dbl) function pow3(x) result(res) ! x^3
+         real(dbl), intent(in) :: x
+         res = x*x*x
+      end function pow3
+
+      real(dbl) function pow4(x) result(res) ! x^4
+         real(dbl), intent(in) :: x
+         res = x*x*x*x
+      end function pow4
+
+      real(kind=dbl) function log_cr(x) result(res)
+         real(kind=dbl), intent(in) :: x
+         res = log(x)
+      end function log_cr
+
+      real(dbl) function exp_cr(x) result(res) ! E^x
+         real(dbl), intent(in) :: x
+         res = exp(x)
+      end function exp_cr
+
+      real(kind=dbl) function pow_cr(x,y) result(res) ! x^y
+         real(kind=dbl), intent(in) :: x,y
+         integer :: iy, j
+         if (x == 0d0) then
+            res = 0d0
+            return
+         end if
+         iy = floor(y)
+         if (y == dble(iy) .and. abs(iy) < 100) then ! integer power of x
+            res = 1d0
+            do j=1,abs(iy)
+               res = res*x
+            end do
+            if (iy < 0) res = 1d0/res
+            return
+         end if
+         res = exp_cr(log_cr(x)*y)
+      end function pow_cr
+
+      subroutine G05_epsnuc_CC(T, Rho, X12, eps, deps_dT, deps_dRho)
+         
+         ! from Gasques, et al, Nuclear fusion in dense matter.  astro-ph/0506386.
+         ! Phys Review C, 72, 025806 (2005)
+         
+         !use const_def
+         
+         real(dbl), intent(in) :: T
+         real(dbl), intent(in) :: Rho
+         real(dbl), intent(in) :: X12 ! mass fraction of c12
+         real(dbl), intent(out) :: eps ! rate in ergs/g/sec
+         real(dbl), intent(out) :: deps_dT ! partial wrt temperature
+         real(dbl), intent(out) :: deps_dRho ! partial wrt density
+         
+         
+         real(dbl), parameter :: exp_cutoff = 200d0
+         real(dbl), parameter :: exp_max_result = 1d200
+         real(dbl), parameter :: exp_min_result = 1d-200
+
+         real(dbl), parameter :: sqrt3 = 1.73205080756888d0 ! sqrt[3]
+         
+         real(dbl), parameter :: Z = 6 ! charge of C12
+         real(dbl), parameter :: A = 12 ! atomic number for C12
+
+         real(dbl), parameter :: b_ne20 = 160.64788d0
+         real(dbl), parameter :: b_c12  =  92.1624d0
+         real(dbl), parameter :: b_he4  =  28.2928d0
+         
+         ! coefficients from "optimal" model 1
+         real(dbl), parameter :: Cexp = 2.638
+         real(dbl), parameter :: Cpyc = 3.90
+         real(dbl), parameter :: Cpl = 1.25
+         real(dbl), parameter :: CT = 0.724
+         real(dbl), parameter :: Csc = 1.0754
+         real(dbl), parameter :: Lambda = 0.5  
+         
+         real(dbl) :: m, Zqe, Z2e2, Q1212, MeV_to_erg, barn_to_cm2, MeV_barn_to_erg_cm2, ergs_c12c12
+         
+         real(dbl) :: Tk, ni, a_ion, Gamma, omega_p, Tp
+         real(dbl) :: Ea, tau, Epk, SEpk, lam, Rpyc, Ppyc, Fpyc
+         real(dbl) :: Ttilda, Gammatilda, tautilda, phi, gam1, gam2, gam
+         real(dbl) :: P, lnF, F, deltaR, R
+
+         real(dbl) :: Epk1, Epk2x, SEpkx1, SEpkx2x, SEpkx2d, SEpkx2n, SEpkx2, phin, phid
+         real(dbl) :: Epk2c, dEpk1_dT, dni_dRho, dTk_dT, da_ion_dRho, dGamma_dT, &
+               dGamma_dRho, domega_p_dRho, dTp_dRho
+         real(dbl) :: dtau_dT, dEpk1_dRho, dEpk2x_dT, dEpk2x_dRho, dEpk2c_dT, dEpk2c_dRho, dEpk_dT, dEpk_dRho
+         real(dbl) :: dSEpkx1_dT, dSEpkx1_dRho, dSEpkx2x_dT, dSEpkx2x_dRho, dSEpkx2d_dT, dSEpkx2d_dRho
+         real(dbl) :: dSEpkx2n_dT, dSEpkx2n_dRho, dSEpkx2_dT, dSEpkx2_dRho, dSEpk_dT, dSEpk_dRho
+         real(dbl) :: dlam_dRho, dPpyc_dRho, dFpyc_dRho, dRpyc_dT, dRpyc_dRho, gam_n, gam_d, dgam_dT, dgam_dRho
+         real(dbl) :: dphin_dGamma, dphin_dT, dphin_dRho, dphid_dGamma,  &
+               dphid_dT, dphid_dRho, dphidT, dphidRho
+         real(dbl) :: dTtilda_dT, dTtilda_dRho, dGammatilda_dT, dGammatilda_dRho,  &
+               dtautilda_dTtilda, dtautilda_dT, dtautilda_dRho
+         real(dbl) :: dgam_n_dT, dgam_n_dRho, dgam_d_dT, dgam_d_dRho, dP_dgam, dP_dTtilda, dP_dT, dP_dRho
+         real(dbl) :: lnF1, lnF2x, lnF2, lnF3, dlnF1_dT, dlnF1_dRho, dlnF2x_dT, dlnF2x_dRho, dlnF2_dT, dlnF2_dRho
+         real(dbl) :: dlnF3_dT, dlnF3_dRho, dlnF_dT, dlnF_dRho, dF_dT, dF_dRho, niterm, dniterm_dRho
+         real(dbl) :: d_deltaR_dT, d_deltaR_dRho, dRdT, dRdRho, exponent
+                   
+         integer :: status, pwdlen
+         integer :: unit = 45
+         character(len=128) :: pwd, pycnoTypeFile 
+
+ 1       format(a55,99(1pd26.16))
+ !2       format(a55,i12,99(1pd26.16))
+ !3       format(a55,2i12,99(1pd26.16))
+ !4       format(a55,3i12,99(1pd26.16))
+ !5       format(a55,4i12,99(1pd26.16))
+ !6       format(a55,5i12,99(1pd26.16))
+ !7       format(a55,6i12,99(1pd26.16))
+ !8       format(a55,7i12,99(1pd26.16))
+ !11      format(a55,99(i26))
+ !12      format(a55,99(f26.16))
+                  
+         m = A * amu  ! ion mass of C12 = 12 amu by definition
+         Zqe = Z*elementary_charge
+         Z2e2 = Zqe*Zqe
+         Q1212 = b_ne20 + b_he4 - 2 * b_c12 ! MeV
+         MeV_to_erg = 1d6 * ev2erg
+         barn_to_cm2 = 1d-24
+         MeV_barn_to_erg_cm2 = MeV_to_erg * barn_to_cm2
+         ergs_c12c12 = MeV_to_erg * Q1212
+
+         Tk = T * boltzmann ! temperature in ergs
+         dTk_dT = boltzmann
+
+         ! number density of ions, cm^-3
+         ! this entire routine gets the rate assuming pure 12C
+         ni = Rho * avogadro / A
+         dni_dRho = avogadro / A
+         
+         ! section III.A.
+         a_ion = pow_cr(3 / (4 * Pi * ni), one_third) ! ion-sphere radius, cm
+         da_ion_dRho = -one_third * a_ion * dni_dRho / ni
+         
+         Gamma = Z2e2 / (a_ion * Tk) ! Coulomb coupling parameter
+         dGamma_dT = - Gamma * dTk_dT / Tk
+         dGamma_dRho =  - Gamma * da_ion_dRho / a_ion
+         
+         omega_p = DSQRT(4 * Pi * Z2e2 * ni / m) ! ion plasma frequency
+         domega_p_dRho = 0.5d0 * omega_p * dni_dRho / ni
+         
+         Tp = hbar * omega_p ! ion plasma temperature
+         dTp_dRho = hbar * domega_p_dRho
+         
+         ! section III.B.
+         Ea = m * (Z2e2 / hbar)**2 ! (eqn 16)
+         
+         tau = 3 * pow_cr(Pi/2,two_thirds) * pow_cr(Ea/Tk, one_third) ! (eqn 16)
+         dtau_dT = -one_third * tau * dTk_dT / Tk
+         
+         Epk1 = hbar * omega_p
+         dEpk1_dRho = hbar * domega_p_dRho
+         dEpk1_dT = 0
+         
+         exponent = -Lambda*Tp/Tk
+         if (exponent < -exp_cutoff) then
+            Epk2x = exp_min_result
+            dEpk2x_dT = 0
+            dEpk2x_dRho = 0
+         else if (exponent > exp_cutoff) then
+            Epk2x = exp_max_result
+            dEpk2x_dT = 0
+            dEpk2x_dRho = 0
+         else
+            Epk2x = exp_cr(exponent)
+            dEpk2x_dT = Epk2x * Lambda * Tp * dTk_dT / (Tk*Tk)
+            dEpk2x_dRho = -Epk2x * Lambda * Tp * dTp_dRho / Tk
+         end if
+         
+         Epk2c = Z2e2/a_ion + Tk*tau/3
+         dEpk2c_dT = (dTk_dT*tau + Tk*dtau_dT)/3
+         dEpk2c_dRho = -Z2e2*da_ion_dRho/(a_ion*a_ion)
+         
+         Epk = (Epk1 + Epk2c * Epk2x) / MeV_to_erg ! (eqn 32)
+         dEpk_dT = (dEpk1_dT + dEpk2c_dT * Epk2x + Epk2c * dEpk2x_dT) / MeV_to_erg
+         dEpk_dRho = (dEpk1_dRho + dEpk2c_dRho * Epk2x + Epk2c * dEpk2x_dRho) / MeV_to_erg
+
+         SEpkx1 = -0.428*Epk
+         dSEpkx1_dT = -0.428*dEpk_dT
+         dSEpkx1_dRho = -0.428*dEpk_dRho
+         
+         SEpkx2x = 0.613*(8-Epk)
+         dSEpkx2x_dT = -0.613*dEpk_dT
+         dSEpkx2x_dRho = -0.613*dEpk_dRho
+         
+         if (SEpkx2x < -exp_cutoff) then
+            SEpkx2d = 1 + exp_min_result
+            dSEpkx2d_dT = 0
+            dSEpkx2d_dRho = 0
+         else if (SEpkx2x > exp_cutoff) then
+            SEpkx2d = 1 + exp_max_result
+            dSEpkx2d_dT = 0
+            dSEpkx2d_dRho = 0
+         else
+            SEpkx2d = 1 + exp_cr(SEpkx2x)
+            dSEpkx2d_dT = (SEpkx2d-1)*dSEpkx2x_dT
+            dSEpkx2d_dRho = (SEpkx2d-1)*dSEpkx2x_dRho
+         end if
+         
+         SEpkx2n = 3 * pow_cr(Epk,0.308d0)
+         dSEpkx2n_dT = 3 * 0.308 * dEpk_dT / Epk
+         dSEpkx2n_dRho = 3 * 0.308 * dEpk_dRho / Epk
+         
+         SEpkx2 = SEpkx2n / SEpkx2d
+         dSEpkx2_dT = (dSEpkx2n_dT - SEpkx2n * dSEpkx2d_dT / SEpkx2d) / SEpkx2d
+         dSEpkx2_dRho = (dSEpkx2n_dRho - SEpkx2n * dSEpkx2d_dRho / SEpkx2d) / SEpkx2d
+         
+         exponent = SEpkx1+SEpkx2
+         if (exponent < -exp_cutoff) then
+            SEpk = 5.15d16 * exp_min_result
+            dSEpk_dT = 0
+            dSEpk_dRho = 0
+         else if (exponent > exp_cutoff) then
+            SEpk = 5.15d16 * exp_max_result
+            dSEpk_dT = 0
+            dSEpk_dRho = 0
+         else
+            SEpk = 5.15d16 * exp_cr(exponent) ! (eqn 12)
+            dSEpk_dT = SEpk * (dSEpkx1_dT + dSEpkx2_dT)
+            dSEpk_dRho = SEpk * (dSEpkx1_dRho + dSEpkx2_dRho)
+         end if
+
+         ! section III.D.
+         lam = pow_cr(Rho/(1.3574d11*A),one_third) / (A*Z*Z) ! (eqn 24)
+         dlam_dRho = one_third * lam / Rho
+         
+         Ppyc = 8*Cpyc*11.515/pow_cr(lam,Cpl) ! (eqn 23)
+         dPpyc_dRho = - Ppyc * dlam_dRho / lam
+         
+         Fpyc = exp_cr(-Cexp/DSQRT(lam)) ! (eqn 23)
+         dFpyc_dRho = Fpyc * Cexp * dlam_dRho / (2 * lam*sqrt(lam))
+         
+         Rpyc = Rho * A * pow4(Z) * (1 / (8 * 11.515)) * 1d46 * pow3(lam) * SEpk * Fpyc * Ppyc ! (eqn 25)
+         
+         if (Rpyc < exp_min_result) then
+            Rpyc = 0
+            dRpyc_dT = 0
+            dRpyc_dRho = 0
+         else
+            dRpyc_dT = Rpyc * (dSEpk_dT / SEpk)
+            dRpyc_dRho = Rpyc * (3 * dlam_dRho / lam + dSEpk_dRho / SEpk + dFpyc_dRho / Fpyc + dPpyc_dRho / Ppyc)
+         end if
+
+         ! section III.G.
+         phin = DSQRT(Gamma)
+         dphin_dGamma = 0.5 * phin / Gamma
+         dphin_dT = dGamma_dT * dphin_dGamma
+         dphin_dRho = dGamma_dRho * dphin_dGamma
+         
+         phid = pow_cr(Csc**4 / 9 + Gamma**2, 0.25d0)
+         dphid_dGamma = 0.5d0 * Gamma / pow3(phid)
+         dphid_dT = dGamma_dT * dphid_dGamma
+         dphid_dRho = dGamma_dRho *dphid_dGamma
+         
+         phi = phin / phid
+         dphidT = (dphin_dT - dphid_dT * phin / phid) / phid
+         dphidRho = (dphin_dRho - dphid_dRho * phin / phid) / phid
+         
+         Ttilda = DSQRT(Tk*Tk + (CT*Tp)*(CT*Tp)) ! (eqn 29)
+         dTtilda_dT = Tk * dTk_dT / Ttilda
+         dTtilda_dRho = CT*CT * Tp * dTp_dRho / Ttilda
+         
+         Gammatilda = Z2e2 / (a_ion * Ttilda) ! (eqn 29)
+         dGammatilda_dT = -Gammatilda * dTtilda_dT / Ttilda
+         dGammatilda_dRho = -Gammatilda * (dTtilda_dRho / Ttilda + da_ion_dRho / a_ion)
+         
+         tautilda = 3 * pow_cr(Pi/2,two_thirds) * pow_cr(Ea / Ttilda, one_third) ! (eqn 29)
+         dtautilda_dTtilda = - tautilda / (3 * Ttilda)
+         dtautilda_dT = dtautilda_dTtilda * dTtilda_dT
+         dtautilda_dRho = dtautilda_dTtilda * dTtilda_dRho
+         
+         gam1 = two_thirds
+         gam2 = two_thirds * (Cpl + 0.5)
+         gam_n = Tk*Tk * gam1 + Tp*Tp * gam2
+         dgam_n_dT = 2 * Tk * dTk_dT * gam1
+         dgam_n_dRho = 2 * Tp * dTp_dRho * gam2
+         
+         gam_d = Tk*Tk + Tp*Tp
+         dgam_d_dT = 2 * Tk * dTk_dT
+         dgam_d_dRho = 2 * Tp * dTp_dRho
+
+         gam = gam_n / gam_d ! (eqn 31)
+         dgam_dT = (dgam_n_dT - gam_n * dgam_d_dT / gam_d)/gam_d
+         dgam_dRho = (dgam_n_dRho - gam_n * dgam_d_dRho / gam_d)/gam_d
+         
+         P = (8 * pow_cr(Pi/2,one_third)/sqrt3) * pow_cr(Ea/Ttilda, gam) ! (eqn 29)
+         if (P < exp_min_result) then
+            P = 0
+            dP_dgam = 0
+            dP_dTtilda = 0
+            dP_dT = 0
+            dP_dRho = 0
+         else
+            dP_dgam = P * log_cr(Ea / Ttilda)
+            dP_dTtilda = -P * gam / Ttilda
+            dP_dT = dP_dgam * dgam_dT + dP_dTtilda * dTtilda_dT
+            dP_dRho = dP_dgam * dgam_dRho + dP_dTtilda * dTtilda_dRho
+         end if
+         
+         lnF1 = -tautilda
+         exponent = -Lambda * Tp / Tk
+         if (exponent < -exp_cutoff) then
+            lnF2x = exp_min_result
+            dlnF2x_dT = 0
+            dlnF2x_dRho = 0
+         else if (exponent > exp_cutoff) then
+            lnF2x = exp_max_result
+            dlnF2x_dT = 0
+            dlnF2x_dRho = 0
+         else
+            lnF2x = exp_cr(exponent)
+            dlnF2x_dT = lnF2x * Lambda * Tp * dTk_dT / Tk**2
+            dlnF2x_dRho = -lnF2x * Lambda * dTp_dRho / Tk
+         end if
+         
+         lnF2 = Csc * Gammatilda * phi * lnF2x
+         lnF3 = - Lambda * Tp / Tk
+         lnF = lnF1 + lnF2 + lnF3 ! (eqn 29)
+         if (lnF < -exp_cutoff) then
+            F = exp_min_result
+            dF_dT = 0
+            dF_dRho = 0
+         else if (lnF > exp_cutoff) then
+            F = exp_max_result
+            dF_dT = 0
+            dF_dRho = 0
+         else
+            F = exp_cr(lnF)
+            dlnF1_dT = -dtautilda_dT
+            dlnF1_dRho = -dtautilda_dRho
+            dlnF2_dT = lnF2 * (dGammatilda_dT / Gammatilda + dphidT / phi + dlnF2x_dT / lnF2x)
+            dlnF2_dRho = lnF2 * (dGammatilda_dRho / Gammatilda + dphidRho / phi + dlnF2x_dRho / lnF2x)
+            dlnF3_dT = -lnF3 * dTk_dT / Tk
+            dlnF3_dRho = lnF3 * dTp_dRho / Tp
+            dlnF_dT = dlnF1_dT + dlnF2_dT + dlnF3_dT
+            dlnF_dRho = dlnF1_dRho + dlnF2_dRho + dlnF3_dRho
+            dF_dT = dlnF_dT * F
+            dF_dRho = dlnF_dRho * F
+         end if
+
+         ! NOTE: when calculating deltaR we need to convert SEpk to erg cm^2 from MeV barn.
+         ! That conversion is included in the numerical coefficient of the eqn for Rpyc.
+         
+         niterm = ni*ni * (hbar / (2 * m * Z2e2))
+         dniterm_dRho = 2 * niterm * dni_dRho / ni
+         
+         deltaR = niterm * SEpk * MeV_barn_to_erg_cm2 * P * F ! (eqn 29)
+         if (deltaR < 1d-100) then
+            deltaR = 0
+            d_deltaR_dT = 0
+            d_deltaR_dRho = 0
+         else
+            d_deltaR_dT = deltaR * (dSEpk_dT / SEpk + dP_dT / P + dF_dT / F)
+            d_deltaR_dRho = deltaR * (dniterm_dRho / niterm + dSEpk_dRho / SEpk + dP_dRho / P + dF_dRho / F)
+         end if
+         
+         R = X12 * (Rpyc + deltaR) ! eqn 28, s^-1 cm^-3
+         dRdT = X12 * (dRpyc_dT + d_deltaR_dT)
+         dRdRho = X12 * (dRpyc_dRho + d_deltaR_dRho)
+
+         eps = R * ergs_c12c12 / Rho ! ergs/g/sec
+         deps_dT = dRdT * ergs_c12c12 / Rho
+         deps_dRho = (dRdRho * ergs_c12c12 - eps) / Rho
+      
+         !if (.true. .or. Rho < 1.7d10) return
+         write(*,1) 'T', T
+         write(*,1) 'Rho', Rho
+         write(*,1) 'X12', X12
+         write(*,1) 'eps', eps
+         write(*,1) 'deps_dT', deps_dT
+         write(*,1) 'deps_dRho', deps_dRho
+         write(*,1) 'Rpyc', Rpyc
+         write(*,*) 
+   
+      end subroutine G05_epsnuc_CC
     
 end module rate_calc
