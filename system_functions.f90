@@ -3,7 +3,7 @@
 !	PycnoCalc
 !
 !	Created by hellmersjl on 5/24/08.
-!
+!ƒƒ
 
 module system_functions
 
@@ -624,7 +624,8 @@ subroutine genPycnoRateSplines
     integer         :: nucIntType
       ! 1 - M3Y
       ! 2 - Sao Paulo
-    
+      ! 3 - RMF
+      
     character(len=1) :: nucIntTypeStr
     character(len=120)	:: splineFile, densitiesFile, ratesFile, secondDerivsFile
     character(len=120)	:: outputfileStub
@@ -650,16 +651,24 @@ subroutine genPycnoRateSplines
 
 ! First we need to load the arrays
 
-    ! Instantiate the CSV file object
-    if (nucIntType .eq. 2) then
-        call scr_and_log_str('Generating Splines for WD M3Y Rates')        
-        call f%read('researchdata/pycno_rates_C-C_WD_M3Y.csv',header_row=1,status_ok=status_ok)
-        fileSuffixNN = '.m3y'
-    else
-        call scr_and_log_str('Generating Splines for WD Sao Paulo Rates')        
-        call f%read('researchdata/pycno_rates_C-C_WD_SaoPaulo.csv',header_row=1,status_ok=status_ok)
-        fileSuffixNN = '.sp'
-    end if
+    select case (nucIntType)
+        case (1)
+            call scr_and_log_str('Generating Splines for WD Sao Paulo Rates')        
+            call f%read('researchdata/pycno_rates_C-C_WD_SaoPaulo.csv',header_row=1,status_ok=status_ok)
+            fileSuffixNN = '.sp'
+        case (2)
+            call scr_and_log_str('Generating Splines for WD M3Y Rates')        
+            call f%read('researchdata/pycno_rates_C-C_WD_M3Y.csv',header_row=1,status_ok=status_ok)
+            fileSuffixNN = '.m3y'
+        case (3)
+            call scr_and_log_str('Generating Splines for WD RMF Rates')        
+            call f%read('researchdata/pycno_rates_C-C_WD_RMF.csv',header_row=1,status_ok=status_ok)
+            fileSuffixNN = '.rmf'
+        case default
+            call scr_and_log_str('Generating Splines for WD M3Y Rates')        
+            call f%read('researchdata/pycno_rates_C-C_WD_M3Y.csv',header_row=1,status_ok=status_ok)
+            fileSuffixNN = '.m3y'
+    end select
     
     ! get the header and type info
     call f%get_header(header,status_ok)
@@ -670,8 +679,7 @@ subroutine genPycnoRateSplines
     call f%get(4,rxnrates,status_ok)
     ! Remove the CSV file object
     call f%destroy()
-    
-    
+      
     ! Do a sanity check on the file contents
 	do i = 1, M
         select case (i)
@@ -778,7 +786,7 @@ subroutine genPycnoRateSplines
 
     end do
     
-    return
+    !return
 
 ! Do some spot checking
     
@@ -789,7 +797,7 @@ subroutine genPycnoRateSplines
 
     thisdensity = 74260000000.000000_dbl + ((75250000000.000000_dbl - 74260000000.000000_dbl)/3.0_dbl)
     thisrate = splint(densities,rates,rate_2nd_derivs,thisdensity)
-    !print *, thisdensity, thisrate, pycnoRate(A1, A2, Z1, Z2, thisdensity, Rstep, partition, nucIntType, .FALSE.)
+    print *, thisdensity, thisrate, pycnoRate(A1, A2, Z1, Z2, thisdensity, Rstep, partition, nucIntType, .FALSE.,6)
     
     print *, A
     
