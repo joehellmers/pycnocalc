@@ -306,6 +306,11 @@ use rate_calc
     integer			    :: unit,ierror
     character(len=20)   :: nucIntTypeDesc
     character(len=20)   :: rxnDesc
+
+    real(dbl)   :: eps          ! placeholder
+    real(dbl)   :: deps_dT      ! placeholder
+    real(dbl)   :: deps_dRho    ! placeholder
+    real(dbl)   :: T
     
     call scr_and_log_str ('CALCULATION: genCCRates:')
 
@@ -330,6 +335,12 @@ use rate_calc
             nucIntTypeDesc = 'M3Y'
         case (3)
             nucIntTypeDesc = 'RMF'
+        case (4)
+            nucIntTypeDesc = 'G05Low'
+            T = 1.0_dbl
+        case (5)
+            nucIntTypeDesc = 'G05High'
+            T = 1.0d+10
         case default
             nucIntTypeDesc = 'M3Y'
     end select
@@ -343,44 +354,56 @@ use rate_calc
     write(unit,*) 'nuclei,nninteraction,density,pycno_rate'
     call scr_and_log(str='nuclei,nninteraction,density,pycno_rate',fmt='(a)',lf=.TRUE.)
     ! TEMP: only do fcc rates
-    do rateCalcTypeIndex = 0, 6
+
+    if ((nucIntType .eq. 1) .or. (nucIntType .eq. 2) .or. (nucIntType .eq. 3)) then
+        do rateCalcTypeIndex = 0, 6
+            do i = 1, N+1
+                current_rho = initial_rho + delta_rho*(i-1)
+                call scr_and_log(str='C-C,',fmt='(a)',lf=.FALSE.)
+                if (rateCalcTypeIndex .eq. 0) then
+                    rxnDesc = trim(nucIntTypeDesc) // '-SPVH'
+                end if
+                if (rateCalcTypeIndex .eq. 1) then
+                    rxnDesc = trim(nucIntTypeDesc) // '-bcc-static'
+                end if
+                if (rateCalcTypeIndex .eq. 2) then
+                    rxnDesc = trim(nucIntTypeDesc) // '-bcc-ws'
+                end if
+                if (rateCalcTypeIndex .eq. 3) then
+                    rxnDesc = trim(nucIntTypeDesc) // '-bcc-relax'
+                end if
+                if (rateCalcTypeIndex .eq. 4) then
+                    rxnDesc = trim(nucIntTypeDesc) // '-fcc-static'
+                end if
+                if (rateCalcTypeIndex .eq. 5) then
+                    rxnDesc = trim(nucIntTypeDesc) // '-fcc-ws'
+                end if
+                if (rateCalcTypeIndex .eq. 6) then
+                    rxnDesc = trim(nucIntTypeDesc) // '-fcc-relax'
+                end if
+                rxnDesc = trim(rxnDesc)             
+                if (nucIntType .eq. 1) then        
+                    call scr_and_log(str=rxnDesc,fmt='(a)',lf=.FALSE.)
+                else
+                    call scr_and_log(str=rxnDesc,fmt='(a)',lf=.FALSE.)
+                end if
+                call scr_and_log(str='',nbr=current_rho,fmt='(ES13.5)',lf=.FALSE.)
+                rate = pycnoRate(A1, A2, Z1, Z2, current_rho, Rstep, partition, nucIntType, .FALSE., rateCalcTypeIndex)
+                write (unit,*) "C-C",delimiter,rxnDesc,delimiter,current_rho,delimiter,rate
+                call scr_and_log(str=',',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+            end do
+        end do
+    else
         do i = 1, N+1
             current_rho = initial_rho + delta_rho*(i-1)
             call scr_and_log(str='C-C,',fmt='(a)',lf=.FALSE.)
-            if (rateCalcTypeIndex .eq. 0) then
-                rxnDesc = trim(nucIntTypeDesc) // '-SPVH'
-            end if
-            if (rateCalcTypeIndex .eq. 1) then
-                rxnDesc = trim(nucIntTypeDesc) // '-bcc-static'
-            end if
-            if (rateCalcTypeIndex .eq. 2) then
-                rxnDesc = trim(nucIntTypeDesc) // '-bcc-ws'
-            end if
-            if (rateCalcTypeIndex .eq. 3) then
-                rxnDesc = trim(nucIntTypeDesc) // '-bcc-relax'
-            end if
-            if (rateCalcTypeIndex .eq. 4) then
-                rxnDesc = trim(nucIntTypeDesc) // '-fcc-static'
-            end if
-            if (rateCalcTypeIndex .eq. 5) then
-                rxnDesc = trim(nucIntTypeDesc) // '-fcc-ws'
-            end if
-            if (rateCalcTypeIndex .eq. 6) then
-                rxnDesc = trim(nucIntTypeDesc) // '-fcc-relax'
-            end if
-            rxnDesc = trim(rxnDesc)             
-            if (nucIntType .eq. 1) then        
-                call scr_and_log(str=rxnDesc,fmt='(a)',lf=.FALSE.)
-            else
-                call scr_and_log(str=rxnDesc,fmt='(a)',lf=.FALSE.)
-            end if
+            rxnDesc = ""             
             call scr_and_log(str='',nbr=current_rho,fmt='(ES13.5)',lf=.FALSE.)
-            rate = pycnoRate(A1, A2, Z1, Z2, current_rho, Rstep, partition, nucIntType, .FALSE., rateCalcTypeIndex)
-            write (unit,*) "C-C",delimiter,rxnDesc,delimiter,current_rho,delimiter,rate
+            call pycnoRateG05_CC(T, current_rho, 0.35_dbl, eps, deps_dT, deps_dRho, rate)
+            write (unit,*) "C-C",delimiter,trim(nucIntTypeDesc),delimiter,current_rho,delimiter,rate
             call scr_and_log(str=',',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
         end do
-    end do
-    
+    end if
     close(unit)
     
                 
@@ -1059,6 +1082,51 @@ subroutine graphSFactor
     end do
         
 end subroutine graphSFactor
+
+!******************************************
+!
+! Sfactor Graph
+!
+!******************************************
+
+subroutine graphG05RateCC
+
+    use rate_calc
+
+    real(kind=dbl)  :: T
+    real(kind=dbl)  :: x12
+    real(kind=dbl)  :: eps
+    real(kind=dbl)  :: deps_dT
+    real(kind=dbl)  :: deps_dRho
+    real(kind=dbl)  :: rpyc
+
+    real(kind=dbl)  :: Rstep = 1.0_dbl
+    
+    real(kind=dbl)  ::  delta_rho, this_rho, rho_min, rho_max
+    integer         ::  nbrDensities = 100
+    
+    call scr_and_log_str ('Generating G05-CC Rates:')
+
+    rho_min = 1d9
+    rho_max = 1d11
+
+    delta_rho = (rho_max - rho_min)/nbrDensities
+    
+    print *, "Density,G05Rate"
+    T   = 1.0_dbl
+    x12 = 3.5d-01
+    this_rho = rho_min
+    do 
+        if (this_rho > rho_max) then
+            exit
+        end if
+        rpyc = 0.0_dbl
+        call pycnoRateG05_CC(T, this_rho, x12, eps, deps_dT, deps_drho, rpyc)
+        print *,this_rho, ",", rpyc
+        this_rho = this_rho + delta_rho
+    end do
+        
+end subroutine graphG05RateCC
 
 
 end module system_functions

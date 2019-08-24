@@ -156,6 +156,14 @@ do i=1, function_cnt
 		call graphSFactor
 	end if
 
+	if (function_list(i)%function_name .EQ. 'pycnoRateG05_CC_001') then
+		call pycnoRateG05_CC_001
+	end if
+
+	if (function_list(i)%function_name .EQ. 'graphG05RateCC') then
+		call graphG05RateCC
+	end if
+
 end do
 
 call printending 

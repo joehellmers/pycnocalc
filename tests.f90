@@ -764,6 +764,47 @@ subroutine spline_002
 
 end subroutine spline_002
 
+subroutine pycnoRateG05_CC_001
+
+    real(kind=dbl)  :: T
+    real(kind=dbl)  :: rho
+    real(kind=dbl)  :: x12
+    real(kind=dbl)  :: eps
+    real(kind=dbl)  :: deps_dT
+    real(kind=dbl)  :: deps_dRho
+    real(kind=dbl)  :: rpyc
+    
+    
+    T   = 9.2569312493209541D+07
+    rho = 4.3765680728498936D+09
+    x12 = 3.5666147092063111D-01
+    rpyc = 0.0_dbl
+    call pycnoRateG05_CC(T, rho, x12, eps, deps_dT, deps_drho, rpyc)
+    write (*,*) 'T=',T,',rho=',rho,',Rpyc=',rpyc
+
+    T   = 1.1209737001273090D+06
+    rho = 1.4409212426081640D+10
+    x12 = 3.5189091992105626D-01
+    rpyc = 0.0_dbl
+    call pycnoRateG05_CC(T, rho, x12, eps, deps_dT, deps_drho, rpyc)
+    write (*,*) 'T=',T,',rho=',rho,',Rpyc=',rpyc
+
+    T   = 1.0_dbl
+    rho = 1.4409212426081640D+10
+    x12 = 3.5189091992105626D-01
+    rpyc = 0.0_dbl
+    call pycnoRateG05_CC(T, rho, x12, eps, deps_dT, deps_drho, rpyc)
+    write (*,*) 'T=',T,',rho=',rho,',Rpyc=',rpyc
+
+    T   = 1.0D+9
+    rho = 1.4409212426081640D+10
+    x12 = 3.5189091992105626D-01
+    rpyc = 0.0_dbl
+    call pycnoRateG05_CC(T, rho, x12, eps, deps_dT, deps_drho, rpyc)
+    write (*,*) 'T=',T,',rho=',rho,',Rpyc=',rpyc
+
+end subroutine pycnoRateG05_CC_001
+
 end module tests
 
 

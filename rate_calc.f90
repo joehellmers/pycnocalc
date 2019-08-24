@@ -495,7 +495,7 @@ contains
          res = exp_cr(log_cr(x)*y)
       end function pow_cr
 
-      subroutine G05_epsnuc_CC(T, Rho, X12, eps, deps_dT, deps_dRho)
+      subroutine pycnoRateG05_CC(T, Rho, X12, eps, deps_dT, deps_dRho, retRpyc)
          
          ! from Gasques, et al, Nuclear fusion in dense matter.  astro-ph/0506386.
          ! Phys Review C, 72, 025806 (2005)
@@ -508,6 +508,7 @@ contains
          real(dbl), intent(out) :: eps ! rate in ergs/g/sec
          real(dbl), intent(out) :: deps_dT ! partial wrt temperature
          real(dbl), intent(out) :: deps_dRho ! partial wrt density
+         real(dbl), intent(out) :: retRpyc ! Pycnonuclear Reaction rate
          
          
          real(dbl), parameter :: exp_cutoff = 200d0
@@ -689,6 +690,10 @@ contains
          dFpyc_dRho = Fpyc * Cexp * dlam_dRho / (2 * lam*sqrt(lam))
          
          Rpyc = Rho * A * pow4(Z) * (1 / (8 * 11.515)) * 1d46 * pow3(lam) * SEpk * Fpyc * Ppyc ! (eqn 25)
+         !print *,"lam=",lam
+         !print *,"SEpk=",SEpk
+         !print *,"Fpyc=",Fpyc
+         !print *,"Ppyc=",Ppyc
          
          if (Rpyc < exp_min_result) then
             Rpyc = 0
@@ -819,17 +824,9 @@ contains
          eps = R * ergs_c12c12 / Rho ! ergs/g/sec
          deps_dT = dRdT * ergs_c12c12 / Rho
          deps_dRho = (dRdRho * ergs_c12c12 - eps) / Rho
-      
-         !if (.true. .or. Rho < 1.7d10) return
-         write(*,1) 'T', T
-         write(*,1) 'Rho', Rho
-         write(*,1) 'X12', X12
-         write(*,1) 'eps', eps
-         write(*,1) 'deps_dT', deps_dT
-         write(*,1) 'deps_dRho', deps_dRho
-         write(*,1) 'Rpyc', Rpyc
-         write(*,*) 
-   
-      end subroutine G05_epsnuc_CC
+         
+         retRpyc = Rpyc
+         
+      end subroutine pycnoRateG05_CC
     
 end module rate_calc
