@@ -12,6 +12,7 @@ implicit none
 save
 
 integer, parameter :: dbl=8
+integer, parameter :: qdr=16
 
 
 ! Global Constants

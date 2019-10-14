@@ -1136,6 +1136,123 @@ subroutine graphG05RateCC
         
 end subroutine graphG05RateCC
 
+subroutine tempAdjustSurfacePlot
+
+    use rate_calc
+    
+    integer         :: A1
+    integer         :: Z1
+    real(kind=dbl)  :: X1
+    integer         :: A2
+    integer         :: Z2
+    real(kind=dbl)  :: X2
+    real(kind=dbl)  :: rho, rho_min, rho_max, delta_rho
+    real(kind=dbl)  :: temp, temp_min, temp_max, delta_temp
+    real(kind=dbl)  :: adjust
+    real(kind=dbl)  :: work1, work2
+    integer         :: i,j
+    integer         :: n_temp = 100
+    integer         :: n_rho = 500
+    integer         :: unit1 = 151
+    integer         :: unit2 = 152
+    integer         :: unit3 = 153
+    integer         :: unit4 = 154
+    integer         :: ierror
+
+    
+    call scr_and_log_str ('Generating Surface Plot for Temperature Adjustment')
+
+    A1 = 12
+    Z1 = 6
+    A2 = 12
+    Z2 = 6
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+
+    rho_min = 1d9
+    rho_max = 1d11
+    delta_rho = (rho_max-rho_min)/n_rho
+
+    temp_min = 3d7
+    temp_max = 7d8
+    delta_temp = (temp_max-temp_min)/n_temp
+    
+    open(unit1, file='./' // results_dir // '/' // trim('tempadjuststatic.csv'), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    if (ierror .NE. 0) then
+	    print *, 'Error opening data file for output'
+	    print *, ierror
+	    stop
+    end if
+    open(unit2, file='./' // results_dir // '/' // trim('rho.csv'), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    if (ierror .NE. 0) then
+	    print *, 'Error opening data file for output'
+	    print *, ierror
+	    stop
+    end if
+
+    open(unit3, file='./' // results_dir // '/' // trim('temp.csv'), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    if (ierror .NE. 0) then
+	    print *, 'Error opening data file for output'
+	    print *, ierror
+	    stop
+    end if
+
+    open(unit4, file='./' // results_dir // '/' // trim('tempadjustrelaxed.csv'), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    if (ierror .NE. 0) then
+	    print *, 'Error opening data file for output'
+	    print *, ierror
+	    stop
+    end if
+    
+    do i = 0,n_rho
+        rho = rho_min + delta_rho*i
+        do j = 0, n_temp
+            temp = temp_min + delta_temp*j
+            adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp, .true.)
+            if (j .eq. n_temp) then
+                write(unit1,fmt="(ES13.5)",advance="yes") adjust   
+            else
+                write(unit1,fmt="(ES13.5,A)",advance="no") adjust,","    
+            end if            
+        end do
+    end do
+    close(unit1)
+
+    do i = 0,n_rho
+        rho = rho_min + delta_rho*i
+        do j = 0, n_temp
+            temp = temp_min + delta_temp*j
+            adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp, .false.)
+            if (j .eq. n_temp) then
+                write(unit4,fmt="(ES13.5)",advance="yes") adjust   
+            else
+                write(unit4 ,fmt="(ES13.5,A)",advance="no") adjust,","    
+            end if            
+        end do
+    end do
+    close(unit4)
+
+    do i = 0,n_rho
+        rho = rho_min + delta_rho*i
+        if (i .eq. n_rho) then
+            write(unit2,fmt="(ES13.5)",advance="yes") rho
+        else
+            write(unit2,fmt="(ES13.5,A)",advance="no") rho,","    
+        end if            
+    end do
+    close(unit2)
+
+    do i = 0,n_temp
+        temp = temp_min + delta_temp*i
+        if (i .eq. n_temp) then
+            write(unit3,fmt="(ES13.5)",advance="yes") temp
+        else
+            write(unit3,fmt="(ES13.5,A)",advance="no") temp,","    
+        end if            
+    end do
+    close(unit3)
+
+end subroutine tempAdjustSurfacePlot
 
 end module system_functions
 

@@ -582,50 +582,65 @@ subroutine rate_temp_adjust_003
     integer         :: Z2
     real(kind=dbl)  :: X2
     real(kind=dbl)  :: rho
-    real(kind=dbl)  :: temp
+    real(kind=dbl)  :: temp, temp_min, temp_max, delta_temp
     real(kind=dbl)  :: adjust
     real(kind=dbl)  :: work1, work2
-    integer         :: i
+    integer         :: i,j
+    integer         :: n = 50
     
-    call scr_and_log_str ('TEST: rate_temp_adjust_001:')
+    call scr_and_log_str ('TEST: rate_temp_adjust_003')
 
     A1 = 12
-    Z1 = 8
+    Z1 = 6
     A2 = 12
     Z2 = 6
     X1 = 0.5_dbl
     X2 = 0.5_dbl
-    rho = 33337662.176436048_dbl
-    temp = 39317201.231798239_dbl
 
-    adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
-
-    call scr_and_log(str='C-C 50-50 rho    = ',nbr=rho,fmt='(ES13.5)',lf=.TRUE.)
-    call scr_and_log(str='          temp   = ',nbr=temp,fmt='(ES13.5)',lf=.TRUE.)
-    call scr_and_log(str='          adjust = ',nbr=adjust,fmt='(ES13.5)',lf=.TRUE.)
-
-    rho = 1.0d7
-    do i = 0,200
-        temp = 10_dbl**real(6.765_dbl + 0.01*i)
+    rho = 1d9
+    temp_min = 2.6d7
+    temp_max = 0.7d9
+    delta_temp = (temp_max-temp_min)/n
+    print *,"temp,adjust"
+    do i = 0,n
+        temp = temp_min + delta_temp*i
         adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
-        print *,log10(rho),",",log10(temp),",",log10(adjust)        
+        print *,temp,",",adjust    
     end do
 
-    rho = 1.0d7
-    call react_rate_zero_temp(rho, A1, Z1, 4.0e16_dbl, work1, work2)
-    print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
-    rho = 1.0d8
-    call react_rate_zero_temp(rho, A1, Z1, 4.0e16_dbl, work1, work2)
-    print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
-    rho = 1.0d9
-    call react_rate_zero_temp(rho, A1, Z1, 4.0e16_dbl, work1, work2)
-    print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
-    rho = 1.0d10
-    call react_rate_zero_temp(rho, A1, Z1, 4.0e16_dbl, work1, work2)
-    print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
-    rho = 1.0d11
-    call react_rate_zero_temp(rho, A1, Z1, 4.0e16_dbl, work1, work2)
-    print *,"Zero Rate Rate, rho = ",rho," (Low,High) = ", work1, ",", work2
+    rho = 1d10
+    temp_min = 6.65d7
+    !temp_max = 0.7d9
+    !delta_temp = (temp_max-temp_min)/n
+    print *,"temp,adjust"
+    do i = 0,n
+        temp = temp_min + delta_temp*i
+        adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
+        print *,temp,",",adjust   
+    end do
+
+    rho = 1d11
+    temp_min = 14.25d7
+    !temp_max = 0.7d9
+    !delta_temp = (temp_max-temp_min)/n
+    print *,"temp,adjust"
+    do i = 0,n
+        temp = temp_min + delta_temp*i
+        adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp)
+        print *,temp,",",adjust   
+    end do
+    
+    print *,""
+    print *,"========================"
+    rho = 34292563.783826306
+    temp = 39909012.627657734
+    adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp, .true.)
+    print *,adjust
+    adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp, .false.)
+    print *,adjust
+    print *,"========================"
+    print *,""
+
 
 end subroutine rate_temp_adjust_003
 

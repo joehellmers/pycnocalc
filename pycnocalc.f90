@@ -35,7 +35,7 @@ call printintro
 
 call initialize_globals
 do i=1, function_cnt
-
+    
 	if (function_list(i)%function_name .EQ. 'LogConfig') then
 		call LogConfig
 	end if
@@ -162,6 +162,10 @@ do i=1, function_cnt
 
 	if (function_list(i)%function_name .EQ. 'graphG05RateCC') then
 		call graphG05RateCC
+	end if
+
+	if (function_list(i)%function_name .EQ. 'tempAdjustSurfacePlot') then
+		call tempAdjustSurfacePlot
 	end if
 
 end do
