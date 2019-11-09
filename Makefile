@@ -12,6 +12,7 @@ OBJS = globalvars.o \
 	mathlinearalg.o \
 	mathinterpolation.o \
 	mathintegration.o \
+	mathdiff.o \
 	system_functions.o \
 	cmdline.o \
 	rate_calc.o \
@@ -34,6 +35,7 @@ MODULES = globalvars.mod \
 	mathlinearalg.mod \
 	mathinterpolation.mod \
 	mathintegration.mod \
+	mathdiff.mod \
 	system_functions.mod \
 	cmdline.mod \
 	rate_calc.mod \
@@ -97,7 +99,7 @@ general_nuclear.mod: constants.mod mathintegration.mod
 system_functions.mod: 	constants.mod astrophysics.mod logging.mod \
 			folding_potential.mod configuration.mod utilities.mod \
 			general_nuclear.mod mathintegration.mod rate_calc.mod \
-			mathinterpolation.mod csv_module.mod
+			mathinterpolation.mod csv_module.mod mathdiff.mod
 	$(F90COMP) -c system_functions.f90 $(SWITCHES)
 
 mathutils.mod: constants.mod
@@ -112,13 +114,16 @@ mathinterpolation.mod: constants.mod mathlinearalg.mod mathutils.mod
 mathintegration.mod: constants.mod
 	$(F90COMP) -c mathintegration.f90 $(SWITCHES)
 
+mathdiff.mod: constants.mod
+	$(F90COMP) -c mathdiff.f90 $(SWITCHES)
+
 cmdline.mod:
 	$(F90COMP) -c cmdline.f90 $(SWITCHES)
 
 rate_calc.mod: constants.mod folding_potential.mod astrophysics.mod mathintegration.mod logging.mod general_nuclear.mod
 	$(F90COMP) -c rate_calc.f90 $(SWITCHES)
 
-tests.mod: constants.mod rate_calc.mod general_nuclear.mod logging.mod mathlinearalg.mod mathinterpolation.mod
+tests.mod: constants.mod rate_calc.mod general_nuclear.mod logging.mod mathlinearalg.mod mathinterpolation.mod mathdiff.mod
 	$(F90COMP) -c tests.f90 $(SWITCHES)
 
 dist:

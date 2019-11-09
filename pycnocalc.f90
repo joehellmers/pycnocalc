@@ -168,6 +168,14 @@ do i=1, function_cnt
 		call tempAdjustSurfacePlot
 	end if
 
+	if (function_list(i)%function_name .EQ. 'ndiff_001') then
+		call ndiff_001
+	end if
+
+	if (function_list(i)%function_name .EQ. 'tempAdjAndTDiff') then
+		call tempAdjAndTDiff
+	end if
+
 end do
 
 call printending 

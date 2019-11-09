@@ -1254,5 +1254,68 @@ subroutine tempAdjustSurfacePlot
 
 end subroutine tempAdjustSurfacePlot
 
+subroutine tempAdjAndTDiff
+
+    use rate_calc
+    use mathdiff
+    
+    integer         :: A1
+    integer         :: Z1
+    real(kind=dbl)  :: X1
+    integer         :: A2
+    integer         :: Z2
+    real(kind=dbl)  :: X2
+    real(kind=dbl)  :: rho
+    real(kind=dbl)  :: temp, temp_min, temp_max, delta_temp
+    real(kind=dbl)  :: adjust
+    integer         :: i,j
+    integer         :: n_temp = 100
+    integer         :: unit1 = 151
+    integer         :: ierror
+
+    real(kind=dbl)  :: f1, f2, f3, f4, h
+    real(kind=dbl)  :: x, ndiff
+
+    call scr_and_log_str ('Graph Temperature Adjustment and Temp Derivative')
+
+    A1 = 12
+    Z1 = 6
+    A2 = 12
+    Z2 = 6
+    X1 = 0.5_dbl
+    X2 = 0.5_dbl
+
+    rho = 1d10
+
+    temp_min = 3d7
+    temp_max = 7d8
+    delta_temp = (temp_max-temp_min)/n_temp
+    
+    open(unit1, file='./' // results_dir // '/' // trim('tempadjustplot.csv'), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    if (ierror .NE. 0) then
+	    print *, 'Error opening data file for output'
+	    print *, ierror
+	    stop
+    end if
+    
+    do j = 0, n_temp
+        temp = temp_min + delta_temp*j
+        adjust = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp, .false.)
+        h = temp/(10.0_dbl**3)
+        f1 = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp-2.0_dbl*h, .false.)
+        f2 = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp-1.0_dbl*h, .false.)
+        f3 = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp+1.0_dbl*h, .false.)
+        f4 = tempRateAdjust(A1, Z1, X1, A2, Z2, X2, rho, temp+2.0_dbl*h, .false.)
+        ndiff = ndiff5pt(f1, f2, f3, f4, h)
+
+        !write(unit1,fmt="(ES13.5,A,ES13.5,A,ES13.5,A,ES13.5))",advance="yes") rho,',',temp,',',ndiff,',',adjust   
+        write(unit1,fmt="(ES13.5,A,ES13.5,A,ES13.5,A,ES13.5)",advance="yes") rho,',',temp,',',adjust,',',ndiff   
+    
+    end do
+    close(unit1)
+
+end subroutine tempAdjAndTDiff
+
+
 end module system_functions
 

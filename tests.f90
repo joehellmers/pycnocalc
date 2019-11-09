@@ -820,6 +820,37 @@ subroutine pycnoRateG05_CC_001
 
 end subroutine pycnoRateG05_CC_001
 
+subroutine ndiff_001
+
+    use mathdiff
+    
+    real(kind=dbl)  :: f1, f2, f3, f4, h
+    real(kind=dbl)  :: x, ndiff
+     
+    integer ::  i
+
+    call scr_and_log_str ('TEST: ndiff_001:')
+
+    x = pi/6.0_dbl
+    
+    
+    do i=1,10
+        h = 1.0_dbl/(10.0_dbl**i)
+        print *, "h=", h
+        !print *, "x=", x
+        !print *, "f(x)=", sin(x)
+        !print *, "dfdx(x)=", cos(x)
+        f1 = sin(x-2.0_dbl*h)
+        f2 = sin(x-h)
+        f3 = sin(x+h)
+        f4 = sin(x+2.0_dbl*h)
+        ndiff = ndiff5pt(f1, f2, f3, f4, h)
+        print *, "ndiff(x)=", ndiff
+        print *, "err=", ndiff-cos(x)
+    end do
+    
+end subroutine ndiff_001
+
 end module tests
 
 
