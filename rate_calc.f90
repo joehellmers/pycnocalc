@@ -210,7 +210,7 @@ contains
 !
 ! Calculate the S Factor
 !
-! REF: Golf Thesis
+! REF: Golf Thesis eqn 3.32
 !
 !*****************************************************************
 
@@ -274,6 +274,8 @@ contains
             call turn_pt(R,Rstep,Rmax,E0,mu,A1_int,A2,Z1_int,Z2,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB,nucIntType,SQMFlag)
             ! ln of Total transmission Probability: ',ln_Trans_total
             ln_Trans_total = -WKB
+            ! TODO: Verify quantity 612.459 = pi*hbar^2/2.  Perhaps there is a conversion factor for barns mixed in.
+            ! TODO: this is supposed to be a sum from 0 to L, but ln_sigma = ln_sigma + stuff... will yield a multiplication basically(?)
             ln_sigma=ln_sigma+log(612.459_dbl)-log(mu*E0)+log(2.0_dbl*real(i,dbl)+1.0_dbl)+ln_Trans_total
         end do
 

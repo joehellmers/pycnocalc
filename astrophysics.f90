@@ -474,6 +474,7 @@ end subroutine react_rate_zero_temp
         ! energy parameter, called Rydberg energy, based on ground state energy from Bohr model of the hydrogen atom
         ln_Estar=log(real(Z1*Z2,dbl))-ln_rstar-34.174_dbl
 
+        ! TODO: Where do these numbers come from?  They don't match SPVH
         ln_Ebcc = 0.5986_dbl + ln_lambda + ln_Estar
         ln_Evib = 0.6162_dbl + 0.5_dbl * ln_lambda + ln_Ebcc
 
