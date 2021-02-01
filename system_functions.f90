@@ -436,6 +436,106 @@ use utilities
                 
 end subroutine genCCRates	
 
+!******************************************
+!
+! Generate C-C rates for a range of densities
+!
+!******************************************
+
+
+subroutine genMCPRates
+
+use rate_calc
+use utilities
+
+    integer         :: A1
+    real(kind=dbl)  :: A2
+    integer         :: Z1
+    real(kind=dbl)  :: Z2
+    real(kind=dbl)  :: initial_rho
+    real(kind=dbl)  :: final_rho
+    real(kind=dbl)  :: current_rho 
+    real(kind=dbl)  :: delta_rho
+    real(kind=dbl)  :: Rstep = 0.1 _dbl
+    integer         :: partition = 15
+    integer         :: nucIntType = 1
+    integer         :: i
+    real(kind=dbl)  :: rate
+    integer         :: N = 100 ! Number of intervals
+
+    character(len=1)	:: delimiter
+    character(len=120)	:: outputfile
+    integer			    :: unit,ierror
+    character(len=20)   :: nucleiDesc
+    character(len=20)   :: nnDesc
+    character(len=20)   :: cellDesc
+    character(len=20)   :: lattApproxDesc
+    character(len=20)   :: rxnCalcDesc
+
+    real(dbl)   :: eps          ! placeholder
+    real(dbl)   :: deps_dT      ! placeholder
+    real(dbl)   :: deps_dRho    ! placeholder
+    real(dbl)   :: T
+    
+    call scr_and_log_str ('CALCULATION: genMCPRates:')
+  
+    nucleiDesc = getParamValue('genMCPRates','nucleiDesc')
+    A1 = ConvertStrToInt(getParamValue('genMCPRates','A1'))
+    print *, A1
+    A2 = ConvertStrToReal(getParamValue('genMCPRates','A2'))
+    print *, A2
+    Z1 = ConvertStrToInt(getParamValue('genMCPRates','Z1'))
+    print *, Z1
+    Z2 = ConvertStrToReal(getParamValue('genMCPRates','Z2'))
+    print *, Z2
+    initial_rho = ConvertStrToReal(getParamValue('genMCPRates','initial_rho'))
+    print *,"initial_rho=", initial_rho
+    final_rho = ConvertStrToReal(getParamValue('genMCPRates','final_rho'))
+    print *,"final_rho=", final_rho
+    nucIntType = convertStrToInt(getParamValue('genMCPRates','nucIntType'))
+        
+    delta_rho = (final_rho-initial_rho)/N
+    print *,"delta_rho=", delta_rho
+
+    delimiter	= getParamValue('genMCPRates','delimiter')
+    outputfile	= getParamValue('genMCPRates','outputfile')
+
+    select case (nucIntType)
+        case (1)
+            nnDesc = 'SAOPAULO'
+        case (2)
+            nnDesc = 'M3Y'
+        case (3)
+            nnDesc = 'RMF'
+        case default
+            nnDesc = 'M3Y'
+            nucIntType = 1
+    end select
+    
+    ! Currently we can only do SPVH for Multi-component plasmas
+    cellDesc = 'bcc'
+    lattApproxDesc = 'static'
+    rxnCalcDesc = 'SPVH'
+    
+    open(unit, file='./' // results_dir // '/' // trim(outputfile), status='REPLACE', ACTION='WRITE', iostat=ierror)
+    if (ierror .NE. 0) then
+        print *, 'Error opening data file for output'
+        print *, ierror
+        stop
+    end if
+    write(unit,*) 'nuclei,rxncalcdesc, nninteraction,cell,lattapprox, density,pycno_rate'
+
+    do i = 1, N+1
+        current_rho = initial_rho + delta_rho*(i-1)
+        call scr_and_log(str='',nbr=current_rho,fmt='(ES13.5)',lf=.FALSE.)
+        rate = pycnoRate(A1, A2, Z1, Z2, current_rho, Rstep, partition, nucIntType, .FALSE., 0)
+        write (unit,*) nucleiDesc,delimiter,rxnCalcDesc,delimiter,nnDesc, delimiter, cellDesc, delimiter, lattApproxDesc, delimiter,current_rho,delimiter,rate
+        call scr_and_log(str=',',nbr=rate,fmt='(ES13.5)',lf=.TRUE.)
+    end do
+    close(unit)
+                
+end subroutine genMCPRates	
+
 subroutine graphM3Y
 
     use nucleon_interactions
