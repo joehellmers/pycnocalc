@@ -162,8 +162,7 @@ contains
                     end if
                 end if
                 !print *, Integrand(i),VEcheck(i)
-            end do		  	  
-            WKB = trapezoidArray(Rmax,turn1,Integrand,Rstep)	
+            end do
         else	  
         !	THERE ARE USUALLY TWO TURNING POINTS WHEN USING SALPETER AND VAN HORN... NEED TO INTEGRATE THROUGH BARRIER
             do i = 0,Rmax
@@ -179,28 +178,8 @@ contains
                 !print *, Integrand(i),VEcheck(i)
             end do	  
             !print *,"mu=",mu
-            WKB = trapezoidArray(Rmax,turn2,Integrand,Rstep)
         end if
 
-        ! New, simpler way, just include positive energies
-        !do i = 0, Rmax
-        !    if (VEcheck(i) .gt. 0) then
-        !        Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))
-        !    else
-        !        Integrand(i) = 0.0_dbl
-        !    end if
-        !end do
-
-        ! New, even simpler way, just integrate to first turning point
-        !Integrand = 0.0_dbl
-        !do i = 0, Rmax
-        !    if (VEcheck(i) .gt. 0) then
-        !        Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))
-        !    else
-        !        exit
-        !    end if
-        !end do
-        !write(*,*) Integrand
         WKB = trapezoidArray(Rmax,Rmax,Integrand,Rstep)
         
     end subroutine turn_pt

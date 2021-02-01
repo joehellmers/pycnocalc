@@ -129,7 +129,7 @@ tests.mod: constants.mod rate_calc.mod general_nuclear.mod logging.mod mathlinea
 dist:
 	scp $(OUTDIR)/pycnocalc electra:~/bin
 
-all: pycnocalc dist
+all: pycnocalc
 
 
 clean:

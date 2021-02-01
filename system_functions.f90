@@ -283,6 +283,7 @@ end subroutine sample_folding_potential_calcs
 subroutine genCCRates
 
 use rate_calc
+use utilities
 
     integer         :: A1
     real(kind=dbl)  :: A2
@@ -295,9 +296,12 @@ use rate_calc
     real(kind=dbl)  :: Rstep = 0.1 _dbl
     integer         :: partition = 15
     integer         :: nucIntType = 1
+    integer         :: rateCalcType = 0
     character(len=1) :: nucIntTypeStr
+    character(len=1) :: rateCalcTypeStr
     integer         :: i
     integer         :: rateCalcTypeIndex
+    integer         :: rateCalcTypeMin, rateCalcTypeMax
     real(kind=dbl)  :: rate
     integer         :: N = 100 ! Number of intervals
 
@@ -319,12 +323,35 @@ use rate_calc
     Z1 = 6
     Z2 = 6.0_dbl
 
-    initial_rho = 1000000000.0_dbl
-    final_rho = 100000000000.0_dbl
-    delta_rho = (final_rho-initial_rho)/N
+    initial_rho = ConvertStrToReal(getParamValue('genCCRates','initial_rho'))
+    final_rho = ConvertStrToReal(getParamValue('genCCRates','final_rho'))
+        
+    if (initial_rho .eq. 0.0) then
+        initial_rho = 1000000000.0_dbl
+    end if
     
+    if (final_rho .eq. 0.0) then
+        final_rho = 100000000000.0_dbl
+    end if
+    
+    delta_rho = (final_rho-initial_rho)/N
+    print *,"initial_rho=", initial_rho
+    print *,"final_rho=", final_rho
+    print *,"delta_rho=", delta_rho
+
     nucIntTypeStr = getParamValue('genCCRates','nucIntType')
     read(nucIntTypeStr,*) nucIntType
+    rateCalcTypeStr = getParamValue('genCCRates','rateCalcType')
+    read(rateCalcTypeStr,*) rateCalcType
+    
+    if (rateCalcType .eq. 0) then
+        rateCalcTypeMin = 0
+        rateCalcTypeMax = 6
+    else
+        rateCalcTypeMin = rateCalcType
+        rateCalcTypeMax = rateCalcType
+    end if
+    
     delimiter	= getParamValue('genCCRates','delimiter')
     outputfile	= getParamValue('genCCRates','outputfile')
 
@@ -356,14 +383,14 @@ use rate_calc
     ! TEMP: only do fcc rates
 
     if ((nucIntType .eq. 1) .or. (nucIntType .eq. 2) .or. (nucIntType .eq. 3)) then
-        do rateCalcTypeIndex = 0, 6
+        do rateCalcTypeIndex = rateCalcTypeMin, rateCalcTypeMax
             do i = 1, N+1
                 current_rho = initial_rho + delta_rho*(i-1)
                 call scr_and_log(str='C-C,',fmt='(a)',lf=.FALSE.)
                 if (rateCalcTypeIndex .eq. 0) then
                     rxnDesc = trim(nucIntTypeDesc) // '-SPVH'
                 end if
-                if (rateCalcTypeIndex .eq. 1) then
+                if (    1232 .eq. 1) then
                     rxnDesc = trim(nucIntTypeDesc) // '-bcc-static'
                 end if
                 if (rateCalcTypeIndex .eq. 2) then
