@@ -293,7 +293,7 @@ use utilities
     real(kind=dbl)  :: final_rho
     real(kind=dbl)  :: current_rho 
     real(kind=dbl)  :: delta_rho
-    real(kind=dbl)  :: Rstep = 0.1 _dbl
+    real(kind=dbl)  :: Rstep = 0.1_dbl
     integer         :: partition = 15
     integer         :: nucIntType = 1
     integer         :: rateCalcType = 0
@@ -456,7 +456,7 @@ use utilities
     real(kind=dbl)  :: final_rho
     real(kind=dbl)  :: current_rho 
     real(kind=dbl)  :: delta_rho
-    real(kind=dbl)  :: Rstep = 0.1 _dbl
+    real(kind=dbl)  :: Rstep = 0.1_dbl
     integer         :: partition = 15
     integer         :: nucIntType = 1
     integer         :: i
@@ -746,7 +746,7 @@ subroutine genPycnoRateSplines
     real(kind=dbl)  :: A2
     integer         :: Z1
     real(kind=dbl)  :: Z2
-    real(kind=dbl)  :: Rstep = 0.1 _dbl
+    real(kind=dbl)  :: Rstep = 0.1_dbl
     integer         :: partition = 15
     integer         :: nucIntType
       ! 1 - M3Y

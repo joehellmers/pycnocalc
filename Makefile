@@ -50,6 +50,7 @@ SWITCHES2 = -ffree-line-length-none -O3 -fopenmp -cpp
 OUTDIR = ~/bin
 
 pycnocalc: $(MODULES)
+	mkdir -p $(OUTDIR)
 	$(F90COMP) pycnocalc.f90 $(OBJS) -o $(OUTDIR)/pycnocalc $(SWITCHES)
 	cp pycnocalc.cfg $(OUTDIR)
 	chmod ugo-x $(OUTDIR)/pycnocalc.cfg
