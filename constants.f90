@@ -45,4 +45,6 @@ real(kind=dbl), parameter :: ev2erg = 1.602176487d-12 ! eV to ergs
 real(kind=dbl), parameter :: one_third = 1d0/3d0
 real(kind=dbl), parameter :: two_thirds = 2d0/3d0
 
+real(kind=dbl), parameter :: new_screen_constant = 1d0
+
 end module constants
