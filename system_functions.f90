@@ -273,6 +273,78 @@ close(unit)
 
 end subroutine sample_folding_potential_calcs
 
+
+
+!!!!!!!!!!!!!! NEW !!!!!!!!!!!!!!!
+
+
+
+subroutine deformed_Vc_graphs()
+
+    ! I just copied my original code and placed it here, so not many changes besides comments, I focused on adding and renovating my
+    ! deformed Coulomb potential function in astrophysics.f90
+
+    use astrophysics
+    implicit none
+  
+
+    real(kind=dbl), parameter :: Rmin = 2.0_dbl, Rmax = 6.0_dbl, dR = 0.1_dbl         ! Loop parameters
+    real(kind=dbl) :: R, V, B2, deg, theta2, Zp, Zt, At                               ! Radius, Coulomb Potential, quadrupole 
+                                                                                      ! deformation parameter, degrees, angle, nucleons,
+                                                                                      ! protons, neutrons
+
+    integer :: iounit, iounit2                                                        
+    real(kind=dbl) :: Vc_usual                                                        ! Coulomb potential with no deformation
+
+    real(kind=dbl), parameter :: pi = acos(-1.0_dbl)
+    real(kind=dbl), parameter :: e2 = 1.439964_dbl
+
+    ! Orientation angle (Would be better if it was a user input)
+    deg = 54.7_dbl
+    theta2 = deg*pi/180_dbl
+    
+    ! Since still working on calculating B2 (need to evaluate the quadrupole moment Q first), I will set B2 to a fixed number for now.
+
+    ! Properties of 117 Lanthanum, from National Nuclear Data Center, https://www.nndc.bnl.gov/ensdf/DSfromRefServlet?kn=1976LI30&searchType=references
+    B2     = 0.31_dbl                                  ! https://www.sciencedirect.com/science/article/pii/S1876610218311603?ref=pdf_download&fr=RR-2&rr=99628a2688de51f0      
+    Zp     = 57.0_dbl     
+    Zt     = 60.0_dbl        
+    At     = 117.0_dbl       
+
+    ! Open a data file
+    open(newunit=iounit, file='Vc_curve.dat', status='replace', action='write')
+
+    R = Rmin
+  
+    ! Writes the Coulomb Potential as R changes, into the data file
+    do while (R <= Rmax + 0.5_dbl*dR)
+        V = Vcoulomb_deformed(R, B2, theta2, Zp, Zt, At)
+        write(iounit,'(F6.2,",",ES20.12)') R, V
+        R = R + dR
+    end do
+
+    close(iounit)
+
+    ! Open a second data file
+    open(newunit=iounit2, file='Vc_curve_spherical.dat', status='replace', action='write')
+    
+    R = Rmin
+    
+    ! Writes the Normal (no deformation) Coulomb Potential as R changes, into the second date file
+    ! Could use the Coulomb Potential function listed in astrophysics.f90, but that requires both radii of the target and
+    ! projectile nuclei
+        do while (R <= Rmax + 0.5_dbl*dR)
+        Vc_usual = (Zp * Zt * e2) / R
+        write(iounit2,'(F6.2,",",ES20.12)') R, Vc_usual
+        R = R + dR
+    end do
+    
+    close(iounit2)
+    
+    ! I need to add the python code to create the graphs as well, will modify this program first
+
+end subroutine deformedNuclei
+
 !******************************************
 !
 ! Generate C-C rates for a range of densities
