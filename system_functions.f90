@@ -279,7 +279,7 @@ end subroutine sample_folding_potential_calcs
 
 
 
-subroutine deformed_Vc_graphs()
+subroutine deformed_Vc_graphs
 
     ! I just copied my original code and placed it here, so not many changes besides comments, I focused on adding and renovating my
     ! deformed Coulomb potential function in astrophysics.f90
@@ -343,7 +343,7 @@ subroutine deformed_Vc_graphs()
     
     ! I need to add the python code to create the graphs as well, will modify this program first
 
-end subroutine deformedNuclei
+end subroutine deformed_Vc_graphs
 
 !******************************************
 !
