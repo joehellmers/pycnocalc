@@ -284,6 +284,7 @@ subroutine deformed_Vc_graphs
     ! I just copied my original code and placed it here, so not many changes besides comments, I focused on adding and renovating my
     ! deformed Coulomb potential function in astrophysics.f90
 
+    use constants
     use astrophysics
     implicit none
   
@@ -296,7 +297,6 @@ subroutine deformed_Vc_graphs
     integer :: iounit, iounit2                                                        
     real(kind=dbl) :: Vc_usual                                                        ! Coulomb potential with no deformation
 
-    real(kind=dbl), parameter :: pi = acos(-1.0_dbl)
     real(kind=dbl), parameter :: e2 = 1.439964_dbl
 
     ! Orientation angle (Would be better if it was a user input)
