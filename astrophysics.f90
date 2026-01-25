@@ -8,6 +8,7 @@
 module astrophysics
 
 use constants
+use screening_module
 
 implicit none
 
@@ -433,6 +434,33 @@ end subroutine react_rate_zero_temp
         end if
 
     end function Vcoulomb
+    
+ !*****************************************************************
+  !
+  ! Screened Coulomb Potential
+  ! V_eff(r) = V_coulomb(r) - V_screen(r)
+  !
+  !*****************************************************************
+  real(kind=dbl) function Vcoulomb_screened(Z1_int, Z2, r, radius1, radius2, &
+                                            V_screen1, V_screen2)
+    implicit none
+
+    integer,      intent(in) :: Z1_int
+    real(kind=dbl), intent(in) :: Z2
+    real(kind=dbl), intent(in) :: r, radius1, radius2
+    real(kind=dbl), intent(in) :: V_screen1, V_screen2
+
+    real(kind=dbl) :: Vc, Vs
+
+    ! Bare Coulomb
+    Vc = Vcoulomb(Z1_int, Z2, r, radius1, radius2)
+
+    ! Linear screening potential from screening_module
+    Vs = screening_potential(r, V_screen1, V_screen2)
+
+    ! Effective potential
+    Vcoulomb_screened = Vc - Vs
+  end function Vcoulomb_screened    
 	
 !*****************************************************************
 !
