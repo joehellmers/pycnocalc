@@ -1,6 +1,6 @@
 
 module screening_module
-  use constants             ! so you can use kind=dbl if you want
+  use constants             
   implicit none
   private
   public :: screening_potential
