@@ -876,7 +876,7 @@ subroutine genPycnoRateSplines
         do j = 1, N
             write (unit,fmt="(ES13.5,A)",advance="no") densities(j),","
             if (mod(j,5) .eq. 0) then
-                write (unit,fmt="(AA)") " &"
+                write (unit,fmt="(a)") " &"
             end if
         end do
         close(unit)
@@ -891,7 +891,7 @@ subroutine genPycnoRateSplines
         do j = 1, N
             write (unit,fmt="(ES13.5,A)",advance="no") rates(j),","
             if (mod(j,5) .eq. 0) then
-                write (unit,fmt="(AA)") " &"
+                write (unit,fmt="(a)") " &"
             end if
         end do
         close(unit)
@@ -906,7 +906,7 @@ subroutine genPycnoRateSplines
         do j = 1, N
             write (unit,fmt="(ES13.5,A)",advance="no") rate_2nd_derivs(j),","
             if (mod(j,5) .eq. 0) then
-                write (unit,fmt="(AA)") " &"
+                write (unit,fmt="(a)") " &"
             end if
         end do
         close(unit)
