@@ -76,6 +76,10 @@ do i=1, function_cnt
 		call turn_pt_001
 	end if
 
+        if (function_list(i)%function_name .EQ. 'deformed_Vc') then
+                call deformed_Vc
+        end if
+
 	if (function_list(i)%function_name .EQ. 'E0_Energy_001') then
 		call E0_Energy_001
 	end if
