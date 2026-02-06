@@ -20,7 +20,7 @@ OBJS = globalvars.o \
 	csv_kinds.o \
 	csv_module.o \
 	csv_parameters.o \
-	csv_utilities.o
+	csv_utilities.o \
 	screening_module.o
 
 MODULES = globalvars.mod \
@@ -44,7 +44,7 @@ MODULES = globalvars.mod \
 	csv_kinds.mod \
 	csv_parameters.mod \
 	csv_utilities.mod \
-	csv_module.mod
+	csv_module.mod \
 	screening_module.mod
 
 SWITCHES = -ffree-line-length-none -O3 -fopenmp -fbounds-check -cpp
@@ -58,7 +58,7 @@ pycnocalc: $(MODULES)
 	chmod ugo-x $(OUTDIR)/pycnocalc.cfg
 
 screening_module.mod:
-        $(F90COMP) -c screening_module.f90 $(SWITCHES)
+	$(F90COMP) -c screening_module.f90 $(SWITCHES)
 
 csv_kinds.mod: 
 	$(F90COMP) -c csv_kinds.f90 $(SWITCHES2)
