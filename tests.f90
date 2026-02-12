@@ -11,6 +11,7 @@ module tests
 use constants
 use general_nuclear
 use rate_calc
+use screening_module
 
 implicit none
 
@@ -850,6 +851,35 @@ subroutine ndiff_001
     end do
     
 end subroutine ndiff_001
+
+subroutine screening_potential_001
+
+    real(kind=dbl) :: r
+    real(kind=dbl) :: V_screen1
+    real(kind=dbl) :: V_screen2
+    real(kind=dbl) :: V
+
+    call scr_and_log_str('TEST: screening_potential_001:')
+
+    V_screen1 = -2.0_dbl    
+    V_screen2 = -0.5_dbl    
+
+    ! Test 1: at r_min = 0.1 fm
+    r = 0.1_dbl
+    V = screening_potential(r, V_screen1, V_screen2)
+    call scr_and_log(str='r = 0.1 fm, V =', nbr=V, fmt='(ES13.5)', lf=.TRUE.)
+
+    ! Test 2: at r_max = 6.0 fm
+    r = 6.0_dbl
+    V = screening_potential(r, V_screen1, V_screen2)
+    call scr_and_log(str='r = 6.0 fm, V =', nbr=V, fmt='(ES13.5)', lf=.TRUE.)
+
+    ! Test 3: mid-point to check for linearity
+    r = 3.05_dbl
+    V = screening_potential(r, V_screen1, V_screen2)
+    call scr_and_log(str='r = 3.05 fm, V =', nbr=V, fmt='(ES13.5)', lf=.TRUE.)
+
+end subroutine screening_potential_001
 
 end module tests
 

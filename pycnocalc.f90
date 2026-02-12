@@ -115,6 +115,10 @@ do i=1, function_cnt
 	if (function_list(i)%function_name .EQ. 'vfold_cubes_001') then
 		call vfold_cubes_001
 	end if
+	
+	if (function_list(i)%function_name .EQ. 'screening_potential_001') then
+		call screening_potential_001
+	end if
 
 	if (function_list(i)%function_name .EQ. 'mean_wt_001') then
 		call mean_wt_001
