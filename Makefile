@@ -4,6 +4,7 @@ OBJS = globalvars.o \
 	vectors.o \
 	nucleon_interactions.o \
 	folding_potential.o \
+	screening_module.o \
 	astrophysics.o \
 	configuration.o \
 	utilities.o \
@@ -20,14 +21,15 @@ OBJS = globalvars.o \
 	csv_kinds.o \
 	csv_module.o \
 	csv_parameters.o \
-	csv_utilities.o \
-	screening_module.o
+	csv_utilities.o 
+	
 
 MODULES = globalvars.mod \
 	logging.mod \
 	vectors.mod \
 	nucleon_interactions.mod \
 	folding_potential.mod \
+	screening_module.mod \
 	astrophysics.mod \
 	configuration.mod \
 	utilities.mod \
@@ -44,8 +46,8 @@ MODULES = globalvars.mod \
 	csv_kinds.mod \
 	csv_parameters.mod \
 	csv_utilities.mod \
-	csv_module.mod \
-	screening_module.mod
+	csv_module.mod 
+	
 
 SWITCHES = -ffree-line-length-none -O3 -fopenmp -fbounds-check -cpp
 SWITCHES2 = -ffree-line-length-none -O3 -fopenmp -cpp
@@ -90,7 +92,7 @@ constants.mod:
 logging.mod: constants.mod
 	$(F90COMP) -c logging.f90 $(SWITCHES)
 
-astrophysics.mod: constants.mod globalvars.mod
+astrophysics.mod: constants.mod globalvars.mod screening_module.mod
 	$(F90COMP) -c astrophysics.f90 $(SWITCHES)
 
 utilities.mod: constants.mod
