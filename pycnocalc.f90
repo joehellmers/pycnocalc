@@ -183,6 +183,10 @@ do i=1, function_cnt
 	if (function_list(i)%function_name .EQ. 'tempAdjAndTDiff') then
 		call tempAdjAndTDiff
 	end if
+	
+	if (function_list(i)%function_name .EQ. 'graphScreenedComponents') then
+		call graphScreenedComponents
+	end if
 
 end do
 

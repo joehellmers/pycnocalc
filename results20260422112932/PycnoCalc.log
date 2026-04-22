@@ -1,0 +1,118 @@
+---- PycnoCalc Log ----
+This is PycnoCalc - Pycnonulear Reaction Calculation System
+ 
+*****************************************************************
+  A Collaboration of: Dr. Fridolin Weber (fweber@mail.sdsu.edu)
+                      Joe Hellmers (hellmersjl@icloud.com)
+                      Barbara Golf (bsouci@gmail.com)
+                      Whitney Ryan (whitney.currier@gmail.com)
+*****************************************************************
+ 
+Log of Configuration Contents
+-----------------------------
+ 
+Function Count = 
+   3.
+ 
+Function: LogConfig                
+ 
+        Parameter Count = 
+   0.
+ 
+Function: SampPycno                
+ 
+        Parameter Count = 
+   0.
+ 
+Function: FoldingSimple            
+ 
+        Parameter Count = 
+  12.
+ 
+     Parameter Name  : r1                   Value: 4.0                           
+     Parameter Name  : r2                   Value: 5.0                           
+     Parameter Name  : dr                   Value: 0.1                           
+     Parameter Name  : A1                   Value: 58                            
+     Parameter Name  : Z1                   Value: 28                            
+     Parameter Name  : A2                   Value: 16                            
+     Parameter Name  : Z2                   Value: 8                             
+     Parameter Name  : n                    Value: 15                            
+     Parameter Name  : diffuse1             Value: 0.5                           
+     Parameter Name  : diffuse2             Value: 0.5                           
+     Parameter Name  : outputfile           Value: O16Ni58step15.txt             
+     Parameter Name  : delimiter            Value: ,                             
+ 
+ 
+ 
+Zero Temp Reaction Rates
+------------------------
+Inside a White Dwarf
+C-C
+    Lower: 
+  4.26957-110
+    Upper: 
+  7.26272-102
+O-O
+    Lower: 
+  3.83376-208
+    Upper: 
+  6.68010-195
+Inside a Neutron Star
+C-C
+    Lower: 
+  1.67574E+71
+    Upper: 
+  4.88392E+71
+O-O
+    Lower: 
+  3.08537E+76
+    Upper: 
+  1.53615E+77
+Neutron Star
+------------
+C-C
+Surface
+    Lower: 
+  4.64633-194
+    Upper: 
+  5.10109-182
+Outer Crust
+    Lower: 
+  2.06863E+44
+    Upper: 
+  6.00031E+45
+Inner Crust
+    Lower: 
+  1.11687E+68
+    Upper: 
+  4.11218E+68
+O-O
+Surface
+    Lower: 
+  0.00000E+00
+    Upper: 
+  0.00000E+00
+Outer Crust
+    Lower: 
+  2.02065E+36
+    Upper: 
+  4.11614E+38
+Inner Crust
+    Lower: 
+  9.17866E+71
+    Upper: 
+  6.66592E+72
+   4.00000
+   4.10000
+   4.20000
+   4.30000
+   4.40000
+   4.50000
+   4.60000
+   4.70000
+   4.80000
+   4.90000
+   5.00000
+Wall Time:   8.47137E-01
+Total Time:   3.92688E+00
+ -------  End Run: PycnoCalc --------

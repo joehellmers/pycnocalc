@@ -1446,3 +1446,101 @@ end subroutine tempAdjAndTDiff
 
 end module system_functions
 
+
+
+subroutine graphScreenedComponents
+
+    use constants
+    use logging
+    use astrophysics,         only: Vcoulomb, E0_Energy
+    use screening_module,     only: screening_potential
+    use nucleon_interactions, only: nucleonM3Y, nucleonRMF, nucleonSaoPaulo
+    use general_nuclear,      only: nuclear_radius, reduced_mass
+
+    implicit none
+
+    integer :: i
+    integer :: npts
+    integer :: A1, Z1
+    integer :: model
+    integer :: rmf_type
+
+    real(kind=dbl) :: A2, Z2
+    real(kind=dbl) :: r, rmin, rmax, dr
+    real(kind=dbl) :: radius1, radius2
+    real(kind=dbl) :: Vc, Vs, Vc_screened, Vn, Vtot
+    real(kind=dbl) :: V_screen1, V_screen2
+    real(kind=dbl) :: delta_0
+    real(kind=dbl) :: mu
+    real(kind=dbl) :: E0
+    real(kind=dbl) :: rho
+
+    call scr_and_log_str('GRAPH: graphScreenedComponents')
+
+    ! Example system: 12C + 12C
+    A1 = 12
+    Z1 = 6
+    A2 = 12.0_dbl
+    Z2 = 6.0_dbl
+
+    ! Requested range
+    rmin = 0.5_dbl
+    rmax = 5.0_dbl
+    npts = 250
+    dr = (rmax - rmin) / real(npts, dbl)
+
+    ! Nuclear radii for finite-size Coulomb term
+    radius1 = nuclear_radius(real(A1, dbl), .FALSE.)
+    radius2 = nuclear_radius(A2, .FALSE.)
+
+    ! Use POSITIVE screening values if you want Vc - Vs to reduce the barrier
+    V_screen1 = 2.0_dbl   ! at r = 0.1 fm
+    V_screen2 = 0.5_dbl   ! at r = 6.0 fm
+
+    ! Choose nuclear-interaction model:
+    ! 1 = M3Y
+    ! 2 = RMF
+    ! 3 = Sao Paulo
+    model = 1
+
+    rmf_type = 1
+    delta_0 = 0.1_dbl
+    rho = 1.0d9
+    mu = reduced_mass(A1, Z1, A2, Z2)
+    E0 = E0_Energy(Z1, Z2, A1, A2, rho)
+
+    open(unit=20, file='researchdata/screened_components.csv', status='replace')
+    write(20,'(A)') 'r_fm,Vcoulomb_MeV,Vscreen_MeV,Vcoulomb_screened_MeV,Vnuclear_MeV,Vtotal_MeV'
+
+    do i = 0, npts
+        r = rmin + dr * real(i, dbl)
+
+        ! Coulomb pieces from astrophysics.f90
+        Vc = Vcoulomb(Z1, Z2, r, radius1, radius2)
+        Vs = screening_potential(r, V_screen1, V_screen2)
+        Vc_screened = Vc - Vs
+
+        ! Nuclear interaction from nucleon_interactions.f90
+        select case (model)
+        case (1)
+            Vn = nucleonM3Y(r, delta_0)
+        case (2)
+            Vn = nucleonRMF(r, rmf_type)
+        case (3)
+            Vn = nucleonSaoPaulo(r, E0, mu)
+        case default
+            Vn = nucleonM3Y(r, delta_0)
+        end select
+
+        Vtot = Vc_screened + Vn
+
+        write(20,'(ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8)') &
+            r, Vc, Vs, Vc_screened, Vn, Vtot
+    end do
+
+    close(20)
+
+    call scr_and_log_str('Wrote researchdata/screened_components.csv')
+
+end subroutine graphScreenedComponents
+
