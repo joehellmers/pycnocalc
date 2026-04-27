@@ -1443,11 +1443,6 @@ subroutine tempAdjAndTDiff
 
 end subroutine tempAdjAndTDiff
 
-
-end module system_functions
-
-
-
 subroutine graphScreenedComponents
 
     use constants
@@ -1543,4 +1538,68 @@ subroutine graphScreenedComponents
     call scr_and_log_str('Wrote researchdata/screened_components.csv')
 
 end subroutine graphScreenedComponents
+
+subroutine graphMeanFieldBarrier
+
+    use constants
+    use logging
+    use screening_module, only: H_mean_field
+    use astrophysics,    only: Vcoulomb, U_barrier_mean_field
+    use general_nuclear, only: nuclear_radius
+
+    implicit none
+
+    integer :: i, npts
+    integer :: A1, Z1
+    real(kind=dbl) :: A2, Z2
+    real(kind=dbl) :: r, rmin, rmax, dr
+    real(kind=dbl) :: rho, temp
+    real(kind=dbl) :: radius1, radius2
+    real(kind=dbl) :: Vc, H, U
+
+    call scr_and_log_str('GRAPH: graphMeanFieldBarrier')
+
+    ! Example: 12C + 12C
+    A1 = 12
+    Z1 = 6
+    A2 = 12.0_dbl
+    Z2 = 6.0_dbl
+
+    ! Example white-dwarf / strong-screening style case
+    rho = 5.0d9
+    temp = 1.0d8
+
+    radius1 = nuclear_radius(real(A1, dbl), .FALSE.)
+    radius2 = nuclear_radius(A2, .FALSE.)
+
+    rmin = 0.5_dbl
+    rmax = 5.0_dbl
+    npts = 250
+    dr   = (rmax - rmin) / real(npts, dbl)
+
+    open(unit=30, file='researchdata/mean_field_barrier.csv', status='replace')
+    write(30,'(A)') 'r_fm,Vcoulomb_MeV,H_MeV,U_MeV'
+
+    do i = 0, npts
+        r = rmin + dr * real(i, dbl)
+
+        Vc = Vcoulomb(Z1, Z2, r, radius1, radius2)
+        H  = H_mean_field(r, rho, temp, A1, Z1)
+        U  = U_barrier_mean_field(Z1, Z2, r, radius1, radius2, rho, temp, A1, Z1)
+
+        write(30,'(ES16.8,",",ES16.8,",",ES16.8,",",ES16.8)') r, Vc, H, U
+    end do
+
+    close(30)
+
+    call scr_and_log_str('Wrote researchdata/mean_field_barrier.csv')
+
+end subroutine graphMeanFieldBarrier
+
+
+end module system_functions
+
+
+
+
 

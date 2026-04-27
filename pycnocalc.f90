@@ -188,6 +188,29 @@ do i=1, function_cnt
 		call graphScreenedComponents
 	end if
 
+	if (function_list(i)%function_name .EQ. 'H_mean_field_001') then
+		call H_mean_field_001
+	end if
+
+	if (function_list(i)%function_name .EQ. 'U_mean_field_001') then
+		call U_mean_field_001
+	end if
+
+	if (function_list(i)%function_name .EQ. 'graphMeanFieldBarrier') then
+		call graphMeanFieldBarrier
+	end if
+
+	if (function_list(i)%function_name .EQ. 'pycnoRate_screened_compare_001') then
+   		 
+    		call pycnoRate_screened_compare_001
+    
+	end if
+
+	if (function_list(i)%function_name .EQ. 'turn_pt_screened_compare_001') then
+
+    		call turn_pt_screened_compare_001
+	end if
+
 end do
 
 call printending 

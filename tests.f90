@@ -881,6 +881,208 @@ subroutine screening_potential_001
 
 end subroutine screening_potential_001
 
+subroutine H_mean_field_001
+
+    use screening_module, only: ion_sphere_radius, gamma_coupling, H_mean_field
+    implicit none
+
+    integer         :: A1, Z1
+    real(kind=dbl)  :: rho, temp
+    real(kind=dbl)  :: r
+    real(kind=dbl)  :: a_fm, gamma, H
+
+    call scr_and_log_str('TEST: H_mean_field_001:')
+
+    A1   = 12
+    Z1   = 6
+    rho  = 5.0d9
+    temp = 1.0d8
+
+    a_fm  = ion_sphere_radius(rho, A1)
+    gamma = gamma_coupling(rho, temp, A1, Z1)
+
+    call scr_and_log(str='a [fm] =', nbr=a_fm,  fmt='(ES13.5)', lf=.TRUE.)
+    call scr_and_log(str='Gamma =', nbr=gamma, fmt='(ES13.5)', lf=.TRUE.)
+
+    r = 0.5_dbl
+    H = H_mean_field(r, rho, temp, A1, Z1)
+    call scr_and_log(str='H(0.5 fm) =', nbr=H, fmt='(ES13.5)', lf=.TRUE.)
+
+    r = 2.0_dbl
+    H = H_mean_field(r, rho, temp, A1, Z1)
+    call scr_and_log(str='H(2.0 fm) =', nbr=H, fmt='(ES13.5)', lf=.TRUE.)
+
+    r = 5.0_dbl
+    H = H_mean_field(r, rho, temp, A1, Z1)
+    call scr_and_log(str='H(5.0 fm) =', nbr=H, fmt='(ES13.5)', lf=.TRUE.)
+
+end subroutine H_mean_field_001
+
+
+subroutine U_mean_field_001
+
+    use astrophysics,    only: Vcoulomb, U_barrier_mean_field
+    use general_nuclear, only: nuclear_radius
+    implicit none
+
+    integer         :: A1, Z1
+    real(kind=dbl)  :: A2, Z2
+    real(kind=dbl)  :: rho, temp
+    real(kind=dbl)  :: r
+    real(kind=dbl)  :: radius1, radius2
+    real(kind=dbl)  :: Vc, U
+
+    call scr_and_log_str('TEST: U_mean_field_001:')
+
+    A1   = 12
+    Z1   = 6
+    A2   = 12.0_dbl
+    Z2   = 6.0_dbl
+    rho  = 5.0d9
+    temp = 1.0d8
+
+    radius1 = nuclear_radius(real(A1, dbl), .FALSE.)
+    radius2 = nuclear_radius(A2, .FALSE.)
+
+    r  = 2.0_dbl
+    Vc = Vcoulomb(Z1, Z2, r, radius1, radius2)
+    U  = U_barrier_mean_field(Z1, Z2, r, radius1, radius2, rho, temp, A1, Z1)
+
+    call scr_and_log(str='Vc(2.0 fm) =', nbr=Vc, fmt='(ES13.5)', lf=.TRUE.)
+    call scr_and_log(str='U (2.0 fm) =', nbr=U,  fmt='(ES13.5)', lf=.TRUE.)
+
+end subroutine U_mean_field_001
+
+subroutine pycnoRate_screened_compare_001
+
+    integer         :: A1
+    real(kind=dbl)  :: A2
+    integer         :: Z1
+    real(kind=dbl)  :: Z2
+    real(kind=dbl)  :: rho
+    real(kind=dbl)  :: Rstep
+    integer         :: partition
+    integer         :: nucIntType
+    real(kind=dbl)  :: rate_unscreened
+    real(kind=dbl)  :: rate_screened
+
+    call scr_and_log_str('TEST: pycnoRate_screened_compare_001:')
+
+    A1 = 12
+    A2 = 12.0_dbl
+    Z1 = 6
+    Z2 = 6.0_dbl
+    rho = 5.0d9
+
+    Rstep = 5.0_dbl
+    partition = 5
+    nucIntType = 1
+
+    rate_unscreened = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 0)
+    rate_screened   = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 0, 2, 1.0d8)
+
+    call scr_and_log(str='rate unscreened =', nbr=rate_unscreened, fmt='(ES13.5)', lf=.TRUE.)
+    call scr_and_log(str='rate screened   =', nbr=rate_screened,   fmt='(ES13.5)', lf=.TRUE.)
+
+end subroutine pycnoRate_screened_compare_001
+
+subroutine turn_pt_screened_compare_001
+
+    integer         :: A1
+    real(kind=dbl)  :: A2
+    integer         :: Z1
+    real(kind=dbl)  :: Z2
+    real(kind=dbl)  :: rho
+    real(kind=dbl)  :: Rstep
+    real(kind=dbl)  :: R
+    real(kind=dbl)  :: E0
+    real(kind=dbl)  :: mu
+    real(kind=dbl)  :: radius1
+    real(kind=dbl)  :: radius2
+    real(kind=dbl)  :: rho0_A1
+    real(kind=dbl)  :: rho0_A2
+    real(kind=dbl)  :: WKB_unscreened
+    real(kind=dbl)  :: WKB_screened
+    real(kind=dbl)  :: screen_temp
+    real(kind=dbl)  :: delta_WKB
+    real(kind=dbl)  :: wkb_enhancement
+
+    integer         :: Rmax
+    integer         :: partition
+    integer         :: nucIntType
+    integer         :: turn1_unscreened
+    integer         :: turn2_unscreened
+    integer         :: turn1_screened
+    integer         :: turn2_screened
+    integer         :: L
+
+    call scr_and_log_str('TEST: turn_pt_screened_compare_001:')
+
+    ! Fixed test case: 12C + 12C
+    A1 = 12
+    A2 = 12.0_dbl
+    Z1 = 6
+    Z2 = 6.0_dbl
+    L  = 0
+
+    print *, 'Enter rho [g/cm^3]:'
+    read(*,*) rho
+
+    print *, 'Enter screening temperature [K]:'
+    read(*,*) screen_temp
+
+    print *, 'Enter Rstep [fm]:'
+    read(*,*) Rstep
+
+    print *, 'Enter partition:'
+    read(*,*) partition
+
+    print *, 'Enter nucIntType:'
+    read(*,*) nucIntType
+
+    mu = reduced_mass(A1, Z1, A2, Z2)
+
+    radius1 = nuclear_radius(real(A1,dbl), .FALSE.)
+    radius2 = nuclear_radius(A2, .FALSE.)
+
+    rho0_A1 = rho0_2pF(real(A1,dbl), radius1, 0.5_dbl)
+    rho0_A2 = rho0_2pF(A2, radius2, 0.5_dbl)
+
+    E0 = E0_Energy(Z1, Z2, A1, A2, rho)
+
+    R = sqrt(3.0_dbl) * 0.5_dbl * lattice(rho, real(A1,dbl), real(Z1,dbl))
+    Rmax = int(R / Rstep) + 1
+
+    call turn_pt(R, Rstep, Rmax, E0, mu, A1, A2, Z1, Z2, radius1, radius2, &
+                 rho0_A1, rho0_A2, L, partition, &
+                 turn1_unscreened, turn2_unscreened, WKB_unscreened, &
+                 nucIntType, .FALSE.)
+
+    call turn_pt(R, Rstep, Rmax, E0, mu, A1, A2, Z1, Z2, radius1, radius2, &
+                 rho0_A1, rho0_A2, L, partition, &
+                 turn1_screened, turn2_screened, WKB_screened, &
+                 nucIntType, .FALSE., 2, rho, screen_temp)
+
+    delta_WKB = WKB_unscreened - WKB_screened
+    wkb_enhancement = exp(delta_WKB)
+
+    call scr_and_log(str='rho [g/cm^3]        =', nbr=rho,             fmt='(ES13.5)', lf=.TRUE.)
+    call scr_and_log(str='screen temp [K]      =', nbr=screen_temp,     fmt='(ES13.5)', lf=.TRUE.)
+    call scr_and_log(str='Rstep [fm]           =', nbr=Rstep,           fmt='(ES13.5)', lf=.TRUE.)
+
+    call scr_and_log(str='WKB unscreened       =', nbr=WKB_unscreened,  fmt='(ES13.5)', lf=.TRUE.)
+    call scr_and_log(str='WKB screened         =', nbr=WKB_screened,    fmt='(ES13.5)', lf=.TRUE.)
+    call scr_and_log(str='delta WKB            =', nbr=delta_WKB,       fmt='(ES13.5)', lf=.TRUE.)
+    call scr_and_log(str='exp(delta WKB)       =', nbr=wkb_enhancement, fmt='(ES13.5)', lf=.TRUE.)
+
+    call scr_and_log(str='turn1 unscreened     =', intval=turn1_unscreened, fmt='(I8)', lf=.TRUE.)
+    call scr_and_log(str='turn2 unscreened     =', intval=turn2_unscreened, fmt='(I8)', lf=.TRUE.)
+
+    call scr_and_log(str='turn1 screened       =', intval=turn1_screened,   fmt='(I8)', lf=.TRUE.)
+    call scr_and_log(str='turn2 screened       =', intval=turn2_screened,   fmt='(I8)', lf=.TRUE.)
+
+end subroutine turn_pt_screened_compare_001
+
 end module tests
 
 

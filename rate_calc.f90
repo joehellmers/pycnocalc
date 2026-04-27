@@ -30,7 +30,7 @@ contains
 !
 !*****************************************************************
 
-    subroutine turn_pt(R,Rstep,Rmax,E0,mu,A1,A2,Z1,Z2,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB,nucIntType,inSQMFlag)
+    subroutine turn_pt(R,Rstep,Rmax,E0,mu,A1,A2,Z1,Z2,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB,nucIntType,inSQMFlag,screening_model,screen_rho,screen_temp)
 
         implicit none
 
@@ -51,24 +51,30 @@ contains
         integer, intent(in)             :: partition    ! number of subdivisions to use for the calculation
         integer, intent(out)            :: turn1        ! position along R-axis of first turning point
         integer, intent(out)            :: turn2        ! position along R-axis of second turning point
-        real(kind=dbl), intent(out)     :: WKB			! value of WKB calculation to get through total barrier (not just coulomb barrier) between incoming and target nuclei
+        real(kind=dbl), intent(out)     :: WKB          ! value of WKB calculation to get through total barrier (not just coulomb barrier) between incoming and target nuclei
         integer, intent(in)             :: nucIntType   ! Type of nuclear interaction to use
-        logical, intent(in), optional   :: inSQMFlag    ! Indicate if we are using SQM for nuclei/nugget 2    
+        logical, intent(in), optional   :: inSQMFlag    ! Indicate if we are using SQM for nuclei/nugget 2
+        integer, intent(in), optional        :: screening_model ! screening selector: 0 = none, 2 = mean-field screened barrier
+        real(kind=dbl), intent(in), optional :: screen_rho      ! mass density [g/cm^3] used by the screening model
+        real(kind=dbl), intent(in), optional :: screen_temp     ! temperature [K] used by the screening model
 
         real(kind=dbl)  :: ln_WKB                    ! natural log of the value of the WKB calculation to get through the total barrier
-        real(kind=dbl)  :: V_2fold					! double folding potential calculated with distance of R between incoming and target nuclei
-        real(kind=dbl)  :: ndensity1, ndensity2		! number density of nuclei 1 and 2, calculated using baryon number
-        real(kind=dbl)  :: VEcheck(0:Rmax)	 	    ! array to hold difference between Veff and E of incoming particle at every point R (between incoming & target nuclei)
-        real(kind=dbl)  :: Vnucarray(0:Rmax)	    	! array to hold Veff between target & incoming particle at every point along R (between incoming & target nuclei)
-        real(kind=dbl)  :: Vcoulary(0:Rmax)			! array to hold Vcoulomb between traget and incoming particle at every point along R (between incoming & target nuclei)
-        integer         :: i, turn_counter                  ! ad hoc counter, counter for the number of turning points 
-        real(kind=dbl)  :: R_pos						! current position along R axis --this is the CURRENT separation between target and incoming particle	  
-        real(kind=dbl)  :: Energy					! function that calculates the Energy of incoming (or just second (projectile) nucleon)
-        real(kind=dbl)  :: Integrand(0:Rmax)  		! array to hold Integrand of S-factor calculation
-        real(kind=dbl)  :: S							! astrophysical S-factor - calculated using equation from PHYS REV C69 --rule of thumb model fitted to data
-        real(kind=dbl)  :: ln_S						! natural log of astrophysical S-factor
+        real(kind=dbl)  :: V_2fold                   ! double folding potential calculated with distance of R between incoming and target nuclei
+        real(kind=dbl)  :: ndensity1, ndensity2      ! number density of nuclei 1 and 2, calculated using baryon number
+        real(kind=dbl)  :: VEcheck(0:Rmax)           ! array to hold difference between Veff and E of incoming particle at every point R (between incoming & target nuclei)
+        real(kind=dbl)  :: Vnucarray(0:Rmax)         ! array to hold Veff between target & incoming particle at every point along R (between incoming & target nuclei)
+        real(kind=dbl)  :: Vcoulary(0:Rmax)          ! array to hold Vcoulomb between target and incoming particle at every point along R (between incoming & target nuclei)
+        integer         :: i, turn_counter           ! ad hoc counter, counter for the number of turning points 
+        real(kind=dbl)  :: R_pos                     ! current position along R axis --this is the CURRENT separation between target and incoming particle
+        real(kind=dbl)  :: Energy                    ! function that calculates the Energy of incoming (or just second (projectile) nucleon)
+        real(kind=dbl)  :: Integrand(0:Rmax)        ! array to hold Integrand of S-factor calculation
+        real(kind=dbl)  :: S                         ! astrophysical S-factor - calculated using equation from PHYS REV C69 --rule of thumb model fitted to data
+        real(kind=dbl)  :: ln_S                      ! natural log of astrophysical S-factor
         integer         :: new_Rmax                  ! new Rmax based upon cutoff
         logical         :: SQMFlag = .FALSE.         ! Used internally
+        integer         :: local_screening_model     ! local copy of screening selector, defaults to 0 (unscreened)
+        real(kind=dbl)  :: local_screen_rho          ! local density [g/cm^3] for screening calculations
+        real(kind=dbl)  :: local_screen_temp         ! local temperature [K] for screening calculations
 
         logical         :: v_fold_threshold_flg
         logical         :: v_fold_first_time
@@ -80,6 +86,16 @@ contains
                 SQMFlag = .TRUE.
             end if
         end if
+
+        ! Set defaults for optional screening inputs so older unscreened calls still work
+        local_screening_model = 0
+        if (present(screening_model)) local_screening_model = screening_model
+
+        local_screen_rho = 0.0_dbl
+        if (present(screen_rho)) local_screen_rho = screen_rho
+
+        local_screen_temp = 0.0_dbl
+        if (present(screen_temp)) local_screen_temp = screen_temp
 
         v_fold_min = 1e-10
         v_fold_max = 0
@@ -96,12 +112,10 @@ contains
 !		to the starting separation distance of R ...   you are calculating VEcheck array IN REVERSE, starting where nuclei are touching (Rpos = 0) and then moving incoming
 !		particle backward to Rpos = R...  So, for my visual sake, we are filling in VEcheck array from right to left (starting at Rmax and moving left to 0)
 
-        !print *,"r,TotEnergy"
         do i = 0,Rmax
             R_pos = i * Rstep
             if (.not. v_fold_threshold_flg) then 
                 V_2fold = vfold_spherically_symmetric (R_pos, A1, A2, Z1, Z2, partition,0.5_dbl,0.5_dbl,rho0_A1, rho0_A2, radius1, radius2, E0, nucIntType, SQMFlag)
-                !print *, V_2fold
                 if (v_fold_max .LT. abs(v_2fold)) then
                     v_fold_max = abs(v_2fold)
                 end if
@@ -116,29 +130,34 @@ contains
             else
                 v_2fold = 0.0_dbl
             end if
-            !print *,"V_2fold at ", R_pos, " = ", V_2fold            
+
             Vnucarray(Rmax-i) = V_2fold
-            Vcoulary(Rmax-i) = Vcoulomb(Z1,Z2,R_pos,radius1,radius2)
+
+            if (local_screening_model == 2 .and. local_screen_rho > 0.0_dbl .and. local_screen_temp > 0.0_dbl) then
+                Vcoulary(Rmax-i) = U_barrier_mean_field(Z1, Z2, R_pos, radius1, radius2, &
+                                                        local_screen_rho, local_screen_temp, A1, Z1)
+            else
+                Vcoulary(Rmax-i) = Vcoulomb(Z1, Z2, R_pos, radius1, radius2)
+            end if
+
             VEcheck(Rmax-i) = V_2fold + Vcoulary(Rmax-i) - E0
-            !print *, Rmax-i, "Electrostatic ", Vcoulary(Rmax-i)
-            !print *,R_pos, ",", VEcheck(Rmax-i)
         end do
 	  
 !	now check the VEcheck array for turning point(s) - there may be more than one - especially if the total energy of the incoming particle starts out high (greater than the potential)
         do i = 1,Rmax
-            if ((VEcheck(i).le.0).and.(VEcheck(i-1).ge.0)) then   		!if Veff - E(i) starts positive and goes negative....
-                turn_counter = turn_counter + 1							!then you've found a turning point....	
+            if ((VEcheck(i).le.0).and.(VEcheck(i-1).ge.0)) then
+                turn_counter = turn_counter + 1
                 if (turn1.lt.0) then
-                    turn1 = i - 1										  	!and the first turn just prior to this position
-                else 													
+                    turn1 = i - 1
+                else
                     turn2 = i - 1
                 end if
             else 
-                if ((VEcheck(i).ge.0).and.(VEcheck(i-1).le.0)) then 	!if Veff - E(i) starts negative and goes positive...
-                    turn_counter = turn_counter + 1							!another turn....
+                if ((VEcheck(i).ge.0).and.(VEcheck(i-1).le.0)) then
+                    turn_counter = turn_counter + 1
                     if (turn1.lt.0) then
-                        turn1 = i - 1										  	!and the turn is just prior to this position
-                    else										
+                        turn1 = i - 1
+                    else
                         turn2 = i - 1
                     end if 
                 end if            
@@ -150,34 +169,29 @@ contains
 !			See notes for "Integrand - 24 April 2008"
 
         if (turn2.lt.0) then
-        !	THERE MAY ONLY BE ONE TURNING POINT - STILL NEED TO INTEGRATE THROUGH BARRIER
             do i = 0,Rmax
                 if (i.gt.turn1) then
                     Integrand(i) = 0.0_dbl
                 else
                     if (VEcheck(i) .ge. 0.0_dbl) then
-                        Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
+                        Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))
                     else
-                        Integrand(i) = -0.01432_dbl*sqrt(-1.0_dbl*mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
+                        Integrand(i) = -0.01432_dbl*sqrt(-1.0_dbl*mu*VEcheck(i))
                     end if
                 end if
-                !print *, Integrand(i),VEcheck(i)
             end do
-        else	  
-        !	THERE ARE USUALLY TWO TURNING POINTS WHEN USING SALPETER AND VAN HORN... NEED TO INTEGRATE THROUGH BARRIER
+        else
             do i = 0,Rmax
                 if ((i.le.turn1).or.(i.gt.turn2)) then
                     Integrand(i) = 0.0_dbl
                 else
                     if (VEcheck(i) .ge. 0.0_dbl) then
-                        Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
+                        Integrand(i) = .01432_dbl*sqrt(mu*VEcheck(i))
                     else
-                        Integrand(i) = -0.01432_dbl*sqrt(-1.0_dbl*mu*VEcheck(i))    ! KEY DIFFERENCE:  hbar in SsubL def!
+                        Integrand(i) = -0.01432_dbl*sqrt(-1.0_dbl*mu*VEcheck(i))
                     end if
                 end if
-                !print *, Integrand(i),VEcheck(i)
-            end do	  
-            !print *,"mu=",mu
+            end do
         end if
 
         WKB = trapezoidArray(Rmax,Rmax,Integrand,Rstep)
@@ -193,7 +207,7 @@ contains
 !
 !*****************************************************************
 
-    real(kind=dbl) function Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag)
+    real(kind=dbl) function Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag, screening_model, screen_temp)
 
         implicit none
         
@@ -204,6 +218,8 @@ contains
         integer, intent(in)             :: partition
         integer, intent(in)             :: nucIntType
         logical, intent(in), optional   :: inSQMFlag
+        integer, intent(in), optional        :: screening_model ! screening selector passed to turn_pt
+        real(kind=dbl), intent(in), optional :: screen_temp     ! temperature [K] for screened barrier evaluation
 
         real(kind=dbl)  :: A1, Z1
         integer         :: L = 0
@@ -220,12 +236,20 @@ contains
         real(kind=dbl)  :: ln_Trans_total
         integer         :: i
         logical         :: SQMFlag = .FALSE.
+        integer         :: local_screening_model          ! local copy of screening selector, defaults to 0
+        real(kind=dbl)  :: local_screen_temp             ! local temperature [K] used in screened barrier calculation
 
         if (present(inSQMFlag)) then
             if (inSQMFlag) then
                 SQMFlag = .TRUE.
             end if
         end if
+
+        local_screening_model = 0
+        if (present(screening_model)) local_screening_model = screening_model
+
+        local_screen_temp = 0.0_dbl
+        if (present(screen_temp)) local_screen_temp = screen_temp
 
         A1 = real(A1_int,dbl)
         Z1 = real(Z1_int,dbl)
@@ -238,31 +262,21 @@ contains
         radius2 = nuclear_radius(A2, SQMFlag)
         rho0_A1 = rho0_2pF(A1,radius1,0.5_dbl)
         rho0_A2 = rho0_2pF(A2,radius2,0.5_dbl)
-        
-        !print*, "radius1 = ", radius1
-        !print*, "radius2 = ", radius2
 
-!	Calculate E of "incoming" (ground state vibrating) particle coming toward lattice-bound target particle
-        E0=E0_Energy(Z1_int,Z2, A1_int, A2, rho)
-        !print*,'E0 =',E0
+        E0 = E0_Energy(Z1_int,Z2, A1_int, A2, rho)
 
-!	Calculate Veffective and WKB integration INSIDE turn_pts function - you should have all other input parameters at this point
-!		AND you CAN'T carry the V_arrays back into the main program because Rmax is a DERIVED paramater - and used as the array dimension
         ln_sigma = 0.0
         do i = 0,L
-            call turn_pt(R,Rstep,Rmax,E0,mu,A1_int,A2,Z1_int,Z2,radius1,radius2,rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB,nucIntType,SQMFlag)
-            ! ln of Total transmission Probability: ',ln_Trans_total
+            call turn_pt(R,Rstep,Rmax,E0,mu,A1_int,A2,Z1_int,Z2,radius1,radius2, &
+                         rho0_A1,rho0_A2,L,partition,turn1,turn2,WKB,nucIntType,SQMFlag, &
+                         local_screening_model, rho, local_screen_temp)
             ln_Trans_total = -WKB
-            ! TODO: Verify quantity 612.459 = pi*hbar^2/2.  Perhaps there is a conversion factor for barns mixed in.
-            ! TODO: this is supposed to be a sum from 0 to L, but ln_sigma = ln_sigma + stuff... will yield a multiplication basically(?)
             ln_sigma=ln_sigma+log(612.459_dbl)-log(mu*E0)+log(2.0_dbl*real(i,dbl)+1.0_dbl)+ln_Trans_total
         end do
 
         ln_S=ln_sigma+log(E0)+(Z1)*(Z2)*.0324_dbl*sqrt(mu/E0)
-        !print*,'ln_S =',ln_S
-        !print*,'log10_S =',(ln_S)*.4343
         Sfactor = exp(ln_S)
-	end function Sfactor
+    end function Sfactor
 
 !*****************************************************************
 !
@@ -274,7 +288,7 @@ contains
 !
 !*****************************************************************
 
-    real(kind=dbl) function pycnoRate(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag, inCalcType)
+    real(kind=dbl) function pycnoRate(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag, inCalcType, screening_model, screen_temp)
 
         implicit none
 
@@ -293,6 +307,8 @@ contains
             !  4 - fcc, static
             !  5 - fcc, wigner-sietz cell
             !  6 - fcc, relaxed 
+        integer, intent(in), optional        :: screening_model ! screening selector passed down to Sfactor / turn_pt
+        real(kind=dbl), intent(in), optional :: screen_temp     ! temperature [K] used by the mean-field screening model
         
         real(kind=dbl)                  :: prepend, alpha1, alpha2, gamma
 
@@ -308,6 +324,8 @@ contains
 
         logical         :: SQMFlag = .FALSE.
         integer         :: calcType = 0
+        integer         :: local_screening_model          ! local copy of screening selector, defaults to 0
+        real(kind=dbl)  :: local_screen_temp             ! local temperature [K] for screened barrier evaluation
         
         if (present(inSQMFlag)) then
             if (inSQMFlag) then
@@ -319,10 +337,17 @@ contains
             calcType = inCalcType
         end if
 
+        local_screening_model = 0
+        if (present(screening_model)) local_screening_model = screening_model
+
+        local_screen_temp = 0.0_dbl
+        if (present(screen_temp)) local_screen_temp = screen_temp
+
         A1 = real(A1_int,dbl)
         Z1 = real(Z1_int,dbl)
 
-        S = Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, SQMFlag)
+        S = Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, SQMFlag, &
+                    local_screening_model, local_screen_temp)
         ln_S = log(S)
         
         if (calcType .eq. 0) then
@@ -382,7 +407,7 @@ contains
 !*****************************************************************
 !
 ! Calculate the adjustment to the Pycno Reaction rate based on 
-! Termparature
+! Temperature
 !
 ! REF: SPVH1969 (45)
 !
@@ -481,8 +506,6 @@ contains
          ! from Gasques, et al, Nuclear fusion in dense matter.  astro-ph/0506386.
          ! Phys Review C, 72, 025806 (2005)
          
-         !use const_def
-         
          real(dbl), intent(in) :: T
          real(dbl), intent(in) :: Rho
          real(dbl), intent(in) :: X12 ! mass fraction of c12
@@ -490,7 +513,6 @@ contains
          real(dbl), intent(out) :: deps_dT ! partial wrt temperature
          real(dbl), intent(out) :: deps_dRho ! partial wrt density
          real(dbl), intent(out) :: retRpyc ! Pycnonuclear Reaction rate
-         
          
          real(dbl), parameter :: exp_cutoff = 200d0
          real(dbl), parameter :: exp_max_result = 1d200
@@ -541,51 +563,38 @@ contains
          character(len=128) :: pwd, pycnoTypeFile 
 
  1       format(a55,99(1pd26.16))
- !2       format(a55,i12,99(1pd26.16))
- !3       format(a55,2i12,99(1pd26.16))
- !4       format(a55,3i12,99(1pd26.16))
- !5       format(a55,4i12,99(1pd26.16))
- !6       format(a55,5i12,99(1pd26.16))
- !7       format(a55,6i12,99(1pd26.16))
- !8       format(a55,7i12,99(1pd26.16))
- !11      format(a55,99(i26))
- !12      format(a55,99(f26.16))
                   
-         m = A * amu  ! ion mass of C12 = 12 amu by definition
+         m = A * amu
          Zqe = Z*elementary_charge
          Z2e2 = Zqe*Zqe
-         Q1212 = b_ne20 + b_he4 - 2 * b_c12 ! MeV
+         Q1212 = b_ne20 + b_he4 - 2 * b_c12
          MeV_to_erg = 1d6 * ev2erg
          barn_to_cm2 = 1d-24
          MeV_barn_to_erg_cm2 = MeV_to_erg * barn_to_cm2
          ergs_c12c12 = MeV_to_erg * Q1212
 
-         Tk = T * boltzmann ! temperature in ergs
+         Tk = T * boltzmann
          dTk_dT = boltzmann
 
-         ! number density of ions, cm^-3
-         ! this entire routine gets the rate assuming pure 12C
          ni = Rho * avogadro / A
          dni_dRho = avogadro / A
          
-         ! section III.A.
-         a_ion = pow_cr(3 / (4 * Pi * ni), one_third) ! ion-sphere radius, cm
+         a_ion = pow_cr(3 / (4 * Pi * ni), one_third)
          da_ion_dRho = -one_third * a_ion * dni_dRho / ni
          
-         Gamma = Z2e2 / (a_ion * Tk) ! Coulomb coupling parameter
+         Gamma = Z2e2 / (a_ion * Tk)
          dGamma_dT = - Gamma * dTk_dT / Tk
          dGamma_dRho =  - Gamma * da_ion_dRho / a_ion
          
-         omega_p = DSQRT(4 * Pi * Z2e2 * ni / m) ! ion plasma frequency
+         omega_p = DSQRT(4 * Pi * Z2e2 * ni / m)
          domega_p_dRho = 0.5d0 * omega_p * dni_dRho / ni
          
-         Tp = hbar * omega_p ! ion plasma temperature
+         Tp = hbar * omega_p
          dTp_dRho = hbar * domega_p_dRho
          
-         ! section III.B.
-         Ea = m * (Z2e2 / hbar)**2 ! (eqn 16)
+         Ea = m * (Z2e2 / hbar)**2
          
-         tau = 3 * pow_cr(Pi/2,two_thirds) * pow_cr(Ea/Tk, one_third) ! (eqn 16)
+         tau = 3 * pow_cr(Pi/2,two_thirds) * pow_cr(Ea/Tk, one_third)
          dtau_dT = -one_third * tau * dTk_dT / Tk
          
          Epk1 = hbar * omega_p
@@ -611,7 +620,7 @@ contains
          dEpk2c_dT = (dTk_dT*tau + Tk*dtau_dT)/3
          dEpk2c_dRho = -Z2e2*da_ion_dRho/(a_ion*a_ion)
          
-         Epk = (Epk1 + Epk2c * Epk2x) / MeV_to_erg ! (eqn 32)
+         Epk = (Epk1 + Epk2c * Epk2x) / MeV_to_erg
          dEpk_dT = (dEpk1_dT + dEpk2c_dT * Epk2x + Epk2c * dEpk2x_dT) / MeV_to_erg
          dEpk_dRho = (dEpk1_dRho + dEpk2c_dRho * Epk2x + Epk2c * dEpk2x_dRho) / MeV_to_erg
 
@@ -655,26 +664,21 @@ contains
             dSEpk_dT = 0
             dSEpk_dRho = 0
          else
-            SEpk = 5.15d16 * exp_cr(exponent) ! (eqn 12)
+            SEpk = 5.15d16 * exp_cr(exponent)
             dSEpk_dT = SEpk * (dSEpkx1_dT + dSEpkx2_dT)
             dSEpk_dRho = SEpk * (dSEpkx1_dRho + dSEpkx2_dRho)
          end if
 
-         ! section III.D.
-         lam = pow_cr(Rho/(1.3574d11*A),one_third) / (A*Z*Z) ! (eqn 24)
+         lam = pow_cr(Rho/(1.3574d11*A),one_third) / (A*Z*Z)
          dlam_dRho = one_third * lam / Rho
          
-         Ppyc = 8*Cpyc*11.515/pow_cr(lam,Cpl) ! (eqn 23)
+         Ppyc = 8*Cpyc*11.515/pow_cr(lam,Cpl)
          dPpyc_dRho = - Ppyc * dlam_dRho / lam
          
-         Fpyc = exp_cr(-Cexp/DSQRT(lam)) ! (eqn 23)
+         Fpyc = exp_cr(-Cexp/DSQRT(lam))
          dFpyc_dRho = Fpyc * Cexp * dlam_dRho / (2 * lam*sqrt(lam))
          
-         Rpyc = Rho * A * pow4(Z) * (1 / (8 * 11.515)) * 1d46 * pow3(lam) * SEpk * Fpyc * Ppyc ! (eqn 25)
-         !print *,"lam=",lam
-         !print *,"SEpk=",SEpk
-         !print *,"Fpyc=",Fpyc
-         !print *,"Ppyc=",Ppyc
+         Rpyc = Rho * A * pow4(Z) * (1 / (8 * 11.515)) * 1d46 * pow3(lam) * SEpk * Fpyc * Ppyc
          
          if (Rpyc < exp_min_result) then
             Rpyc = 0
@@ -685,7 +689,6 @@ contains
             dRpyc_dRho = Rpyc * (3 * dlam_dRho / lam + dSEpk_dRho / SEpk + dFpyc_dRho / Fpyc + dPpyc_dRho / Ppyc)
          end if
 
-         ! section III.G.
          phin = DSQRT(Gamma)
          dphin_dGamma = 0.5 * phin / Gamma
          dphin_dT = dGamma_dT * dphin_dGamma
@@ -700,15 +703,15 @@ contains
          dphidT = (dphin_dT - dphid_dT * phin / phid) / phid
          dphidRho = (dphin_dRho - dphid_dRho * phin / phid) / phid
          
-         Ttilda = DSQRT(Tk*Tk + (CT*Tp)*(CT*Tp)) ! (eqn 29)
+         Ttilda = DSQRT(Tk*Tk + (CT*Tp)*(CT*Tp))
          dTtilda_dT = Tk * dTk_dT / Ttilda
          dTtilda_dRho = CT*CT * Tp * dTp_dRho / Ttilda
          
-         Gammatilda = Z2e2 / (a_ion * Ttilda) ! (eqn 29)
+         Gammatilda = Z2e2 / (a_ion * Ttilda)
          dGammatilda_dT = -Gammatilda * dTtilda_dT / Ttilda
          dGammatilda_dRho = -Gammatilda * (dTtilda_dRho / Ttilda + da_ion_dRho / a_ion)
          
-         tautilda = 3 * pow_cr(Pi/2,two_thirds) * pow_cr(Ea / Ttilda, one_third) ! (eqn 29)
+         tautilda = 3 * pow_cr(Pi/2,two_thirds) * pow_cr(Ea / Ttilda, one_third)
          dtautilda_dTtilda = - tautilda / (3 * Ttilda)
          dtautilda_dT = dtautilda_dTtilda * dTtilda_dT
          dtautilda_dRho = dtautilda_dTtilda * dTtilda_dRho
@@ -723,11 +726,11 @@ contains
          dgam_d_dT = 2 * Tk * dTk_dT
          dgam_d_dRho = 2 * Tp * dTp_dRho
 
-         gam = gam_n / gam_d ! (eqn 31)
+         gam = gam_n / gam_d
          dgam_dT = (dgam_n_dT - gam_n * dgam_d_dT / gam_d)/gam_d
          dgam_dRho = (dgam_n_dRho - gam_n * dgam_d_dRho / gam_d)/gam_d
          
-         P = (8 * pow_cr(Pi/2,one_third)/sqrt3) * pow_cr(Ea/Ttilda, gam) ! (eqn 29)
+         P = (8 * pow_cr(Pi/2,one_third)/sqrt3) * pow_cr(Ea/Ttilda, gam)
          if (P < exp_min_result) then
             P = 0
             dP_dgam = 0
@@ -759,7 +762,7 @@ contains
          
          lnF2 = Csc * Gammatilda * phi * lnF2x
          lnF3 = - Lambda * Tp / Tk
-         lnF = lnF1 + lnF2 + lnF3 ! (eqn 29)
+         lnF = lnF1 + lnF2 + lnF3
          if (lnF < -exp_cutoff) then
             F = exp_min_result
             dF_dT = 0
@@ -782,13 +785,10 @@ contains
             dF_dRho = dlnF_dRho * F
          end if
 
-         ! NOTE: when calculating deltaR we need to convert SEpk to erg cm^2 from MeV barn.
-         ! That conversion is included in the numerical coefficient of the eqn for Rpyc.
-         
          niterm = ni*ni * (hbar / (2 * m * Z2e2))
          dniterm_dRho = 2 * niterm * dni_dRho / ni
          
-         deltaR = niterm * SEpk * MeV_barn_to_erg_cm2 * P * F ! (eqn 29)
+         deltaR = niterm * SEpk * MeV_barn_to_erg_cm2 * P * F
          if (deltaR < 1d-100) then
             deltaR = 0
             d_deltaR_dT = 0
@@ -798,11 +798,11 @@ contains
             d_deltaR_dRho = deltaR * (dniterm_dRho / niterm + dSEpk_dRho / SEpk + dP_dRho / P + dF_dRho / F)
          end if
          
-         R = X12 * (Rpyc + deltaR) ! eqn 28, s^-1 cm^-3
+         R = X12 * (Rpyc + deltaR)
          dRdT = X12 * (dRpyc_dT + d_deltaR_dT)
          dRdRho = X12 * (dRpyc_dRho + d_deltaR_dRho)
 
-         eps = R * ergs_c12c12 / Rho ! ergs/g/sec
+         eps = R * ergs_c12c12 / Rho
          deps_dT = dRdT * ergs_c12c12 / Rho
          deps_dRho = (dRdRho * ergs_c12c12 - eps) / Rho
          
