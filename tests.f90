@@ -1016,6 +1016,10 @@ subroutine turn_pt_screened_compare_001
     integer         :: turn2_screened
     integer         :: L
 
+    logical         :: file_exists
+    integer         :: unitno
+    character(len=128) :: outfile
+
     call scr_and_log_str('TEST: turn_pt_screened_compare_001:')
 
     ! Fixed test case: 12C + 12C
@@ -1080,6 +1084,27 @@ subroutine turn_pt_screened_compare_001
 
     call scr_and_log(str='turn1 screened       =', intval=turn1_screened,   fmt='(I8)', lf=.TRUE.)
     call scr_and_log(str='turn2 screened       =', intval=turn2_screened,   fmt='(I8)', lf=.TRUE.)
+
+    outfile = 'researchdata/turn_pt_screened_compare_runs.csv'
+    unitno = 88
+
+    inquire(file=outfile, exist=file_exists)
+
+    if (file_exists) then
+        open(unit=unitno, file=outfile, status='old', position='append', action='write')
+    else
+        open(unit=unitno, file=outfile, status='new', action='write')
+        write(unitno,'(A)') 'rho,screen_temp,Rstep,partition,nucIntType,' // &
+                            'WKB_unscreened,WKB_screened,delta_WKB,exp_delta_WKB,' // &
+                            'turn1_unscreened,turn2_unscreened,turn1_screened,turn2_screened'
+    end if
+
+    write(unitno,'(ES16.8,",",ES16.8,",",ES16.8,",",I0,",",I0,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",I0,",",I0,",",I0,",",I0)') &
+        rho, screen_temp, Rstep, partition, nucIntType, &
+        WKB_unscreened, WKB_screened, delta_WKB, wkb_enhancement, &
+        turn1_unscreened, turn2_unscreened, turn1_screened, turn2_screened
+
+    close(unitno)
 
 end subroutine turn_pt_screened_compare_001
 

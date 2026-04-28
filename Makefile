@@ -146,6 +146,7 @@ clean:
 	rm -rf .DS_Store
 	rm -rf $(OUTDIR)/pycnocalc
 	rm -rf notebooks/.ipynb_checkpoints/
+	rm -f researchdata/turn_pt_screened_compare_runs.csv
 clean_local:
 	rm *.mod
 	rm *.o
