@@ -993,6 +993,11 @@ subroutine turn_pt_screened_compare_001
     integer         :: Z1
     real(kind=dbl)  :: Z2
     real(kind=dbl)  :: rho
+    real(kind=dbl)  :: rho_min
+    real(kind=dbl)  :: rho_max
+    real(kind=dbl)  :: log_rho_min
+    real(kind=dbl)  :: log_rho_max
+    real(kind=dbl)  :: dlogrho
     real(kind=dbl)  :: Rstep
     real(kind=dbl)  :: R
     real(kind=dbl)  :: E0
@@ -1003,9 +1008,13 @@ subroutine turn_pt_screened_compare_001
     real(kind=dbl)  :: rho0_A2
     real(kind=dbl)  :: WKB_unscreened
     real(kind=dbl)  :: WKB_screened
+    real(kind=dbl)  :: WKB_zeroT
     real(kind=dbl)  :: screen_temp
     real(kind=dbl)  :: delta_WKB
     real(kind=dbl)  :: wkb_enhancement
+    real(kind=dbl)  :: rate_zeroT
+    real(kind=dbl)  :: turn1_zeroT_fm
+    real(kind=dbl)  :: turn2_zeroT_fm
 
     integer         :: Rmax
     integer         :: partition
@@ -1014,10 +1023,14 @@ subroutine turn_pt_screened_compare_001
     integer         :: turn2_unscreened
     integer         :: turn1_screened
     integer         :: turn2_screened
+    integer         :: turn1_zeroT
+    integer         :: turn2_zeroT
     integer         :: L
+    integer         :: n_pts
+    integer         :: i
+    integer         :: unitno
 
     logical         :: file_exists
-    integer         :: unitno
     character(len=128) :: outfile
 
     call scr_and_log_str('TEST: turn_pt_screened_compare_001:')
@@ -1028,9 +1041,6 @@ subroutine turn_pt_screened_compare_001
     Z1 = 6
     Z2 = 6.0_dbl
     L  = 0
-
-    print *, 'Enter rho [g/cm^3]:'
-    read(*,*) rho
 
     print *, 'Enter screening temperature [K]:'
     read(*,*) screen_temp
@@ -1052,61 +1062,128 @@ subroutine turn_pt_screened_compare_001
     rho0_A1 = rho0_2pF(real(A1,dbl), radius1, 0.5_dbl)
     rho0_A2 = rho0_2pF(A2, radius2, 0.5_dbl)
 
-    E0 = E0_Energy(Z1, Z2, A1, A2, rho)
+    if (screen_temp > 0.0_dbl) then
 
-    R = sqrt(3.0_dbl) * 0.5_dbl * lattice(rho, real(A1,dbl), real(Z1,dbl))
-    Rmax = int(R / Rstep) + 1
+        print *, 'Enter rho [g/cm^3]:'
+        read(*,*) rho
 
-    call turn_pt(R, Rstep, Rmax, E0, mu, A1, A2, Z1, Z2, radius1, radius2, &
-                 rho0_A1, rho0_A2, L, partition, &
-                 turn1_unscreened, turn2_unscreened, WKB_unscreened, &
-                 nucIntType, .FALSE.)
+        E0 = E0_Energy(Z1, Z2, A1, A2, rho)
 
-    call turn_pt(R, Rstep, Rmax, E0, mu, A1, A2, Z1, Z2, radius1, radius2, &
-                 rho0_A1, rho0_A2, L, partition, &
-                 turn1_screened, turn2_screened, WKB_screened, &
-                 nucIntType, .FALSE., 2, rho, screen_temp)
+        R = sqrt(3.0_dbl) * 0.5_dbl * lattice(rho, real(A1,dbl), real(Z1,dbl))
+        Rmax = int(R / Rstep) + 1
 
-    delta_WKB = WKB_unscreened - WKB_screened
-    wkb_enhancement = exp(delta_WKB)
+        call turn_pt(R, Rstep, Rmax, E0, mu, A1, A2, Z1, Z2, radius1, radius2, &
+                     rho0_A1, rho0_A2, L, partition, &
+                     turn1_unscreened, turn2_unscreened, WKB_unscreened, &
+                     nucIntType, .FALSE.)
 
-    call scr_and_log(str='rho [g/cm^3]        =', nbr=rho,             fmt='(ES13.5)', lf=.TRUE.)
-    call scr_and_log(str='screen temp [K]      =', nbr=screen_temp,     fmt='(ES13.5)', lf=.TRUE.)
-    call scr_and_log(str='Rstep [fm]           =', nbr=Rstep,           fmt='(ES13.5)', lf=.TRUE.)
+        call turn_pt(R, Rstep, Rmax, E0, mu, A1, A2, Z1, Z2, radius1, radius2, &
+                     rho0_A1, rho0_A2, L, partition, &
+                     turn1_screened, turn2_screened, WKB_screened, &
+                     nucIntType, .FALSE., 2, rho, screen_temp)
 
-    call scr_and_log(str='WKB unscreened       =', nbr=WKB_unscreened,  fmt='(ES13.5)', lf=.TRUE.)
-    call scr_and_log(str='WKB screened         =', nbr=WKB_screened,    fmt='(ES13.5)', lf=.TRUE.)
-    call scr_and_log(str='delta WKB            =', nbr=delta_WKB,       fmt='(ES13.5)', lf=.TRUE.)
-    call scr_and_log(str='exp(delta WKB)       =', nbr=wkb_enhancement, fmt='(ES13.5)', lf=.TRUE.)
+        delta_WKB = WKB_unscreened - WKB_screened
+        wkb_enhancement = exp(delta_WKB)
 
-    call scr_and_log(str='turn1 unscreened     =', intval=turn1_unscreened, fmt='(I8)', lf=.TRUE.)
-    call scr_and_log(str='turn2 unscreened     =', intval=turn2_unscreened, fmt='(I8)', lf=.TRUE.)
+        call scr_and_log(str='rho [g/cm^3]        =', nbr=rho,             fmt='(ES13.5)', lf=.TRUE.)
+        call scr_and_log(str='screen temp [K]      =', nbr=screen_temp,     fmt='(ES13.5)', lf=.TRUE.)
+        call scr_and_log(str='Rstep [fm]           =', nbr=Rstep,           fmt='(ES13.5)', lf=.TRUE.)
 
-    call scr_and_log(str='turn1 screened       =', intval=turn1_screened,   fmt='(I8)', lf=.TRUE.)
-    call scr_and_log(str='turn2 screened       =', intval=turn2_screened,   fmt='(I8)', lf=.TRUE.)
+        call scr_and_log(str='WKB unscreened       =', nbr=WKB_unscreened,  fmt='(ES13.5)', lf=.TRUE.)
+        call scr_and_log(str='WKB screened         =', nbr=WKB_screened,    fmt='(ES13.5)', lf=.TRUE.)
+        call scr_and_log(str='delta WKB            =', nbr=delta_WKB,       fmt='(ES13.5)', lf=.TRUE.)
+        call scr_and_log(str='exp(delta WKB)       =', nbr=wkb_enhancement, fmt='(ES13.5)', lf=.TRUE.)
 
-    outfile = 'researchdata/turn_pt_screened_compare_runs.csv'
-    unitno = 88
+        call scr_and_log(str='turn1 unscreened     =', intval=turn1_unscreened, fmt='(I8)', lf=.TRUE.)
+        call scr_and_log(str='turn2 unscreened     =', intval=turn2_unscreened, fmt='(I8)', lf=.TRUE.)
 
-    inquire(file=outfile, exist=file_exists)
+        call scr_and_log(str='turn1 screened       =', intval=turn1_screened,   fmt='(I8)', lf=.TRUE.)
+        call scr_and_log(str='turn2 screened       =', intval=turn2_screened,   fmt='(I8)', lf=.TRUE.)
 
-    if (file_exists) then
-        open(unit=unitno, file=outfile, status='old', position='append', action='write')
+        outfile = 'researchdata/turn_pt_screened_compare_runs.csv'
+        unitno = 88
+
+        inquire(file=outfile, exist=file_exists)
+
+        if (file_exists) then
+            open(unit=unitno, file=outfile, status='old', position='append', action='write')
+        else
+            open(unit=unitno, file=outfile, status='new', action='write')
+            write(unitno,'(A)') 'rho,screen_temp,Rstep,partition,nucIntType,' // &
+                                'WKB_unscreened,WKB_screened,delta_WKB,exp_delta_WKB,' // &
+                                'turn1_unscreened,turn2_unscreened,turn1_screened,turn2_screened'
+        end if
+
+        write(unitno,'(ES16.8,",",ES16.8,",",ES16.8,",",I0,",",I0,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",I0,",",I0,",",I0,",",I0)') &
+            rho, screen_temp, Rstep, partition, nucIntType, &
+            WKB_unscreened, WKB_screened, delta_WKB, wkb_enhancement, &
+            turn1_unscreened, turn2_unscreened, turn1_screened, turn2_screened
+
+        close(unitno)
+
     else
-        open(unit=unitno, file=outfile, status='new', action='write')
-        write(unitno,'(A)') 'rho,screen_temp,Rstep,partition,nucIntType,' // &
-                            'WKB_unscreened,WKB_screened,delta_WKB,exp_delta_WKB,' // &
-                            'turn1_unscreened,turn2_unscreened,turn1_screened,turn2_screened'
+
+        call scr_and_log_str('Zero-temperature entry detected; running zero-T density sweep.')
+
+        print *, 'Enter minimum rho [g/cm^3]:'
+        read(*,*) rho_min
+
+        print *, 'Enter maximum rho [g/cm^3]:'
+        read(*,*) rho_max
+
+        print *, 'Enter number of density points:'
+        read(*,*) n_pts
+
+        if (n_pts < 2) then
+            call scr_and_log_str('Number of density points must be at least 2.')
+            return
+        end if
+
+        log_rho_min = log10(rho_min)
+        log_rho_max = log10(rho_max)
+        dlogrho = (log_rho_max - log_rho_min) / real(n_pts - 1, dbl)
+
+        outfile = 'researchdata/turn_pt_zeroT_density_from_compare.csv'
+        unitno = 79
+
+        open(unit=unitno, file=outfile, status='replace', action='write')
+
+        write(unitno,'(A)') 'rho,WKB_zeroT,rate_zeroT,turn1_zeroT,turn2_zeroT,' // &
+                            'turn1_zeroT_fm,turn2_zeroT_fm'
+
+        do i = 0, n_pts - 1
+
+            rho = 10.0_dbl**(log_rho_min + real(i, dbl) * dlogrho)
+
+            E0 = E0_Energy(Z1, Z2, A1, A2, rho)
+
+            R = sqrt(3.0_dbl) * 0.5_dbl * lattice(rho, real(A1,dbl), real(Z1,dbl))
+            Rmax = int(R / Rstep) + 1
+
+            call turn_pt(R, Rstep, Rmax, E0, mu, A1, A2, Z1, Z2, radius1, radius2, &
+                         rho0_A1, rho0_A2, L, partition, &
+                         turn1_zeroT, turn2_zeroT, WKB_zeroT, &
+                         nucIntType, .FALSE.)
+
+            rate_zeroT = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 0)
+
+            turn1_zeroT_fm = real(turn1_zeroT, dbl) * Rstep
+            turn2_zeroT_fm = real(turn2_zeroT, dbl) * Rstep
+
+            write(unitno,'(ES16.8,",",ES16.8,",",ES16.8,",",I0,",",I0,",",ES16.8,",",ES16.8)') &
+                rho, WKB_zeroT, rate_zeroT, turn1_zeroT, turn2_zeroT, &
+                turn1_zeroT_fm, turn2_zeroT_fm
+
+        end do
+
+        close(unitno)
+
+        call scr_and_log_str('Wrote researchdata/turn_pt_zeroT_density_from_compare.csv')
+
     end if
 
-    write(unitno,'(ES16.8,",",ES16.8,",",ES16.8,",",I0,",",I0,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",I0,",",I0,",",I0,",",I0)') &
-        rho, screen_temp, Rstep, partition, nucIntType, &
-        WKB_unscreened, WKB_screened, delta_WKB, wkb_enhancement, &
-        turn1_unscreened, turn2_unscreened, turn1_screened, turn2_screened
-
-    close(unitno)
-
 end subroutine turn_pt_screened_compare_001
+
 
 end module tests
 
