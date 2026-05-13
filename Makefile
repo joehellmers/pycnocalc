@@ -1,20 +1,5 @@
-# ============================================================
-# SCREENING PROJECT BUILD ADDITIONS
-#
-# The Makefile was updated so the new screening module is built
-# before files that depend on it.
-#
-# Important dependency flow:
-#   screening_module.mod -> astrophysics.mod -> system_functions.mod/tests.mod
-#
-# This allows the new screened-barrier routines and screening
-# tests to compile with the rest of PycnoCalc.
-# ============================================================
+
 F90COMP = gfortran
-# ------------------------------------------------------------
-# PROJECT ADDITION: screening_module.o is included in the object
-# list so the new screening physics is linked into PycnoCalc.
-# ------------------------------------------------------------
 
 OBJS = globalvars.o \
 	logging.o \
@@ -110,7 +95,7 @@ logging.mod: constants.mod
 	$(F90COMP) -c logging.f90 $(SWITCHES)
 
 # ------------------------------------------------------------
-# PROJECT ADDITION: astrophysics.mod depends on screening_module.mod
+# astrophysics.mod depends on screening_module.mod
 # because the screened barrier routines call screening functions.
 # ------------------------------------------------------------
 
@@ -127,7 +112,7 @@ general_nuclear.mod: constants.mod mathintegration.mod
 	$(F90COMP) -c general_nuclear.f90 $(SWITCHES)
 
 # ------------------------------------------------------------
-# PROJECT ADDITION: system_functions.mod depends on astrophysics.mod
+# system_functions.mod depends on astrophysics.mod
 # and exports graph / CSV routines for screened-barrier analysis.
 # ------------------------------------------------------------
 
@@ -159,7 +144,7 @@ rate_calc.mod: constants.mod folding_potential.mod astrophysics.mod mathintegrat
 	$(F90COMP) -c rate_calc.f90 $(SWITCHES)
 
 # ------------------------------------------------------------
-# PROJECT ADDITION: tests.mod depends on screening_module.mod for
+# tests.mod depends on screening_module.mod for
 # mean-field screening tests and screened comparison routines.
 # ------------------------------------------------------------
 
