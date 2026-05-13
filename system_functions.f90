@@ -1443,6 +1443,192 @@ subroutine tempAdjAndTDiff
 
 end subroutine tempAdjAndTDiff
 
+! ------------------------------------------------------------
+! SCREENED COMPONENT GRAPH EXPORT
+!
+! Purpose:
+!   Export the separate barrier components needed to compare
+!   unscreened and screened potentials.
+!
+! Typical outputs include:
+!   - bare Coulomb potential
+!   - screening correction
+!   - screened Coulomb potential
+!   - nuclear/folding potential contribution
+!   - total screened and unscreened barriers
+! ------------------------------------------------------------
+
+subroutine graphScreenedComponents
+
+    use constants
+    use logging
+    use astrophysics,         only: Vcoulomb, E0_Energy
+    use screening_module,     only: screening_potential
+    use nucleon_interactions, only: nucleonM3Y, nucleonRMF, nucleonSaoPaulo
+    use general_nuclear,      only: nuclear_radius, reduced_mass
+
+    implicit none
+
+    integer :: i
+    integer :: npts
+    integer :: A1, Z1
+    integer :: model
+    integer :: rmf_type
+
+    real(kind=dbl) :: A2, Z2
+    real(kind=dbl) :: r, rmin, rmax, dr
+    real(kind=dbl) :: radius1, radius2
+    real(kind=dbl) :: Vc, Vs, Vc_screened, Vn
+    real(kind=dbl) :: Vtot_unscreened, Vtot_screened
+    real(kind=dbl) :: V_screen1, V_screen2
+    real(kind=dbl) :: delta_0
+    real(kind=dbl) :: mu
+    real(kind=dbl) :: E0
+    real(kind=dbl) :: rho
+
+    call scr_and_log_str('GRAPH: graphScreenedComponents')
+
+    ! Example system: 12C + 12C
+    A1 = 12
+    Z1 = 6
+    A2 = 12.0_dbl
+    Z2 = 6.0_dbl
+
+    ! Requested range
+    rmin = 0.5_dbl
+    rmax = 5.0_dbl
+    npts = 250
+    dr = (rmax - rmin) / real(npts, dbl)
+
+    ! Nuclear radii for finite-size Coulomb term
+    radius1 = nuclear_radius(real(A1, dbl), .FALSE.)
+    radius2 = nuclear_radius(A2, .FALSE.)
+
+    ! Positive screening values so Vc - Vs lowers the barrier
+    V_screen1 = 2.0_dbl   ! at r = 0.1 fm
+    V_screen2 = 0.5_dbl   ! at r = 6.0 fm
+
+    ! Choose nuclear-interaction model:
+    ! 1 = M3Y
+    ! 2 = RMF
+    ! 3 = Sao Paulo
+    model = 1
+
+    rmf_type = 1
+    delta_0 = 0.1_dbl
+    rho = 1.0d9
+    mu = reduced_mass(A1, Z1, A2, Z2)
+    E0 = E0_Energy(Z1, Z2, A1, A2, rho)
+
+    open(unit=20, file='researchdata/screened_components.csv', status='replace')
+    write(20,'(A)') 'r_fm,Vcoulomb_MeV,Vscreen_MeV,Vcoulomb_screened_MeV,Vnuclear_MeV,Vtotal_unscreened_MeV,Vtotal_screened_MeV'
+
+    do i = 0, npts
+        r = rmin + dr * real(i, dbl)
+
+        ! Coulomb pieces from astrophysics.f90
+        Vc = Vcoulomb(Z1, Z2, r, radius1, radius2)
+        Vs = screening_potential(r, V_screen1, V_screen2)
+        Vc_screened = Vc - Vs
+
+        ! Nuclear interaction from nucleon_interactions.f90
+        select case (model)
+        case (1)
+            Vn = nucleonM3Y(r, delta_0)
+        case (2)
+            Vn = nucleonRMF(r, rmf_type)
+        case (3)
+            Vn = nucleonSaoPaulo(r, E0, mu)
+        case default
+            Vn = nucleonM3Y(r, delta_0)
+        end select
+
+        Vtot_unscreened = Vc + Vn
+        Vtot_screened   = Vc_screened + Vn
+
+        write(20,'(ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8)') &
+            r, Vc, Vs, Vc_screened, Vn, Vtot_unscreened, Vtot_screened
+    end do
+
+    close(20)
+
+    call scr_and_log_str('Wrote researchdata/screened_components.csv')
+
+end subroutine graphScreenedComponents
+
+! ------------------------------------------------------------
+! MEAN-FIELD BARRIER GRAPH EXPORT
+!
+! Purpose:
+!   Export a radius sweep comparing the bare Coulomb barrier
+!   with the mean-field screened barrier.
+!
+!   Used to make the final barrier plots showing how the
+!   plasma mean-field potential lowers the tunneling barrier.
+! ------------------------------------------------------------
+
+subroutine graphMeanFieldBarrier
+
+    use constants
+    use logging
+    use screening_module, only: H_mean_field
+    use astrophysics,    only: Vcoulomb, U_barrier_mean_field
+    use general_nuclear, only: nuclear_radius
+
+    implicit none
+
+    integer :: i, npts
+    integer :: A1, Z1
+    real(kind=dbl) :: A2, Z2
+    real(kind=dbl) :: r, rmin, rmax, dr
+    real(kind=dbl) :: rho, temp
+    real(kind=dbl) :: radius1, radius2
+    real(kind=dbl) :: Vc, H, U
+
+    call scr_and_log_str('GRAPH: graphMeanFieldBarrier')
+
+    ! Example: 12C + 12C
+    A1 = 12
+    Z1 = 6
+    A2 = 12.0_dbl
+    Z2 = 6.0_dbl
+
+    ! Example white-dwarf / strong-screening style case
+    rho = 5.0d9
+    temp = 1.0d8
+
+    radius1 = nuclear_radius(real(A1, dbl), .FALSE.)
+    radius2 = nuclear_radius(A2, .FALSE.)
+
+    rmin = 0.5_dbl
+    rmax = 5.0_dbl
+    npts = 250
+    dr   = (rmax - rmin) / real(npts, dbl)
+
+    open(unit=30, file='researchdata/mean_field_barrier.csv', status='replace')
+    write(30,'(A)') 'r_fm,Vcoulomb_MeV,H_MeV,U_MeV'
+
+    do i = 0, npts
+        r = rmin + dr * real(i, dbl)
+
+        Vc = Vcoulomb(Z1, Z2, r, radius1, radius2)
+        H  = H_mean_field(r, rho, temp, A1, Z1)
+        U  = U_barrier_mean_field(Z1, Z2, r, radius1, radius2, rho, temp, A1, Z1)
+
+        write(30,'(ES16.8,",",ES16.8,",",ES16.8,",",ES16.8)') r, Vc, H, U
+    end do
+
+    close(30)
+
+    call scr_and_log_str('Wrote researchdata/mean_field_barrier.csv')
+
+end subroutine graphMeanFieldBarrier
+
 
 end module system_functions
+
+
+
+
+
 

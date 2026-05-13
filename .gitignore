@@ -1,2 +1,6 @@
-*.mod
+# Fortran build artifacts
 *.o
+*.mod
+
+# MacOS
+.DS_Store

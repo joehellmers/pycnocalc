@@ -22,7 +22,7 @@ save
 
 integer, parameter :: max_function_cnt = 25
 integer, parameter :: max_param_cnt = 100
-integer, parameter :: max_function_name_size = 25
+integer, parameter :: max_function_name_size = 64
 integer, parameter :: max_param_name_size = 20
 integer, parameter :: max_param_value_size = 30
 

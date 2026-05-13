@@ -1,9 +1,12 @@
+
 F90COMP = gfortran
+
 OBJS = globalvars.o \
 	logging.o \
 	vectors.o \
 	nucleon_interactions.o \
 	folding_potential.o \
+	screening_module.o \
 	astrophysics.o \
 	configuration.o \
 	utilities.o \
@@ -20,13 +23,15 @@ OBJS = globalvars.o \
 	csv_kinds.o \
 	csv_module.o \
 	csv_parameters.o \
-	csv_utilities.o
+	csv_utilities.o 
+	
 
 MODULES = globalvars.mod \
 	logging.mod \
 	vectors.mod \
 	nucleon_interactions.mod \
 	folding_potential.mod \
+	screening_module.mod \
 	astrophysics.mod \
 	configuration.mod \
 	utilities.mod \
@@ -43,7 +48,8 @@ MODULES = globalvars.mod \
 	csv_kinds.mod \
 	csv_parameters.mod \
 	csv_utilities.mod \
-	csv_module.mod
+	csv_module.mod 
+	
 
 SWITCHES = -ffree-line-length-none -O3 -fopenmp -fbounds-check -cpp
 SWITCHES2 = -ffree-line-length-none -O3 -fopenmp -cpp
@@ -54,6 +60,9 @@ pycnocalc: $(MODULES)
 	$(F90COMP) pycnocalc.f90 $(OBJS) -o $(OUTDIR)/pycnocalc $(SWITCHES)
 	cp pycnocalc.cfg $(OUTDIR)
 	chmod ugo-x $(OUTDIR)/pycnocalc.cfg
+
+screening_module.mod:
+	$(F90COMP) -c screening_module.f90 $(SWITCHES)
 
 csv_kinds.mod: 
 	$(F90COMP) -c csv_kinds.f90 $(SWITCHES2)
@@ -85,7 +94,12 @@ constants.mod:
 logging.mod: constants.mod
 	$(F90COMP) -c logging.f90 $(SWITCHES)
 
-astrophysics.mod: constants.mod globalvars.mod
+# ------------------------------------------------------------
+# astrophysics.mod depends on screening_module.mod
+# because the screened barrier routines call screening functions.
+# ------------------------------------------------------------
+
+astrophysics.mod: constants.mod globalvars.mod screening_module.mod
 	$(F90COMP) -c astrophysics.f90 $(SWITCHES)
 
 utilities.mod: constants.mod
@@ -96,6 +110,11 @@ configuration.mod: constants.mod logging.mod utilities.mod globalvars.mod
 
 general_nuclear.mod: constants.mod mathintegration.mod
 	$(F90COMP) -c general_nuclear.f90 $(SWITCHES)
+
+# ------------------------------------------------------------
+# system_functions.mod depends on astrophysics.mod
+# and exports graph / CSV routines for screened-barrier analysis.
+# ------------------------------------------------------------
 
 system_functions.mod: 	constants.mod astrophysics.mod logging.mod \
 			folding_potential.mod configuration.mod utilities.mod \
@@ -124,6 +143,11 @@ cmdline.mod:
 rate_calc.mod: constants.mod folding_potential.mod astrophysics.mod mathintegration.mod logging.mod general_nuclear.mod
 	$(F90COMP) -c rate_calc.f90 $(SWITCHES)
 
+# ------------------------------------------------------------
+# tests.mod depends on screening_module.mod for
+# mean-field screening tests and screened comparison routines.
+# ------------------------------------------------------------
+
 tests.mod: constants.mod rate_calc.mod general_nuclear.mod logging.mod mathlinearalg.mod mathinterpolation.mod mathdiff.mod
 	$(F90COMP) -c tests.f90 $(SWITCHES)
 
@@ -133,12 +157,20 @@ dist:
 all: pycnocalc
 
 
+# ------------------------------------------------------------
+# CLEAN TARGET
+# Removes compiled objects / modules so the screening dependency
+# chain can be rebuilt from scratch when needed.
+# ------------------------------------------------------------
+
 clean:
 	rm -rf *.mod
 	rm -rf *.o
 	rm -rf .DS_Store
 	rm -rf $(OUTDIR)/pycnocalc
 	rm -rf notebooks/.ipynb_checkpoints/
+	rm -f researchdata/turn_pt_screened_compare_runs.csv
 clean_local:
 	rm *.mod
 	rm *.o
+

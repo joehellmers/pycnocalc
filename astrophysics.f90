@@ -8,6 +8,7 @@
 module astrophysics
 
 use constants
+use screening_module
 
 implicit none
 
@@ -433,6 +434,168 @@ end subroutine react_rate_zero_temp
         end if
 
     end function Vcoulomb
+    
+ !*****************************************************************
+  !
+  ! Screened Coulomb Potential
+  ! V_eff(r) = V_coulomb(r) - V_screen(r)
+  !
+  !*****************************************************************
+! ------------------------------------------------------------
+! LINEAR-SCREENED COULOMB BARRIER
+!
+! Purpose:
+!   Construct an effective Coulomb barrier using the original
+!   toy linear screening potential:
+!
+!       Veff(r) = Vcoulomb(r) - Vscreen(r)
+!
+!   Used for the early prototype screening implementation and
+!   barrier-comparison plots.
+! ------------------------------------------------------------
+
+  real(kind=dbl) function Vcoulomb_screened(Z1_int, Z2, r, radius1, radius2, &
+                                            V_screen1, V_screen2)
+    implicit none
+
+    integer,      intent(in) :: Z1_int
+    real(kind=dbl), intent(in) :: Z2
+    real(kind=dbl), intent(in) :: r, radius1, radius2
+    real(kind=dbl), intent(in) :: V_screen1, V_screen2
+
+    real(kind=dbl) :: Vc, Vs
+
+    ! Bare Coulomb
+    Vc = Vcoulomb(Z1_int, Z2, r, radius1, radius2)
+
+    ! Linear screening potential from screening_module
+    Vs = screening_potential(r, V_screen1, V_screen2)
+
+    ! Effective potential
+    Vcoulomb_screened = Vc - Vs
+  end function Vcoulomb_screened
+
+!*****************************************************************
+!
+! Mean-field screened Coulomb barrier
+! U(r) = Vcoulomb(r) - H_mean_field(r)
+!
+!*****************************************************************
+! ------------------------------------------------------------
+! MEAN-FIELD SCREENED BARRIER
+!
+! Purpose:
+!   Construct the screened Coulomb barrier used in the final
+!   mean-field implementation:
+!
+!       U(r) = Vcoulomb(r) - H_mean_field(r)
+!
+!   This is the core screened barrier used in the screened WKB
+!   and screened rate studies.
+! ------------------------------------------------------------
+
+real(kind=dbl) function U_barrier_mean_field(Z1_int, Z2, r, radius1, radius2, rho, temp, A_int, Z_int)
+
+    implicit none
+
+    integer, intent(in)         :: Z1_int
+    real(kind=dbl), intent(in)  :: Z2
+    real(kind=dbl), intent(in)  :: r
+    real(kind=dbl), intent(in)  :: radius1
+    real(kind=dbl), intent(in)  :: radius2
+    real(kind=dbl), intent(in)  :: rho
+    real(kind=dbl), intent(in)  :: temp
+    integer, intent(in)         :: A_int
+    integer, intent(in)         :: Z_int
+
+    real(kind=dbl) :: Vc
+    real(kind=dbl) :: H
+
+    Vc = Vcoulomb(Z1_int, Z2, r, radius1, radius2)
+    H  = H_mean_field(r, rho, temp, A_int, Z_int)
+
+    U_barrier_mean_field = Vc - H
+
+end function U_barrier_mean_field
+
+
+!*****************************************************************
+!
+! Generic barrier selector
+!
+! screening_model = 0 : bare Coulomb only
+! screening_model = 1 : old linear toy screening
+! screening_model = 2 : Chugunov mean-field screening
+!
+!*****************************************************************
+! ------------------------------------------------------------
+! GENERIC SCREENING BARRIER SELECTOR
+!
+! Purpose:
+!   Provide one interface for switching between unscreened,
+!   toy-screened, and mean-field-screened barriers.
+!
+! screening_model meanings:
+!   0 = bare Coulomb
+!   1 = toy linear screening
+!   2 = mean-field screening
+!
+!   Makes screened vs unscreened comparisons easier to run
+!   without rewriting the barrier logic in multiple places.
+! ------------------------------------------------------------
+
+real(kind=dbl) function barrier_potential(Z1_int, Z2, r, radius1, radius2, &
+                                          screening_model, rho, temp, A_int, Z_int, &
+                                          V_screen1, V_screen2)
+
+    implicit none
+
+    integer, intent(in)         :: Z1_int
+    real(kind=dbl), intent(in)  :: Z2
+    real(kind=dbl), intent(in)  :: r
+    real(kind=dbl), intent(in)  :: radius1
+    real(kind=dbl), intent(in)  :: radius2
+
+    integer, intent(in), optional         :: screening_model
+    real(kind=dbl), intent(in), optional  :: rho
+    real(kind=dbl), intent(in), optional  :: temp
+    integer, intent(in), optional         :: A_int
+    integer, intent(in), optional         :: Z_int
+    real(kind=dbl), intent(in), optional  :: V_screen1
+    real(kind=dbl), intent(in), optional  :: V_screen2
+
+    integer :: model
+
+    model = 0
+    if (present(screening_model)) model = screening_model
+
+    select case (model)
+
+    case (0)
+        barrier_potential = Vcoulomb(Z1_int, Z2, r, radius1, radius2)
+
+    case (1)
+        if (present(V_screen1) .and. present(V_screen2)) then
+            barrier_potential = Vcoulomb_screened(Z1_int, Z2, r, radius1, radius2, &
+                                                  V_screen1, V_screen2)
+        else
+            barrier_potential = Vcoulomb(Z1_int, Z2, r, radius1, radius2)
+        end if
+
+    case (2)
+        if (present(rho) .and. present(temp) .and. present(A_int) .and. present(Z_int)) then
+            barrier_potential = U_barrier_mean_field(Z1_int, Z2, r, radius1, radius2, &
+                                         rho, temp, A_int, Z_int)
+        else
+            barrier_potential = Vcoulomb(Z1_int, Z2, r, radius1, radius2)
+        end if
+
+    case default
+        barrier_potential = Vcoulomb(Z1_int, Z2, r, radius1, radius2)
+
+    end select
+
+end function barrier_potential    
 	
 !*****************************************************************
 !
@@ -500,3 +663,4 @@ end subroutine react_rate_zero_temp
     end function
 
 end module astrophysics
+
