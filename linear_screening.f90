@@ -1,3 +1,14 @@
+! ============================================================
+! STANDALONE LINEAR SCREENING PROTOTYPE
+!
+! This small program was used as an early development tool for
+! the screening project. It generates a simple linear screening
+! potential between two user-provided endpoint values and writes
+! the result to linear_screening.dat.
+!
+! This file is separate from the main PycnoCalc screening module
+! and should be treated as a prototype / visualization helper.
+! ============================================================
 
 program linear_screening
 
@@ -38,6 +49,15 @@ program linear_screening
   print *, 'Data written to linear_screening.dat'
 
 contains
+! ------------------------------------------------------------
+! PROJECT ADDITION: LOCAL TOY SCREENING FUNCTION
+!
+! Purpose:
+!   Defines a simple line between the two user-entered endpoint
+!   values. This helped test and visualize the first screening
+!   idea before the physics-based mean-field model was added.
+! ------------------------------------------------------------
+
 
   real function screening_potential(r, V_screen1, V_screen2)
     implicit none
@@ -54,4 +74,5 @@ contains
   end function screening_potential
 
 end program linear_screening
+
 

@@ -441,6 +441,19 @@ end subroutine react_rate_zero_temp
   ! V_eff(r) = V_coulomb(r) - V_screen(r)
   !
   !*****************************************************************
+! ------------------------------------------------------------
+! LINEAR-SCREENED COULOMB BARRIER
+!
+! Purpose:
+!   Construct an effective Coulomb barrier using the original
+!   toy linear screening potential:
+!
+!       Veff(r) = Vcoulomb(r) - Vscreen(r)
+!
+!   Used for the early prototype screening implementation and
+!   barrier-comparison plots.
+! ------------------------------------------------------------
+
   real(kind=dbl) function Vcoulomb_screened(Z1_int, Z2, r, radius1, radius2, &
                                             V_screen1, V_screen2)
     implicit none
@@ -468,6 +481,19 @@ end subroutine react_rate_zero_temp
 ! U(r) = Vcoulomb(r) - H_mean_field(r)
 !
 !*****************************************************************
+! ------------------------------------------------------------
+! MEAN-FIELD SCREENED BARRIER
+!
+! Purpose:
+!   Construct the screened Coulomb barrier used in the final
+!   mean-field implementation:
+!
+!       U(r) = Vcoulomb(r) - H_mean_field(r)
+!
+!   This is the core screened barrier used in the screened WKB
+!   and screened rate studies.
+! ------------------------------------------------------------
+
 real(kind=dbl) function U_barrier_mean_field(Z1_int, Z2, r, radius1, radius2, rho, temp, A_int, Z_int)
 
     implicit none
@@ -502,6 +528,22 @@ end function U_barrier_mean_field
 ! screening_model = 2 : Chugunov mean-field screening
 !
 !*****************************************************************
+! ------------------------------------------------------------
+! GENERIC SCREENING BARRIER SELECTOR
+!
+! Purpose:
+!   Provide one interface for switching between unscreened,
+!   toy-screened, and mean-field-screened barriers.
+!
+! screening_model meanings:
+!   0 = bare Coulomb
+!   1 = toy linear screening
+!   2 = mean-field screening
+!
+!   Makes screened vs unscreened comparisons easier to run
+!   without rewriting the barrier logic in multiple places.
+! ------------------------------------------------------------
+
 real(kind=dbl) function barrier_potential(Z1_int, Z2, r, radius1, radius2, &
                                           screening_model, rho, temp, A_int, Z_int, &
                                           V_screen1, V_screen2)
@@ -621,3 +663,4 @@ end function barrier_potential
     end function
 
 end module astrophysics
+

@@ -16,11 +16,54 @@ module screening_module
   real(kind=dbl), parameter :: cm_to_fm    = 1.0d13
   real(kind=dbl), parameter :: tiny_val    = 1.0d-30
 
+! ============================================================
+! SCREENING PROJECT MODULE
+!
+! This module contains the screening physics added during the
+! electron / plasma screening project.
+!
+! Two screening levels are included here:
+!
+!   (1) screening_potential(...)
+!       Original toy linear screening model used for early
+!       prototype barrier testing and visualization.
+!
+!   (2) H_mean_field(...)
+!       Main mean-field plasma screening potential used in the
+!       final screened barrier implementation.
+!
+! Supporting helpers added for the mean-field model:
+!   - ion_sphere_radius
+!   - gamma_coupling
+!   - h0_fit
+!   - u_mean_field
+!
+! The linear screening model is a prototype tool.
+! The mean-field model is the main physics-based implementation.
+! ============================================================
+
 contains
 
   !=========================================================
   ! Original toy linear screening model
   !=========================================================
+! ------------------------------------------------------------
+! TOY LINEAR SCREENING MODEL
+!
+! Purpose:
+!   Early prototype screening model used to test whether a
+!   screening correction could be inserted into the barrier.
+!
+! Usage:
+!   Primarily used for:
+!     - early barrier plots
+!     - code-development checks
+!     - comparison against later mean-field screening
+!
+! Status:
+!   Prototype only; not the final physics model.
+! ------------------------------------------------------------
+
   real(kind=dbl) function screening_potential(r, V_screen1, V_screen2)
     implicit none
     real(kind=dbl), intent(in) :: r
@@ -43,6 +86,12 @@ contains
   ! ni = rho / (A * mu)
   ! a  = (3 / 4 pi ni)^(1/3)
   !=========================================================
+! ------------------------------------------------------------
+! MEAN-FIELD SUPPORT FUNCTION
+! Computes the ion-sphere radius a(rho) used in the
+! one-component plasma screening model.
+! ------------------------------------------------------------
+
   real(kind=dbl) function ion_sphere_radius(rho_g_cm3, A_int)
     implicit none
     real(kind=dbl), intent(in) :: rho_g_cm3
@@ -70,6 +119,12 @@ contains
   !
   ! with a in fm, k_B T in MeV
   !=========================================================
+! ------------------------------------------------------------
+! MEAN-FIELD SUPPORT FUNCTION
+! Computes the Coulomb coupling parameter Gamma(rho, T),
+! which controls the strength of plasma screening.
+! ------------------------------------------------------------
+
   real(kind=dbl) function gamma_coupling(rho_g_cm3, temp_k, A_int, Z_int)
     implicit none
     real(kind=dbl), intent(in) :: rho_g_cm3
@@ -104,6 +159,12 @@ contains
   ! + B1 Gamma^2/(B2 + Gamma)
   ! + B3 Gamma^2/(B4 + Gamma^2)
   !=========================================================
+! ------------------------------------------------------------
+! CHUGUNOV / MEAN-FIELD FIT
+! Implements the analytic fit used for h0(Gamma) in the
+! mean-field screening model.
+! ------------------------------------------------------------
+
   real(kind=dbl) function h0_fit(gamma)
     implicit none
     real(kind=dbl), intent(in) :: gamma
@@ -139,6 +200,12 @@ contains
   ! This is the fit that reproduces the small-r expansion,
   ! including alpha2 ~ -1/4 at strong coupling.
   !=========================================================
+! ------------------------------------------------------------
+! DIMENSIONLESS MEAN-FIELD PROFILE
+! Computes u(x), where x = r/a, for the screened mean-field
+! plasma potential shape.
+! ------------------------------------------------------------
+
   real(kind=dbl) function u_mean_field(x, gamma)
     implicit none
     real(kind=dbl), intent(in) :: x
@@ -184,6 +251,19 @@ contains
   !
   ! returns H in MeV
   !=========================================================
+! ------------------------------------------------------------
+! FINAL MEAN-FIELD SCREENING POTENTIAL
+!
+! Purpose:
+!   Compute H(r), the mean-field plasma screening potential
+!   used in the screened barrier:
+!
+!       U(r) = Vcoulomb(r) - H(r)
+!
+!   This is the main screening function used in the final
+!   screened WKB and screened rate comparisons.
+! ------------------------------------------------------------
+
   real(kind=dbl) function H_mean_field(r_fm, rho_g_cm3, temp_k, A_int, Z_int)
     implicit none
     real(kind=dbl), intent(in) :: r_fm
@@ -218,3 +298,4 @@ contains
   end function H_mean_field
 
 end module screening_module
+

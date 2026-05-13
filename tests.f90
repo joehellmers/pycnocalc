@@ -852,6 +852,30 @@ subroutine ndiff_001
     
 end subroutine ndiff_001
 
+! ============================================================
+! SCREENING PROJECT TESTS / BENCHMARKS
+!
+! Tests and comparison routines added
+! during the screening project.
+!
+! These routines are intended to verify and document:
+!   - toy linear screening behavior
+!   - mean-field screening values
+!   - screened barrier values
+!   - screened vs unscreened WKB behavior
+!   - screened vs unscreened pycnonuclear rates
+!   - white-dwarf benchmark behavior
+!
+! These are research / validation routines, not core physics
+! formulas.
+! ============================================================
+
+! ------------------------------------------------------------
+! TOY SCREENING TEST
+! Tests the original linear screening potential over a simple
+! radius range for early development checks.
+! ------------------------------------------------------------
+
 subroutine screening_potential_001
 
     real(kind=dbl) :: r
@@ -880,6 +904,18 @@ subroutine screening_potential_001
     call scr_and_log(str='r = 3.05 fm, V =', nbr=V, fmt='(ES13.5)', lf=.TRUE.)
 
 end subroutine screening_potential_001
+
+! ------------------------------------------------------------
+! MEAN-FIELD H(r) TEST
+!
+! Purpose:
+!   Evaluates the final mean-field screening potential H(r)
+!   for selected density, temperature, A, and Z values.
+!
+!   Confirms that the screening module produces reasonable
+!   H(r) values before the potential is inserted into the
+!   barrier / WKB calculation.
+! ------------------------------------------------------------
 
 subroutine H_mean_field_001
 
@@ -919,6 +955,17 @@ subroutine H_mean_field_001
 end subroutine H_mean_field_001
 
 
+! ------------------------------------------------------------
+! MEAN-FIELD BARRIER TEST
+!
+! Purpose:
+!   Tests U_barrier_mean_field by comparing the screened
+!   effective Coulomb barrier against the unscreened barrier.
+!
+!   Confirms that the final screening correction is being
+!   applied at the barrier level.
+! ------------------------------------------------------------
+
 subroutine U_mean_field_001
 
     use astrophysics,    only: Vcoulomb, U_barrier_mean_field
@@ -953,6 +1000,17 @@ subroutine U_mean_field_001
 
 end subroutine U_mean_field_001
 
+! ------------------------------------------------------------
+! SCREENED RATE COMPARISON TEST
+!
+! Purpose:
+!   Compares pycnonuclear reaction rates with and without the
+!   mean-field screening correction.
+!
+!   Provides a direct check of how screening changes the final
+!   rate output.
+! ------------------------------------------------------------
+
 subroutine pycnoRate_screened_compare_001
 
     integer         :: A1
@@ -985,6 +1043,18 @@ subroutine pycnoRate_screened_compare_001
     call scr_and_log(str='rate screened   =', nbr=rate_screened,   fmt='(ES13.5)', lf=.TRUE.)
 
 end subroutine pycnoRate_screened_compare_001
+
+! ------------------------------------------------------------
+! SCREENED WKB / TURNING-POINT COMPARISON
+!
+! Purpose:
+!   Compares unscreened and screened turning points and WKB
+!   values for the same physical conditions.
+!
+!   This routine connects the screening correction to the
+!   tunneling integral and shows how the barrier change affects
+!   the WKB result.
+! ------------------------------------------------------------
 
 subroutine turn_pt_screened_compare_001
 
@@ -1184,7 +1254,146 @@ subroutine turn_pt_screened_compare_001
 
 end subroutine turn_pt_screened_compare_001
 
+! ------------------------------------------------------------
+! WHITE-DWARF BENCHMARK
+!
+! Purpose:
+!   Runs the screened and unscreened calculations over a set of
+!   white-dwarf-like conditions and exports a benchmark table.
+!
+!   Provides the final comparison dataset for judging the size
+!   and consistency of the screening effect.
+! ------------------------------------------------------------
+
+subroutine white_dwarf_benchmark_001
+
+    use astrophysics, only: lattice
+
+    implicit none
+
+    integer         :: A1
+    integer         :: Z1
+    integer         :: partition
+    integer         :: nucIntType
+    integer         :: L
+    integer         :: Rmax
+    integer         :: i
+    integer         :: unitno
+    integer         :: turn1_unscreened
+    integer         :: turn2_unscreened
+    integer         :: turn1_screened
+    integer         :: turn2_screened
+
+    real(kind=dbl)  :: A2
+    real(kind=dbl)  :: Z2
+    real(kind=dbl)  :: rho
+    real(kind=dbl)  :: screen_temp
+    real(kind=dbl)  :: Rstep
+    real(kind=dbl)  :: R
+    real(kind=dbl)  :: E0
+    real(kind=dbl)  :: mu
+    real(kind=dbl)  :: radius1
+    real(kind=dbl)  :: radius2
+    real(kind=dbl)  :: rho0_A1
+    real(kind=dbl)  :: rho0_A2
+    real(kind=dbl)  :: WKB_unscreened
+    real(kind=dbl)  :: WKB_screened
+    real(kind=dbl)  :: delta_WKB
+    real(kind=dbl)  :: wkb_enhancement
+    real(kind=dbl)  :: rate_unscreened
+    real(kind=dbl)  :: rate_screened
+    real(kind=dbl)  :: rate_ratio
+
+    real(kind=dbl), dimension(5) :: rho_cases
+    real(kind=dbl), dimension(5) :: temp_cases
+
+    call scr_and_log_str('TEST: white_dwarf_benchmark_001:')
+
+    ! Fixed system: 12C + 12C
+    A1 = 12
+    A2 = 12.0_dbl
+    Z1 = 6
+    Z2 = 6.0_dbl
+
+    ! Numerical settings
+    Rstep      = 0.25_dbl
+    partition  = 15
+    nucIntType = 1
+    L          = 0
+
+    ! White-dwarf benchmark cases
+    rho_cases  = (/ 2.0d9, 3.0d9, 5.0d9, 5.0d9, 5.0d9 /)
+    temp_cases = (/ 1.0d8, 1.0d8, 1.0d8, 5.0d7, 2.0d8 /)
+
+    mu = reduced_mass(A1, Z1, A2, Z2)
+
+    radius1 = nuclear_radius(real(A1, dbl), .FALSE.)
+    radius2 = nuclear_radius(A2, .FALSE.)
+
+    rho0_A1 = rho0_2pF(real(A1, dbl), radius1, 0.5_dbl)
+    rho0_A2 = rho0_2pF(A2, radius2, 0.5_dbl)
+
+    unitno = 91
+    open(unit=unitno, file='researchdata/white_dwarf_benchmark_001.csv', status='replace', action='write')
+
+    write(unitno,'(A)') 'rho,temp_k,Rstep,partition,nucIntType,' // &
+                        'WKB_unscreened,WKB_screened,delta_WKB,exp_delta_WKB,' // &
+                        'rate_unscreened,rate_screened,rate_ratio,' // &
+                        'turn1_unscreened,turn2_unscreened,turn1_screened,turn2_screened'
+
+    do i = 1, 5
+
+        rho         = rho_cases(i)
+        screen_temp = temp_cases(i)
+
+        E0 = E0_Energy(Z1, Z2, A1, A2, rho)
+
+        R = sqrt(3.0_dbl) * 0.5_dbl * lattice(rho, real(A1, dbl), real(Z1, dbl))
+        Rmax = int(R / Rstep) + 1
+
+        ! Unscreened WKB
+        call turn_pt(R, Rstep, Rmax, E0, mu, A1, A2, Z1, Z2, radius1, radius2, &
+                     rho0_A1, rho0_A2, L, partition, &
+                     turn1_unscreened, turn2_unscreened, WKB_unscreened, &
+                     nucIntType, .FALSE.)
+
+        ! Mean-field screened WKB
+        call turn_pt(R, Rstep, Rmax, E0, mu, A1, A2, Z1, Z2, radius1, radius2, &
+                     rho0_A1, rho0_A2, L, partition, &
+                     turn1_screened, turn2_screened, WKB_screened, &
+                     nucIntType, .FALSE., 2, rho, screen_temp)
+
+        delta_WKB       = WKB_unscreened - WKB_screened
+        wkb_enhancement = exp(delta_WKB)
+
+        ! Unscreened rate
+        rate_unscreened = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 0)
+
+        ! Mean-field screened rate
+        rate_screened = pycnoRate(A1, A2, Z1, Z2, rho, Rstep, partition, nucIntType, .FALSE., 0, 2, screen_temp)
+
+        if (rate_unscreened > 0.0_dbl) then
+            rate_ratio = rate_screened / rate_unscreened
+        else
+            rate_ratio = 0.0_dbl
+        end if
+
+        write(unitno,'(ES16.8,",",ES16.8,",",ES16.8,",",I0,",",I0,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",I0,",",I0,",",I0,",",I0)') &
+            rho, screen_temp, Rstep, partition, nucIntType, &
+            WKB_unscreened, WKB_screened, delta_WKB, wkb_enhancement, &
+            rate_unscreened, rate_screened, rate_ratio, &
+            turn1_unscreened, turn2_unscreened, turn1_screened, turn2_screened
+
+    end do
+
+    close(unitno)
+
+    call scr_and_log_str('Wrote researchdata/white_dwarf_benchmark_001.csv')
+
+end subroutine white_dwarf_benchmark_001
+
 
 end module tests
+
 
 

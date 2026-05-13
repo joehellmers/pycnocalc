@@ -1443,6 +1443,21 @@ subroutine tempAdjAndTDiff
 
 end subroutine tempAdjAndTDiff
 
+! ------------------------------------------------------------
+! SCREENED COMPONENT GRAPH EXPORT
+!
+! Purpose:
+!   Export the separate barrier components needed to compare
+!   unscreened and screened potentials.
+!
+! Typical outputs include:
+!   - bare Coulomb potential
+!   - screening correction
+!   - screened Coulomb potential
+!   - nuclear/folding potential contribution
+!   - total screened and unscreened barriers
+! ------------------------------------------------------------
+
 subroutine graphScreenedComponents
 
     use constants
@@ -1463,7 +1478,8 @@ subroutine graphScreenedComponents
     real(kind=dbl) :: A2, Z2
     real(kind=dbl) :: r, rmin, rmax, dr
     real(kind=dbl) :: radius1, radius2
-    real(kind=dbl) :: Vc, Vs, Vc_screened, Vn, Vtot
+    real(kind=dbl) :: Vc, Vs, Vc_screened, Vn
+    real(kind=dbl) :: Vtot_unscreened, Vtot_screened
     real(kind=dbl) :: V_screen1, V_screen2
     real(kind=dbl) :: delta_0
     real(kind=dbl) :: mu
@@ -1488,7 +1504,7 @@ subroutine graphScreenedComponents
     radius1 = nuclear_radius(real(A1, dbl), .FALSE.)
     radius2 = nuclear_radius(A2, .FALSE.)
 
-    ! Use POSITIVE screening values if you want Vc - Vs to reduce the barrier
+    ! Positive screening values so Vc - Vs lowers the barrier
     V_screen1 = 2.0_dbl   ! at r = 0.1 fm
     V_screen2 = 0.5_dbl   ! at r = 6.0 fm
 
@@ -1505,7 +1521,7 @@ subroutine graphScreenedComponents
     E0 = E0_Energy(Z1, Z2, A1, A2, rho)
 
     open(unit=20, file='researchdata/screened_components.csv', status='replace')
-    write(20,'(A)') 'r_fm,Vcoulomb_MeV,Vscreen_MeV,Vcoulomb_screened_MeV,Vnuclear_MeV,Vtotal_MeV'
+    write(20,'(A)') 'r_fm,Vcoulomb_MeV,Vscreen_MeV,Vcoulomb_screened_MeV,Vnuclear_MeV,Vtotal_unscreened_MeV,Vtotal_screened_MeV'
 
     do i = 0, npts
         r = rmin + dr * real(i, dbl)
@@ -1527,10 +1543,11 @@ subroutine graphScreenedComponents
             Vn = nucleonM3Y(r, delta_0)
         end select
 
-        Vtot = Vc_screened + Vn
+        Vtot_unscreened = Vc + Vn
+        Vtot_screened   = Vc_screened + Vn
 
-        write(20,'(ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8)') &
-            r, Vc, Vs, Vc_screened, Vn, Vtot
+        write(20,'(ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8,",",ES16.8)') &
+            r, Vc, Vs, Vc_screened, Vn, Vtot_unscreened, Vtot_screened
     end do
 
     close(20)
@@ -1538,6 +1555,17 @@ subroutine graphScreenedComponents
     call scr_and_log_str('Wrote researchdata/screened_components.csv')
 
 end subroutine graphScreenedComponents
+
+! ------------------------------------------------------------
+! MEAN-FIELD BARRIER GRAPH EXPORT
+!
+! Purpose:
+!   Export a radius sweep comparing the bare Coulomb barrier
+!   with the mean-field screened barrier.
+!
+!   Used to make the final barrier plots showing how the
+!   plasma mean-field potential lowers the tunneling barrier.
+! ------------------------------------------------------------
 
 subroutine graphMeanFieldBarrier
 
@@ -1598,6 +1626,7 @@ end subroutine graphMeanFieldBarrier
 
 
 end module system_functions
+
 
 
 

@@ -11,7 +11,6 @@
 !	ST1983: S. L. Shapiro, S. A. Teukolsky "Black Holes, White Dwarfs, and Neutron Stars
 !
 
-
 program PycnoCalc
 
 use logging
@@ -183,6 +182,22 @@ do i=1, function_cnt
 	if (function_list(i)%function_name .EQ. 'tempAdjAndTDiff') then
 		call tempAdjAndTDiff
 	end if
+! ============================================================
+! SCREENING PROJECT DISPATCH ROUTINES
+!
+!   - graphScreenedComponents
+!   - H_mean_field_001
+!   - U_mean_field_001
+!   - graphMeanFieldBarrier
+!   - pycnoRate_screened_compare_001
+!   - turn_pt_screened_compare_001
+!   - white_dwarf_benchmark_001
+!
+! These routines support the screening-project workflow:
+! barrier plots -> WKB comparison -> rate comparison ->
+! benchmark / convergence testing
+! ============================================================
+
 	
 	if (function_list(i)%function_name .EQ. 'graphScreenedComponents') then
 		call graphScreenedComponents
@@ -211,6 +226,10 @@ do i=1, function_cnt
     		call turn_pt_screened_compare_001
 	end if
 
+	if (function_list(i)%function_name .EQ. 'white_dwarf_benchmark_001') then
+
+    		call white_dwarf_benchmark_001
+	end if
 
 end do
 
@@ -218,6 +237,7 @@ call printending
 
 
 end program PycnoCalc
+
 
 
 
