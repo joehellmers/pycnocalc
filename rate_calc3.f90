@@ -92,7 +92,7 @@ contains
             !print *,"V_2fold at ", R_pos, " = ", V_2fold 
 
             ! read data file containing all potentials, from DFMDEF2013 code
-            open(unit=10, file='dataPot.dat', status='old')
+            open(unit=10, file='901.dat', status='old')
             line = 0
             do 
                 read(10,*,end=100) rcm, iter, UCfin, UNDfin, Uexfin, UNfin, Utotfin
@@ -175,6 +175,204 @@ contains
         WKB = trapezoidArray(Rmax,Rmax,Integrand,Rstep)
         
     end subroutine turn_pt3
+    
+        real(kind=dbl) function lnSfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag)
 
+        implicit none
+
+        integer, intent(in)             :: A1_int, Z1_int
+        real(kind=dbl), intent(in)      :: A2, Z2
+        real(kind=dbl), intent(in)      :: rho
+        real(kind=dbl), intent(in)      :: Rstep
+        integer, intent(in)             :: partition
+        integer, intent(in)             :: nucIntType
+        logical, intent(in), optional   :: inSQMFlag
+
+        real(kind=dbl)  :: A1, Z1
+        integer         :: L = 0
+        real(kind=dbl)  :: E0
+        real(kind=dbl)  :: ln_sigma
+        integer         :: Rmax
+        real(kind=dbl)  :: mu
+        integer         :: turn1, turn2
+        real(kind=dbl)  :: WKB
+        real(kind=dbl)  :: ln_Trans_total
+        integer         :: i
+        logical         :: SQMFlag = .FALSE.
+
+        if (present(inSQMFlag)) then
+            if (inSQMFlag) then
+                SQMFlag = .TRUE.
+            end if
+        end if
+
+        A1 = real(A1_int,dbl)
+        Z1 = real(Z1_int,dbl)
+
+        Rmax = 200
+        mu = reduced_mass(A1_int, Z1_int, A2, Z2)
+        E0 = E0_Energy(Z1_int, Z2, A1_int, A2, rho)
+
+        ln_sigma = 0.0_dbl
+        do i = 0,L
+            call turn_pt3(Rstep, Rmax, E0, mu, turn1, turn2, WKB, SQMFlag)
+            ln_Trans_total = -WKB
+            ln_sigma = ln_sigma + log(612.459_dbl) - log(mu*E0) + &
+                       log(2.0_dbl*real(i,dbl)+1.0_dbl) + ln_Trans_total
+        end do
+
+        lnSfactor = ln_sigma + log(E0) + (Z1)*(Z2)*0.0324_dbl*sqrt(mu/E0)
+
+    end function lnSfactor
+
+    real(kind=dbl) function Sfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag)
+
+        implicit none
+
+        integer, intent(in)             :: A1_int, Z1_int
+        real(kind=dbl), intent(in)      :: A2, Z2
+        real(kind=dbl), intent(in)      :: rho
+        real(kind=dbl), intent(in)      :: Rstep
+        integer, intent(in)             :: partition
+        integer, intent(in)             :: nucIntType
+        logical, intent(in), optional   :: inSQMFlag
+
+        real(kind=dbl) :: ln_S
+
+        ln_S = lnSfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag)
+
+        print *, 'ln_S    = ', ln_S
+        print *, 'log10_S = ', ln_S / log(10.0d0)
+
+        if (ln_S > log(huge(1.0d0))) then
+            Sfactor = huge(1.0d0)
+        else
+            Sfactor = exp(ln_S)
+        end if
+
+    end function Sfactor
+
+    real(kind=dbl) function pycnoRate(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, inSQMFlag, inCalcType)
+
+        implicit none
+
+        integer, intent(in)             :: A1_int, Z1_int
+        real(kind=dbl), intent(in)      :: A2, Z2
+        real(kind=dbl), intent(in)      :: rho
+        real(kind=dbl), intent(in)      :: Rstep
+        integer, intent(in)             :: partition
+        integer, intent(in)             :: nucIntType
+        logical, intent(in), optional   :: inSQMFlag
+        integer, intent(in), optional   :: inCalcType
+
+        real(kind=dbl)                  :: prepend, alpha1, alpha2, gamma
+        real(kind=dbl)                  :: ln_P0
+        real(kind=dbl)                  :: P0
+        real(kind=dbl)                  :: lambda
+        real(kind=dbl)                  :: ln_lambda
+        real(kind=dbl)                  :: ln_S
+        real(kind=dbl)                  :: A1, Z1
+        logical                         :: SQMFlag = .FALSE.
+        integer                         :: calcType = 0
+
+        if (present(inSQMFlag)) then
+            if (inSQMFlag) then
+                SQMFlag = .TRUE.
+            end if
+        end if
+
+        if (present(inCalcType)) then
+            calcType = inCalcType
+        end if
+
+        A1 = real(A1_int,dbl)
+        Z1 = real(Z1_int,dbl)
+
+        ln_S = lnSfactor(A1_int, A2, Z1_int, Z2, rho, Rstep, partition, nucIntType, SQMFlag)
+
+        if (calcType .eq. 0) then
+
+            lambda = inv_len_param2comp(rho, A1_int, Z1_int, 0.5_dbl, int(A2), int(Z2), 0.5_dbl)
+            ln_lambda = log(lambda)
+
+            ln_P0 = -2.638_dbl/(sqrt(lambda)) + log(rho) + log(A1*A2) - log(A1+A2) + &
+                    2.0_dbl*log(Z1*Z2) + ln_S + (4.0_dbl/7.0_dbl)*ln_lambda + 109.36_dbl
+
+            print *, 'ln_P0      = ', ln_P0
+            print *, 'log10_rate = ', ln_P0 / log(10.0d0)
+
+            if (ln_P0 > log(huge(1.0d0))) then
+                P0 = huge(1.0d0)
+            else if (ln_P0 < log(tiny(1.0d0))) then
+                P0 = 0.0d0
+            else
+                P0 = exp(ln_P0)
+            end if
+
+            pycnoRate = P0
+
+        else
+
+            if (calcType .eq. 1 .or. calcType .eq. 2 .or. calcType .eq. 3) then
+                prepend = 1.06_dbl
+                gamma = 2.0_dbl
+            else
+                prepend = 2.69_dbl
+                gamma = 4.0_dbl
+            end if
+
+            lambda = 0.0245_dbl*(A1**(-4.0_dbl/3.0_dbl))*(Z1**(-2.0_dbl))* &
+                     (gamma**(-1.0_dbl/3.0_dbl))*((rho/(1.0d6))**(1.0_dbl/3.0_dbl))
+
+            if (calcType .eq. 1) then
+                alpha1 = 2.639_dbl
+                alpha2 = -6.305_dbl
+            end if
+
+            if (calcType .eq. 2) then
+                alpha1 = 2.516_dbl
+                alpha2 = -6.793_dbl
+            end if
+
+            if (calcType .eq. 3) then
+                alpha1 = 2.517_dbl
+                alpha2 = -6.754_dbl
+            end if
+
+            if (calcType .eq. 4) then
+                alpha1 = 2.401_dbl
+                alpha2 = -6.315_dbl
+            end if
+
+            if (calcType .eq. 5) then
+                alpha1 = 2.265_dbl
+                alpha2 = -6.911_dbl
+            end if
+
+            if (calcType .eq. 6) then
+                alpha1 = 2.260_dbl
+                alpha2 = -6.923_dbl
+            end if
+
+            ln_P0 = log(prepend) + log(1.0d45) + log(rho) + log(A1*A2) + &
+                    2.0_dbl*log(Z1) + 2.0_dbl*log(Z2) + ln_S + &
+                    (4.0_dbl/7.0_dbl)*log(lambda) - alpha2 - alpha1*lambda**(-0.5_dbl)
+
+            print *, 'ln_P0      = ', ln_P0
+            print *, 'log10_rate = ', ln_P0 / log(10.0d0)
+
+            if (ln_P0 > log(huge(1.0d0))) then
+                P0 = huge(1.0d0)
+            else if (ln_P0 < log(tiny(1.0d0))) then
+                P0 = 0.0d0
+            else
+                P0 = exp(ln_P0)
+            end if
+
+            pycnoRate = P0
+
+        end if
+
+    end function pycnoRate
 
     end module rate_calc3
