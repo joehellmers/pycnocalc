@@ -434,6 +434,47 @@ end subroutine react_rate_zero_temp
 
     end function Vcoulomb
 	
+
+!*****************************************************************
+!
+! Deformed Coulomb Potential function - output in MEV
+! Projectile nucleus is spherical, target nucleus is deformed
+!
+!*****************************************************************
+
+    real(kind=dbl) function Vcoulomb_deformed(R, B2, angle2, Z1_int, Z2, A2)
+      
+        implicit none
+
+        real(kind=dbl), intent(in) :: R                 ! distance between the two centers of the target and projectile nuclei
+        real(kind=dbl), intent(in) :: B2                ! quadrupole deformation parameter
+        real(kind=dbl), intent(in) :: angle2            ! angle between target's symmetry axis and the projectile's direction,
+                                                        ! determines orientation, in radians
+        real(kind=dbl), intent(in) :: Z1_int            ! proton count for the projectile nucleus
+        real(kind=dbl), intent(in) :: Z2                ! proton count for the target nucleus
+        real(kind=dbl), intent(in) :: A2                ! nucleon number for the target nucleus
+
+        real(kind=dbl) :: r0t                           ! target nucleus radius if it was spherical
+        real(kind=dbl) :: rt                            ! target nucleus radius accounting for deformation
+        real(kind=dbl) :: P2                            ! Legendre polynomial, 2nd order
+        real(kind=dbl) :: c                             ! cosine of angle2
+
+        real(kind=dbl), parameter :: pi = acos(-1.0_dbl)
+        real(kind=dbl), parameter :: e2 = 1.439964_dbl
+
+        c = cos(angle2)
+        P2 = 0.5_dbl*(3.0_dbl*c*c - 1.0_dbl)
+        r0t = 1.28_dbl*(A2**(1.0_dbl/3.0_dbl)) - 0.76_dbl + 0.8_dbl*(A2**(-1.0_dbl/3.0_dbl))
+        rt = r0t*(1.0_dbl + sqrt(5.0_dbl/(4.0_dbl*pi))*B2*P2)
+
+        Vcoulomb_deformed = ((Z1_int*Z2*e2)/R)*(1.0_dbl + ((rt*rt*B2*P2)/(R*R))*(sqrt(9.0_dbl/(20.0_dbl*pi)) + (3.0_dbl*B2*P2)/(7.0_dbl*pi)))
+
+        ! In the future I can use the constants module, change proton and nucleon counts to integers and then convert them to reals
+        ! when I need to. I can say for what values of separation distance R does this function remain valid.
+
+    end function Vcoulomb_deformed
+
+
 !*****************************************************************
 !
 ! Lattice + Vibrational Energy
